@@ -1,7 +1,6 @@
 # BOQ Manager
 
-**BOQ Manager** is a lightweight, responsive web application designed to manage and calculate project cost estimations (Bill of Quantity).  
-It allows users to create, edit, and export project data in Excel and PDF formats without any server-side dependencies — everything runs locally in your browser.
+**BOQ Manager** is a lightweight, responsive web application designed to manage and calculate project cost estimations (Bill of Quantity). It allows users to create, edit, and export project data in Excel and PDF formats without any server-side dependencies — everything runs locally in your browser.
 
 ---
 
