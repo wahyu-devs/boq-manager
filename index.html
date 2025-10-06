@@ -372,7 +372,8 @@
       <div class="nav-actions">
         <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
         <button class="btn ghost" id="manageBtn">Manage Items & Projects</button>
-        <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup Data</button>
+        <button class="btn secondary" id="downloadJSON"
+          title="Backup semua data (projects, items, working, commission)">Backup Data</button>
         <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore Data</button>
         <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
       </div>
@@ -463,7 +464,8 @@
             <tr>
               <td id="calcTotalCogs" class="value">0</td>
               <td id="calcTotalSelling" class="value">0</td>
-              <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input" type="text" placeholder="0" /></td>
+              <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input"
+                  type="text" placeholder="0" /></td>
               <td id="calcGrossProfit" class="value">0</td>
               <td id="calcTotalMargin" class="value">0.00%</td>
             </tr>
@@ -517,7 +519,6 @@
     const tabSelling = document.getElementById('tabSelling');
     const tabCalc = document.getElementById('tabCalc');
     let activeTab = 'cogs';
-
     function switchTo(tab) {
       activeTab = tab;
       tabCogs.classList.add('hidden');
@@ -548,6 +549,7 @@
     tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
     tabSellingBtn.addEventListener('click', () => switchTo('selling'));
     tabCalcBtn.addEventListener('click', () => switchTo('calculation'));
+
     const form = document.getElementById('boqForm');
     const itemList = document.getElementById('itemList');
     const priceInput = document.getElementById('price');
@@ -576,12 +578,14 @@
     const manageItemList = document.getElementById('manageItemList');
     const manageProjectsBtn = document.getElementById('manageProjectsBtn');
     const manageProjectList = document.getElementById('manageProjectList');
+
     // Calculation elements
     const calcTotalCogsEl = document.getElementById('calcTotalCogs');
     const calcTotalSellingEl = document.getElementById('calcTotalSelling');
     const commissionCellInput = document.getElementById('commissionCellInput');
     const calcGrossProfitEl = document.getElementById('calcGrossProfit');
     const calcTotalMarginEl = document.getElementById('calcTotalMargin');
+
     // Items now stored as array of objects:
     // { name, unit, price, sellingPrice, category, updatedAt }
     let items = JSON.parse(localStorage.getItem('boq_items')) || [];
@@ -592,52 +596,38 @@
     const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
     let currentCommission = 0;
 
-    function sanitize(s) {
-      return String(s || '').replace(/<\/?[^>]+(>|$)/g, "").trim();
-    }
-
-    function getSafeFileName(name) {
-      if (!name) return 'BOQ';
-      return (`BOQ - ${name}`).replace(/[\\\/:*?"<>|]/g, '').trim();
-    }
-
-    function updateNavProject() {
-      navProject.textContent = currentProjectName ? `| ${currentProjectName}` : '(no project)';
-    }
-
-    function showAlert(msg) {
-      alert(msg);
-    }
-
-    function parseNumberFormatted(str) {
-      if (str == null) return null;
-      const raw = String(str).replace(/\./g, '').replace(/,/g, '').trim();
-      return raw === '' ? null : Number(raw);
-    }
-
-    function formatThousandsInput(el) {
-      el.addEventListener('input', () => {
-        const raw = String(el.value).replace(/[^\d]/g, '');
-        el.value = raw ? Number(raw).toLocaleString('id-ID') : '';
-      });
-    }
+    function sanitize(s) { return String(s || '').replace(/<\/?[^>]+(>|$)/g, "").trim(); }
+    function getSafeFileName(name) { if (!name) return 'BOQ'; return (`BOQ - ${name}`).replace(/[\\\/:*?"<>|]/g, '').trim(); }
+    function updateNavProject() { navProject.textContent = currentProjectName ? `| ${currentProjectName}` : '(no project)'; }
+    function showAlert(msg) { alert(msg); }
+    function parseNumberFormatted(str) { if (str == null) return null; const raw = String(str).replace(/\./g, '').replace(/,/g, '').trim(); return raw === '' ? null : Number(raw); }
+    function formatThousandsInput(el) { el.addEventListener('input', () => { const raw = String(el.value).replace(/[^\d]/g, ''); el.value = raw ? Number(raw).toLocaleString('id-ID') : ''; }); }
     formatThousandsInput(priceInput);
     formatThousandsInput(sellingInput);
 
+    // Excel helper: convert column number to letters (A, B, ... Z, AA, AB ...)
+    function excelColLetter(n) {
+      let s = '';
+      while (n > 0) {
+        const m = (n - 1) % 26;
+        s = String.fromCharCode(65 + m) + s;
+        n = Math.floor((n - 1) / 26);
+      }
+      return s;
+    }
+
     function updateDatalist() {
-      // unique names, keep latest order by updatedAt desc
       const map = {};
       items.forEach(it => {
         if (!it || !it.name) return;
         const key = it.name.trim();
-        if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) {
-          map[key] = it;
-        }
+        if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) map[key] = it;
       });
+      const arr = Object.values(map).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       itemList.innerHTML = '';
-      Object.keys(map).forEach(name => {
+      arr.forEach(it => {
         const opt = document.createElement('option');
-        opt.value = name;
+        opt.value = it.name;
         itemList.appendChild(opt);
       });
     }
@@ -654,11 +644,9 @@
       const eps = 1e-9;
       return Math.ceil((n - eps) / 1000) * 1000;
     }
+
     // ---------- ITEM helpers (autofill & store) ----------
-    function normalizeKey(name) {
-      return String(name || '').trim().toLowerCase();
-    }
-    // return the latest item object by name (case-insensitive) or null
+    function normalizeKey(name) { return String(name || '').trim().toLowerCase(); }
     function getItemByName(name) {
       if (!name) return null;
       const key = normalizeKey(name);
@@ -671,21 +659,16 @@
       }
       return best;
     }
-    // merge/update items array with provided fields (non-empty fields overwrite)
     function updateItemsWithEntry(name, unit, price, sellingPrice, category) {
       if (!name) return;
       const key = normalizeKey(name);
       let foundIndex = -1;
       for (let i = 0; i < items.length; i++) {
-        if (normalizeKey(items[i].name) === key) {
-          foundIndex = i;
-          break;
-        }
+        if (normalizeKey(items[i].name) === key) { foundIndex = i; break; }
       }
       const now = Date.now();
       if (foundIndex >= 0) {
         const it = items[foundIndex];
-        // Overwrite with provided non-empty values — but also allow empty strings to clear
         if (unit !== undefined) it.unit = unit;
         if (price !== undefined) it.price = price;
         if (sellingPrice !== undefined) it.sellingPrice = sellingPrice;
@@ -693,54 +676,38 @@
         it.updatedAt = now;
         items[foundIndex] = it;
       } else {
-        const newIt = {
-          name: name,
-          unit: unit || "",
-          price: (price !== undefined && price !== null) ? price : "",
-          sellingPrice: (sellingPrice !== undefined && sellingPrice !== null) ? sellingPrice : "",
-          category: category || "",
-          updatedAt: now
-        };
-        items.push(newIt);
+        items.push({ name, unit: unit || "", price: (price !== undefined && price !== null) ? price : "", sellingPrice: (sellingPrice !== undefined && sellingPrice !== null) ? sellingPrice : "", category: category || "", updatedAt: now });
       }
-      // dedupe by normalized name keeping the latest updatedAt entry
       const map = {};
       items.forEach(it => {
         const k = normalizeKey(it.name);
         if (!map[k] || (it.updatedAt || 0) > (map[k].updatedAt || 0)) map[k] = it;
       });
-      items = Object.values(map);
+      items = Object.values(map).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       localStorage.setItem('boq_items', JSON.stringify(items));
       updateDatalist();
     }
-    // autofill form fields when user selects/inputs an existing item name
     function autofillFromItem(name) {
       const it = getItemByName(name);
       if (!it) return;
-      // fill fields (we assume selecting name indicates want stored data)
       if (it.unit !== undefined) unitInput.value = it.unit || "";
-      // price and selling: format to locale string if present
       if (it.price !== undefined && it.price !== "" && it.price !== null) {
         priceInput.value = Number(it.price).toLocaleString('id-ID');
-        sellingInput.value = ''; // clear selling if COGS exists (user can override)
+        sellingInput.value = '';
       } else {
         priceInput.value = '';
-        if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) {
-          sellingInput.value = Number(it.sellingPrice).toLocaleString('id-ID');
-        } else {
-          sellingInput.value = '';
-        }
+        if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) sellingInput.value = Number(it.sellingPrice).toLocaleString('id-ID');
+        else sellingInput.value = '';
       }
       if (it.category !== undefined) categoryInput.value = it.category || "";
     }
-    // listen to nameInput changes to autofill
-    nameInput.addEventListener('input', (e) => {
+    nameInput.addEventListener('change', (e) => {
       const v = sanitize(e.target.value);
       if (!v) return;
-      // Try to autofill immediately (this triggers on typing too; that's acceptable)
       const found = getItemByName(v);
       if (found) autofillFromItem(v);
     });
+
     // ---------- Totals & rendering ----------
     function computeTotals() {
       const totalCogs = tableData.reduce((acc, r) => {
@@ -756,10 +723,7 @@
         const q = Number(r.qty || 0);
         return acc + (spr ? (spr * q) : 0);
       }, 0);
-      return {
-        totalCogs,
-        totalSelling
-      };
+      return { totalCogs, totalSelling };
     }
 
     function renderCogsTable() {
@@ -782,21 +746,13 @@
         cogsTbody.appendChild(trSec);
         grouped[cat].forEach(row => {
           const tr = document.createElement('tr');
-          const tdNo = document.createElement('td');
-          tdNo.textContent = idx++;
-          const tdName = document.createElement('td');
-          tdName.className = 'left';
-          tdName.textContent = sanitize(row.name);
-          const tdQty = document.createElement('td');
-          tdQty.textContent = row.qty !== "" ? row.qty : "";
-          const tdUnit = document.createElement('td');
-          tdUnit.textContent = row.unit || "";
-          const tdCogs = document.createElement('td');
-          tdCogs.style.textAlign = 'right';
-          const tdTotal = document.createElement('td');
-          tdTotal.style.textAlign = 'right';
-          const tdMargin = document.createElement('td');
-          tdMargin.style.textAlign = 'right';
+          const tdNo = document.createElement('td'); tdNo.textContent = idx++;
+          const tdName = document.createElement('td'); tdName.className = 'left'; tdName.textContent = sanitize(row.name);
+          const tdQty = document.createElement('td'); tdQty.textContent = row.qty !== "" ? row.qty : "";
+          const tdUnit = document.createElement('td'); tdUnit.textContent = row.unit || "";
+          const tdCogs = document.createElement('td'); tdCogs.style.textAlign = 'right';
+          const tdTotal = document.createElement('td'); tdTotal.style.textAlign = 'right';
+          const tdMargin = document.createElement('td'); tdMargin.style.textAlign = 'right';
           const priceNum = (row.price != null && row.price !== "") ? Number(row.price) : null;
           const qtyNum = (row.qty != null && row.qty !== "") ? Number(row.qty) : null;
           const totalCogs = (priceNum != null && qtyNum != null) ? Number(priceNum) * Number(qtyNum) : null;
@@ -804,18 +760,8 @@
           tdTotal.textContent = (totalCogs != null && isFinite(totalCogs)) ? Number(totalCogs).toLocaleString('id-ID') : "";
           tdMargin.textContent = (row.margin != null && row.margin !== "") ? Number(row.margin).toFixed(2) : "";
           if (totalCogs != null && isFinite(totalCogs)) grand += Number(totalCogs);
-          tr.appendChild(tdNo);
-          tr.appendChild(tdName);
-          tr.appendChild(tdQty);
-          tr.appendChild(tdUnit);
-          tr.appendChild(tdCogs);
-          tr.appendChild(tdTotal);
-          tr.appendChild(tdMargin);
-          tr.addEventListener('click', () => {
-            selectedIndex = tableData.indexOf(row);
-            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
-            tr.classList.add('selected');
-          });
+          tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdCogs); tr.appendChild(tdTotal); tr.appendChild(tdMargin);
+          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
           cogsTbody.appendChild(tr);
         });
       }
@@ -842,19 +788,12 @@
         sellingTbody.appendChild(trSec);
         grouped[cat].forEach(row => {
           const tr = document.createElement('tr');
-          const tdNo = document.createElement('td');
-          tdNo.textContent = idx++;
-          const tdName = document.createElement('td');
-          tdName.className = 'left';
-          tdName.textContent = sanitize(row.name);
-          const tdQty = document.createElement('td');
-          tdQty.textContent = row.qty !== "" ? row.qty : "";
-          const tdUnit = document.createElement('td');
-          tdUnit.textContent = row.unit || "";
-          const tdSelling = document.createElement('td');
-          tdSelling.style.textAlign = 'right';
-          const tdTotalSelling = document.createElement('td');
-          tdTotalSelling.style.textAlign = 'right';
+          const tdNo = document.createElement('td'); tdNo.textContent = idx++;
+          const tdName = document.createElement('td'); tdName.className = 'left'; tdName.textContent = sanitize(row.name);
+          const tdQty = document.createElement('td'); tdQty.textContent = row.qty !== "" ? row.qty : "";
+          const tdUnit = document.createElement('td'); tdUnit.textContent = row.unit || "";
+          const tdSelling = document.createElement('td'); tdSelling.style.textAlign = 'right';
+          const tdTotalSelling = document.createElement('td'); tdTotalSelling.style.textAlign = 'right';
           let sellingPriceRaw = null;
           if (row.sellingPrice != null && row.sellingPrice !== "") sellingPriceRaw = Number(row.sellingPrice);
           else {
@@ -867,35 +806,19 @@
           tdSelling.textContent = (sellingPriceRounded != null && isFinite(sellingPriceRounded)) ? Number(sellingPriceRounded).toLocaleString('id-ID') : "";
           tdTotalSelling.textContent = (totalSelling != null && isFinite(totalSelling)) ? Number(totalSelling).toLocaleString('id-ID') : "";
           if (totalSelling != null && isFinite(totalSelling)) grand += Number(totalSelling);
-          tr.appendChild(tdNo);
-          tr.appendChild(tdName);
-          tr.appendChild(tdQty);
-          tr.appendChild(tdUnit);
-          tr.appendChild(tdSelling);
-          tr.appendChild(tdTotalSelling);
-          tr.addEventListener('click', () => {
-            selectedIndex = tableData.indexOf(row);
-            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
-            tr.classList.add('selected');
-          });
+          tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdSelling); tr.appendChild(tdTotalSelling);
+          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
           sellingTbody.appendChild(tr);
         });
       }
       grandSellingEl.textContent = grand.toLocaleString('id-ID');
     }
-    // Projects helper
-    function loadProjectsObj() {
-      try {
-        return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || {};
-      } catch (e) {
-        return {};
-      }
-    }
 
-    function saveProjectsObj(obj) {
-      localStorage.setItem(PROJECTS_KEY, JSON.stringify(obj));
-    }
-    // Calculation
+    // Projects helper
+    function loadProjectsObj() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || {}; } catch (e) { return {}; } }
+    function saveProjectsObj(obj) { localStorage.setItem(PROJECTS_KEY, JSON.stringify(obj)); }
+
+    // Calculation function
     function renderCalculation() {
       const totals = computeTotals();
       const totalCogs = totals.totalCogs || 0;
@@ -909,6 +832,7 @@
       calcGrossProfitEl.textContent = Number(grossProfit || 0).toLocaleString('id-ID');
       calcTotalMarginEl.textContent = (isFinite(totalMargin) ? (totalMargin * 100).toFixed(2) : '0.00') + '%';
     }
+
     // Commission formatting/persistence
     (function setupCommissionCell() {
       commissionCellInput.addEventListener('input', () => {
@@ -918,11 +842,7 @@
         currentCommission = Number(parsed);
         if (currentProjectName) {
           const projects = loadProjectsObj();
-          const existing = projects[currentProjectName] || {};
-          projects[currentProjectName] = {
-            data: tableData,
-            commission: Number(currentCommission || 0)
-          };
+          projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
           saveProjectsObj(projects);
         } else {
           if (currentCommission === 0) localStorage.removeItem(UNSAVED_COMM_KEY);
@@ -936,29 +856,20 @@
       if (currentProjectName) {
         const projects = loadProjectsObj();
         const p = projects[currentProjectName];
-        if (p && typeof p === 'object') {
-          currentCommission = Number(p.commission || 0);
-          return;
-        }
+        if (p && typeof p === 'object') { currentCommission = Number(p.commission || 0); return; }
       }
       const unsaved = parseNumberFormatted(localStorage.getItem(UNSAVED_COMM_KEY));
       currentCommission = unsaved != null ? Number(unsaved) : 0;
     }
 
-    function renderAll() {
-      renderCogsTable();
-      renderSellingTable();
-      renderCalculation();
-    }
+    function renderAll() { renderCogsTable(); renderSellingTable(); renderCalculation(); }
+
     // FORM SUBMIT
     form.addEventListener('submit', e => {
       e.preventDefault();
       const name = sanitize(nameInput.value);
       const category = sanitize(categoryInput.value);
-      if (!name || !category) {
-        showAlert('Nama item dan kategori harus diisi.');
-        return;
-      }
+      if (!name || !category) { showAlert('Nama item dan kategori harus diisi.'); return; }
       const qtyRaw = qtyInput.value;
       const qty = qtyRaw !== "" ? Number(qtyRaw) : "";
       const unit = sanitize(unitInput.value);
@@ -980,49 +891,25 @@
       } else sellingPriceComputed = "";
       const sellingPriceRoundedForTotal = (sellingPriceComputed !== "" && sellingPriceComputed != null) ? roundUpToThousand(Number(sellingPriceComputed)) : "";
       const totalSelling = (qty !== "" && sellingPriceRoundedForTotal !== "" && sellingPriceRoundedForTotal != null) ? Number(qty) * Number(sellingPriceRoundedForTotal) : "";
-      const newRow = {
-        name,
-        qty: qty !== "" ? qty : "",
-        unit,
-        price: price !== "" ? price : "",
-        total: totalCogs !== "" ? totalCogs : "",
-        margin: margin !== "" ? margin : 0,
-        sellingPrice: (sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "",
-        totalSellingPrice: (totalSelling !== "" && totalSelling != null) ? totalSelling : "",
-        category
-      };
-      if (selectedIndex !== null) {
-        tableData[selectedIndex] = newRow;
-        selectedIndex = null;
-      } else tableData.push(newRow);
-      // Persist working table
+      const newRow = { name, qty: qty !== "" ? qty : "", unit, price: price !== "" ? price : "", total: totalCogs !== "" ? totalCogs : "", margin: margin !== "" ? margin : 0, sellingPrice: (sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "", totalSellingPrice: (totalSelling !== "" && totalSelling != null) ? totalSelling : "", category };
+      if (selectedIndex !== null) { tableData[selectedIndex] = newRow; selectedIndex = null; } else tableData.push(newRow);
       localStorage.setItem('boq_working', JSON.stringify(tableData));
-      // Update items store with the latest data for this item
-      // Preference: if price provided use it; otherwise store sellingPrice if provided
-      const storePrice = (price !== "" && price != null) ? Number(price) : ((sellingProvided === "" && sellingPriceComputed !== "" && sellingPriceComputed != null) ? "" : "");
-      const storeSelling = (sellingProvided !== "" && sellingProvided != null) ? Number(sellingProvided) : ((sellingProvided === "" && sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "");
-      // We want to store price if present, and sellingPrice if present (both allowed)
-      updateItemsWithEntry(name, unit || "", (price !== "" ? Number(price) : (storePrice === "" ? "" : "")), (storeSelling !== "" ? storeSelling : (sellingPriceComputed !== "" ? Number(sellingPriceComputed) : "")), category || "");
-      // Reset form & render
+      const storePrice = (price !== "" && price != null) ? Number(price) : "";
+      const storeSelling = (sellingProvided !== "" && sellingProvided != null) ? Number(sellingProvided) : ((sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "");
+      updateItemsWithEntry(name, unit || "", storePrice !== "" ? storePrice : "", storeSelling !== "" ? storeSelling : "", category || "");
       form.reset();
       nameInput.focus();
       renderAll();
-      // also update stored project data if project active
       if (currentProjectName) {
         const projects = loadProjectsObj();
-        projects[currentProjectName] = {
-          data: tableData,
-          commission: Number(currentCommission || 0)
-        };
+        projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
         saveProjectsObj(projects);
       }
     });
+
     // Row actions
     function editRow() {
-      if (selectedIndex === null) {
-        showAlert('Pilih baris dulu!');
-        return;
-      }
+      if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
       const r = tableData[selectedIndex];
       nameInput.value = r.name;
       qtyInput.value = r.qty !== "" ? r.qty : "";
@@ -1034,12 +921,8 @@
       switchTo('cogs');
       nameInput.focus();
     }
-
     function deleteRow() {
-      if (selectedIndex === null) {
-        showAlert('Pilih baris dulu!');
-        return;
-      }
+      if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
       if (!confirm('Hapus baris ini?')) return;
       tableData.splice(selectedIndex, 1);
       selectedIndex = null;
@@ -1047,327 +930,174 @@
       renderAll();
       if (currentProjectName) {
         const projects = loadProjectsObj();
-        projects[currentProjectName] = {
-          data: tableData,
-          commission: Number(currentCommission || 0)
-        };
+        projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
         saveProjectsObj(projects);
       }
     }
-    // EXPORT & PDF (unchanged logic, omitted for brevity in comment)
+
+    // EXPORT & PDF (updated title font + Grand Total label center + number right aligned)
     async function exportExcel() {
-      if (!tableData.length) {
-        showAlert('Tidak ada data untuk diekspor.');
-        return;
-      }
-      const filename = getSafeFileName(currentProjectName) + ".xlsx";
+      if (!tableData.length) { showAlert('Tidak ada data untuk diekspor.'); return; }
+      let filenameSuffix = '';
+      if (activeTab === 'cogs') filenameSuffix = ' (COGS)';
+      else if (activeTab === 'selling') filenameSuffix = ' (Selling)';
+      const filename = getSafeFileName(currentProjectName) + (filenameSuffix ? filenameSuffix : '') + ".xlsx";
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet("BOQ");
+      const titleText = currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ';
+
       if (activeTab === 'cogs') {
-        sheet.columns = [{
-          header: "No",
-          key: "no",
-          width: 6
-        }, {
-          header: "Nama Item",
-          key: "name",
-          width: 40
-        }, {
-          header: "Qty",
-          key: "qty",
-          width: 10
-        }, {
-          header: "Unit",
-          key: "unit",
-          width: 12
-        }, {
-          header: "Harga COGS",
-          key: "price",
-          width: 18
-        }, {
-          header: "Total COGS",
-          key: "totalCogs",
-          width: 18
-        }, {
-          header: "Margin (%)",
-          key: "margin",
-          width: 12
-        }];
-        sheet.getRow(1).eachCell((cell, colNum) => {
-          cell.font = {
-            name: 'Arial',
-            bold: true,
-            color: {
-              argb: "FFFFFFFF"
-            }
-          };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: {
-              argb: "FF1F4E78"
-            }
-          };
-          cell.alignment = {
-            horizontal: "center",
-            vertical: "middle",
-            wrapText: colNum === 2 ? true : false
-          };
-          cell.border = {
-            top: {
-              style: "thin"
-            },
-            left: {
-              style: "thin"
-            },
-            bottom: {
-              style: "thin"
-            },
-            right: {
-              style: "thin"
-            }
-          };
+        sheet.columns = [
+          { header: "No", key: "no", width: 6 },
+          { header: "Nama Item", key: "name", width: 40 },
+          { header: "Qty", key: "qty", width: 10 },
+          { header: "Unit", key: "unit", width: 12 },
+          { header: "Harga COGS", key: "price", width: 18 },
+          { header: "Total COGS", key: "totalCogs", width: 18 },
+          { header: "Margin (%)", key: "margin", width: 12 }
+        ];
+
+        // detect if header row content exists already
+        const firstRowVals = sheet.getRow(1).values || [];
+        const headerExists = firstRowVals.slice(1).some(v => v !== undefined && v !== null && String(v).trim() !== '');
+
+        // Insert title row (row 1) and spacer (row 2)
+        sheet.insertRow(1, [titleText]);
+        sheet.insertRow(2, []);
+
+        // Merge title across columns and style (use Arial, bold, size 11)
+        const lastCol = sheet.columns.length;
+        const titleRow = sheet.getRow(1);
+        sheet.mergeCells(`A1:${excelColLetter(lastCol)}1`);
+        const tCell = titleRow.getCell(1);
+        tCell.font = { name: 'Arial', bold: true, size: 11 }; // <-- ukuran diubah menjadi 11
+        tCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        // header row at row 3 if not already present
+        const headerValues = sheet.columns.map(c => c.header);
+        if (!headerExists) sheet.insertRow(3, headerValues);
+
+        // Style header row (row 3)
+        const headerRow = sheet.getRow(3);
+        headerRow.eachCell((cell, colNum) => {
+          cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+          cell.alignment = { horizontal: "center", vertical: "middle", wrapText: colNum === 2 ? true : false };
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         });
+
+        // write data grouped by category
         const grouped = {};
         tableData.forEach(r => {
           const cat = sanitize(r.category || "Uncategorized");
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(r);
         });
+
         let no = 1;
         for (const cat of Object.keys(grouped)) {
           const secRow = sheet.addRow([cat]);
-          const lastCol = 7;
-          sheet.mergeCells(`A${secRow.number}:${String.fromCharCode(64 + lastCol)}${secRow.number}`);
+          sheet.mergeCells(`A${secRow.number}:${excelColLetter(lastCol)}${secRow.number}`);
           for (let i = 1; i <= lastCol; i++) {
             const cell = secRow.getCell(i);
-            cell.font = {
-              name: 'Arial',
-              bold: true
-            };
-            cell.fill = {
-              type: "pattern",
-              pattern: "solid",
-              fgColor: {
-                argb: "FFEEEEEE"
-              }
-            };
-            cell.alignment = {
-              horizontal: "left",
-              vertical: "middle"
-            };
-            cell.border = {
-              top: {
-                style: "thin"
-              },
-              left: {
-                style: "thin"
-              },
-              bottom: {
-                style: "thin"
-              },
-              right: {
-                style: "thin"
-              }
-            };
+            cell.font = { name: 'Arial', bold: true };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
+            cell.alignment = { horizontal: "left", vertical: "middle" };
+            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
           }
           grouped[cat].forEach(r => {
             const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
-            const rowObj = {
-              no: no++,
-              name: r.name,
-              qty: r.qty,
-              unit: r.unit,
-              price: r.price,
-              totalCogs: totalCogs,
-              margin: r.margin
-            };
+            const rowObj = { no: no++, name: r.name, qty: r.qty, unit: r.unit, price: r.price, totalCogs: totalCogs, margin: r.margin };
             const dr = sheet.addRow(rowObj);
             dr.eachCell((cell, colNum) => {
-              cell.font = {
-                name: 'Arial'
-              };
-              cell.border = {
-                top: {
-                  style: "thin"
-                },
-                left: {
-                  style: "thin"
-                },
-                bottom: {
-                  style: "thin"
-                },
-                right: {
-                  style: "thin"
-                }
-              };
+              cell.font = { name: 'Arial' };
+              cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
               if (colNum >= 5) {
                 cell.numFmt = "#,##0";
-                cell.alignment = {
-                  horizontal: "right",
-                  vertical: "middle"
-                };
+                cell.alignment = { horizontal: "right", vertical: "middle" };
               } else if (colNum === 2) {
-                cell.alignment = {
-                  horizontal: "left",
-                  vertical: "middle",
-                  wrapText: true
-                };
+                cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
               } else {
-                cell.alignment = {
-                  horizontal: "center",
-                  vertical: "middle"
-                };
+                cell.alignment = { horizontal: "center", vertical: "middle" };
               }
             });
           });
         }
+
+        // Grand total row: merge label across all columns except last; label center, total number RIGHT aligned
         const sumCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
         const tr = sheet.addRow([]);
-        const lastCol = 7;
-        sheet.mergeCells(`A${tr.number}:F${tr.number}`);
-        for (let i = 1; i <= lastCol; i++) {
-          const cell = tr.getCell(i);
-          cell.font = {
-            name: 'Arial',
-            bold: i === 1
-          };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: {
-              argb: "FFFEF3D6"
-            }
-          };
-          cell.alignment = {
-            horizontal: i === 1 ? "center" : "right",
-            vertical: "middle"
-          };
-          cell.border = {
-            top: {
-              style: "thin"
-            },
-            left: {
-              style: "thin"
-            },
-            bottom: {
-              style: "thin"
-            },
-            right: {
-              style: "thin"
-            }
-          };
-        }
-        tr.getCell(1).value = "Grand Total COGS";
-        tr.getCell(7).value = sumCogs;
-        tr.getCell(7).numFmt = "#,##0";
-        tr.getCell(7).font = {
-          name: 'Arial',
-          bold: true
-        };
+        const lastColNow = sheet.columns.length;
+        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow - 1)}${tr.number}`);
+        const labelCell = tr.getCell(1);
+        labelCell.value = "Grand Total COGS";
+        labelCell.font = { name: 'Arial', bold: true };
+        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+        labelCell.alignment = { horizontal: "center", vertical: "middle" };
+        labelCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
+        const totalCell = tr.getCell(lastColNow);
+        totalCell.value = sumCogs;
+        totalCell.numFmt = "#,##0";
+        totalCell.font = { name: 'Arial', bold: true };
+        totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+        totalCell.alignment = { horizontal: "right", vertical: "middle" }; // angka RIGHT aligned
+        totalCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
       } else {
-        sheet.columns = [{
-          header: "No",
-          key: "no",
-          width: 6
-        }, {
-          header: "Nama Item",
-          key: "name",
-          width: 40
-        }, {
-          header: "Qty",
-          key: "qty",
-          width: 10
-        }, {
-          header: "Unit",
-          key: "unit",
-          width: 12
-        }, {
-          header: "Harga Satuan",
-          key: "sellingPrice",
-          width: 18
-        }, {
-          header: "Total",
-          key: "totalSelling",
-          width: 18
-        }];
-        sheet.getRow(1).eachCell((cell, colNum) => {
-          cell.font = {
-            name: 'Arial',
-            bold: true,
-            color: {
-              argb: "FFFFFFFF"
-            }
-          };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: {
-              argb: "FF1F4E78"
-            }
-          };
-          cell.alignment = {
-            horizontal: "center",
-            vertical: "middle",
-            wrapText: colNum === 2 ? true : false
-          };
-          cell.border = {
-            top: {
-              style: "thin"
-            },
-            left: {
-              style: "thin"
-            },
-            bottom: {
-              style: "thin"
-            },
-            right: {
-              style: "thin"
-            }
-          };
+        // Selling branch
+        sheet.columns = [
+          { header: "No", key: "no", width: 6 },
+          { header: "Nama Item", key: "name", width: 40 },
+          { header: "Qty", key: "qty", width: 10 },
+          { header: "Unit", key: "unit", width: 12 },
+          { header: "Harga Satuan", key: "sellingPrice", width: 18 },
+          { header: "Total", key: "totalSelling", width: 18 }
+        ];
+
+        const firstRowVals = sheet.getRow(1).values || [];
+        const headerExists = firstRowVals.slice(1).some(v => v !== undefined && v !== null && String(v).trim() !== '');
+
+        // title + spacer
+        sheet.insertRow(1, [titleText]);
+        sheet.insertRow(2, []);
+
+        const lastCol = sheet.columns.length;
+        const titleRow = sheet.getRow(1);
+        sheet.mergeCells(`A1:${excelColLetter(lastCol)}1`);
+        const tCell = titleRow.getCell(1);
+        tCell.font = { name: 'Arial', bold: true, size: 11 }; // <-- ukuran diubah menjadi 11
+        tCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        const headerValues = sheet.columns.map(c => c.header);
+        if (!headerExists) sheet.insertRow(3, headerValues);
+
+        const headerRow = sheet.getRow(3);
+        headerRow.eachCell((cell, colNum) => {
+          cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+          cell.alignment = { horizontal: "center", vertical: "middle", wrapText: colNum === 2 ? true : false };
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         });
+
         const grouped = {};
         tableData.forEach(r => {
           const cat = sanitize(r.category || "Uncategorized");
           if (!grouped[cat]) grouped[cat] = [];
           grouped[cat].push(r);
         });
+
         let no = 1;
         for (const cat of Object.keys(grouped)) {
           const secRow = sheet.addRow([cat]);
-          const lastCol = 6;
-          sheet.mergeCells(`A${secRow.number}:${String.fromCharCode(64 + lastCol)}${secRow.number}`);
-          for (let i = 1; i <= lastCol; i++) {
+          const lastColNow = sheet.columns.length;
+          sheet.mergeCells(`A${secRow.number}:${excelColLetter(lastColNow)}${secRow.number}`);
+          for (let i = 1; i <= lastColNow; i++) {
             const cell = secRow.getCell(i);
-            cell.font = {
-              name: 'Arial',
-              bold: true
-            };
-            cell.fill = {
-              type: "pattern",
-              pattern: "solid",
-              fgColor: {
-                argb: "FFEEEEEE"
-              }
-            };
-            cell.alignment = {
-              horizontal: "left",
-              vertical: "middle"
-            };
-            cell.border = {
-              top: {
-                style: "thin"
-              },
-              left: {
-                style: "thin"
-              },
-              bottom: {
-                style: "thin"
-              },
-              right: {
-                style: "thin"
-              }
-            };
+            cell.font = { name: 'Arial', bold: true };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
+            cell.alignment = { horizontal: "left", vertical: "middle" };
+            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
           }
           grouped[cat].forEach(r => {
             let spRaw = null;
@@ -1375,54 +1105,23 @@
             else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
             const spRounded = spRaw != null ? roundUpToThousand(spRaw) : "";
             const totalSp = (spRounded !== "") ? Number(r.qty || 0) * spRounded : "";
-            const rowObj = {
-              no: no++,
-              name: r.name,
-              qty: r.qty,
-              unit: r.unit,
-              sellingPrice: spRounded,
-              totalSelling: totalSp
-            };
+            const rowObj = { no: no++, name: r.name, qty: r.qty, unit: r.unit, sellingPrice: spRounded, totalSelling: totalSp };
             const dr = sheet.addRow(rowObj);
             dr.eachCell((cell, colNum) => {
-              cell.font = {
-                name: 'Arial'
-              };
-              cell.border = {
-                top: {
-                  style: "thin"
-                },
-                left: {
-                  style: "thin"
-                },
-                bottom: {
-                  style: "thin"
-                },
-                right: {
-                  style: "thin"
-                }
-              };
+              cell.font = { name: 'Arial' };
+              cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
               if (colNum >= 5) {
                 cell.numFmt = "#,##0";
-                cell.alignment = {
-                  horizontal: "right",
-                  vertical: "middle"
-                };
+                cell.alignment = { horizontal: "right", vertical: "middle" };
               } else if (colNum === 2) {
-                cell.alignment = {
-                  horizontal: "left",
-                  vertical: "middle",
-                  wrapText: true
-                };
+                cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
               } else {
-                cell.alignment = {
-                  horizontal: "center",
-                  vertical: "middle"
-                };
+                cell.alignment = { horizontal: "center", vertical: "middle" };
               }
             });
           });
         }
+
         const sumSelling = tableData.reduce((a, b) => {
           let sp = null;
           if (b.sellingPrice != null && b.sellingPrice !== "") sp = Number(b.sellingPrice);
@@ -1430,52 +1129,28 @@
           const spr = sp != null ? roundUpToThousand(sp) : 0;
           return a + (spr ? (Number(b.qty || 0) * spr) : 0);
         }, 0);
+
         const tr = sheet.addRow([]);
-        sheet.mergeCells(`A${tr.number}:E${tr.number}`);
-        for (let i = 1; i <= 6; i++) {
-          const cell = tr.getCell(i);
-          cell.font = {
-            name: 'Arial',
-            bold: i === 1
-          };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: {
-              argb: "FFFEF3D6"
-            }
-          };
-          cell.alignment = {
-            horizontal: i === 1 ? "center" : "right",
-            vertical: "middle"
-          };
-          cell.border = {
-            top: {
-              style: "thin"
-            },
-            left: {
-              style: "thin"
-            },
-            bottom: {
-              style: "thin"
-            },
-            right: {
-              style: "thin"
-            }
-          };
-        }
-        tr.getCell(1).value = "Grand Total";
-        tr.getCell(6).value = sumSelling;
-        tr.getCell(6).numFmt = "#,##0";
-        tr.getCell(6).font = {
-          name: 'Arial',
-          bold: true
-        };
+        const lastColNow = sheet.columns.length;
+        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow - 1)}${tr.number}`);
+        const labelCell = tr.getCell(1);
+        labelCell.value = "Grand Total";
+        labelCell.font = { name: 'Arial', bold: true };
+        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+        labelCell.alignment = { horizontal: "center", vertical: "middle" };
+        labelCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
+        const totalCell = tr.getCell(lastColNow);
+        totalCell.value = sumSelling;
+        totalCell.numFmt = "#,##0";
+        totalCell.font = { name: 'Arial', bold: true };
+        totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+        totalCell.alignment = { horizontal: "right", vertical: "middle" }; // angka RIGHT aligned
+        totalCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       }
+
       const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      });
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = filename;
@@ -1483,137 +1158,63 @@
     }
 
     function exportPDF() {
-      if (!tableData.length) {
-        showAlert('Tidak ada data untuk diekspor.');
-        return;
-      }
-      const {
-        jsPDF
-      } = window.jspdf;
+      if (!tableData.length) { showAlert('Tidak ada data untuk diekspor.'); return; }
+      let filenameSuffix = '';
+      if (activeTab === 'cogs') filenameSuffix = ' (COGS)';
+      else if (activeTab === 'selling') filenameSuffix = ' (Selling)';
+      const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(14);
       const title = currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ';
       doc.text(title, 14, 15);
+
       const grouped = {};
       tableData.forEach(r => {
         const cat = sanitize(r.category || 'Uncategorized');
         if (!grouped[cat]) grouped[cat] = [];
         grouped[cat].push(r);
       });
+
       const body = [];
       let rowNoGlobal = 1;
+
       if (activeTab === 'cogs') {
         for (const cat of Object.keys(grouped)) {
-          body.push([{
-            content: cat,
-            colSpan: 7,
-            styles: {
-              fillColor: [238, 238, 238],
-              fontStyle: "bold",
-              halign: "left",
-              valign: "middle"
-            }
-          }]);
+          body.push([{ content: cat, colSpan: 7, styles: { fillColor: [238, 238, 238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
           grouped[cat].forEach(r => {
             const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
-            body.push([rowNoGlobal++, r.name, r.qty, r.unit, {
-              content: r.price != null && r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "",
-              styles: {
-                halign: 'right',
-                valign: 'middle'
-              }
-            }, {
-              content: totalCogs !== "" ? Number(totalCogs).toLocaleString('id-ID') : "",
-              styles: {
-                halign: 'right',
-                valign: 'middle'
-              }
-            }, {
-              content: r.margin != null && r.margin !== "" ? Number(r.margin).toFixed(2) : "",
-              styles: {
-                halign: 'right',
-                valign: 'middle'
-              }
-            }]);
+            body.push([
+              rowNoGlobal++,
+              r.name,
+              r.qty,
+              r.unit,
+              { content: r.price != null && r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
+              { content: totalCogs !== "" ? Number(totalCogs).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
+              { content: r.margin != null && r.margin !== "" ? Number(r.margin).toFixed(2) : "", styles: { halign: 'right', valign: 'middle' } }
+            ]);
           });
         }
         const grandCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
-        body.push([{
-          content: "Grand Total COGS",
-          colSpan: 6,
-          styles: {
-            fontStyle: "bold",
-            halign: "center",
-            valign: "middle",
-            fillColor: [254, 243, 214]
-          }
-        }, {
-          content: grandCogs.toLocaleString('id-ID'),
-          styles: {
-            fontStyle: "bold",
-            halign: "right",
-            valign: "middle",
-            fillColor: [254, 243, 214]
-          }
-        }]);
+        body.push([{ content: "Grand Total COGS", colSpan: 6, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254, 243, 214] } }, { content: grandCogs.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254, 243, 214] } }]);
         const head = ["No", "Nama Item", "Qty", "Unit", "Harga COGS", "Total COGS", "Margin (%)"];
-        doc.autoTable({
-          head: [head],
-          body,
-          startY: 22,
-          theme: 'grid',
-          headStyles: {
-            fillColor: [31, 78, 120],
-            textColor: [255, 255, 255],
-            halign: 'center',
-            valign: 'middle'
-          },
-          columnStyles: {
-            0: {
-              halign: 'center',
-              valign: 'middle'
-            },
-            2: {
-              halign: 'center',
-              valign: 'middle'
-            }
-          },
-          styles: {
-            fontSize: 10,
-            cellPadding: 3
-          }
-        });
+        doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, columnStyles: { 0: { halign: 'center', valign: 'middle' }, 2: { halign: 'center', valign: 'middle' }, 3: { halign: 'center', valign: 'middle' } }, styles: { fontSize: 10, cellPadding: 3 } });
       } else {
         for (const cat of Object.keys(grouped)) {
-          body.push([{
-            content: cat,
-            colSpan: 6,
-            styles: {
-              fillColor: [238, 238, 238],
-              fontStyle: "bold",
-              halign: "left",
-              valign: "middle"
-            }
-          }]);
+          body.push([{ content: cat, colSpan: 6, styles: { fillColor: [238, 238, 238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
           grouped[cat].forEach(r => {
             let spRaw = null;
             if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
             else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
             const spRounded = spRaw != null ? roundUpToThousand(spRaw) : "";
             const totalSp = (spRounded !== "") ? Number(r.qty || 0) * spRounded : "";
-            body.push([rowNoGlobal++, r.name, r.qty, r.unit, {
-              content: spRounded !== "" ? Number(spRounded).toLocaleString('id-ID') : "",
-              styles: {
-                halign: 'right',
-                valign: 'middle'
-              }
-            }, {
-              content: totalSp !== "" ? Number(totalSp).toLocaleString('id-ID') : "",
-              styles: {
-                halign: 'right',
-                valign: 'middle'
-              }
-            }]);
+            body.push([
+              rowNoGlobal++,
+              r.name,
+              r.qty,
+              r.unit,
+              { content: spRounded !== "" ? Number(spRounded).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
+              { content: totalSp !== "" ? Number(totalSp).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } }
+            ]);
           });
         }
         const grandSelling = tableData.reduce((a, b) => {
@@ -1623,78 +1224,23 @@
           const spr = sp != null ? roundUpToThousand(sp) : 0;
           return a + (spr ? (Number(b.qty || 0) * spr) : 0);
         }, 0);
-        body.push([{
-          content: "Grand Total",
-          colSpan: 5,
-          styles: {
-            fontStyle: "bold",
-            halign: "center",
-            valign: "middle",
-            fillColor: [254, 243, 214]
-          }
-        }, {
-          content: grandSelling.toLocaleString('id-ID'),
-          styles: {
-            fontStyle: "bold",
-            halign: "right",
-            valign: "middle",
-            fillColor: [254, 243, 214]
-          }
-        }]);
+        body.push([{ content: "Grand Total", colSpan: 5, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254, 243, 214] } }, { content: grandSelling.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254, 243, 214] } }]);
         const head = ["No", "Nama Item", "Qty", "Unit", "Harga Satuan", "Total"];
-        doc.autoTable({
-          head: [head],
-          body,
-          startY: 22,
-          theme: 'grid',
-          headStyles: {
-            fillColor: [31, 78, 120],
-            textColor: [255, 255, 255],
-            halign: 'center',
-            valign: 'middle'
-          },
-          columnStyles: {
-            0: {
-              halign: 'center',
-              valign: 'middle'
-            },
-            2: {
-              halign: 'center',
-              valign: 'middle'
-            }
-          },
-          styles: {
-            fontSize: 10,
-            cellPadding: 3
-          }
-        });
+        doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, columnStyles: { 0: { halign: 'center', valign: 'middle' }, 2: { halign: 'center', valign: 'middle' }, 3: { halign: 'center', valign: 'middle' } }, styles: { fontSize: 10, cellPadding: 3 } });
       }
-      const filename = getSafeFileName(currentProjectName) + ".pdf";
+
+      const filename = getSafeFileName(currentProjectName) + (filenameSuffix ? filenameSuffix : '') + ".pdf";
       doc.save(filename);
     }
+
     // MANAGE ITEMS & PROJECTS
-    manageBtn.addEventListener('click', () => {
-      populateManageItems();
-      manageModal.style.display = 'block';
-      manageModal.setAttribute('aria-hidden', 'false');
-    });
-    modalClose.addEventListener('click', () => {
-      manageModal.style.display = 'none';
-      manageModal.setAttribute('aria-hidden', 'true');
-    });
-    projectsClose.addEventListener('click', () => {
-      projectsModal.style.display = 'none';
-      projectsModal.setAttribute('aria-hidden', 'true');
-    });
-    manageProjectsBtn.addEventListener('click', () => {
-      populateManageProjects();
-      projectsModal.style.display = 'block';
-      projectsModal.setAttribute('aria-hidden', 'false');
-    });
+    manageBtn.addEventListener('click', () => { populateManageItems(); manageModal.style.display = 'block'; manageModal.setAttribute('aria-hidden', 'false'); });
+    modalClose.addEventListener('click', () => { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden', 'true'); });
+    projectsClose.addEventListener('click', () => { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden', 'true'); });
+    manageProjectsBtn.addEventListener('click', () => { populateManageProjects(); projectsModal.style.display = 'block'; projectsModal.setAttribute('aria-hidden', 'false'); });
 
     function populateManageItems() {
       manageItemList.innerHTML = '';
-      // show items sorted by updatedAt desc
       const sorted = items.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       sorted.forEach((it, idx) => {
         const li = document.createElement('li');
@@ -1702,53 +1248,17 @@
         const small = document.createElement('div');
         small.style.fontSize = '12px';
         small.style.color = '#666';
-        small.textContent = `Unit: ${it.unit||'-'} · COGS: ${it.price !== "" && it.price != null ? Number(it.price).toLocaleString('id-ID') : '-'} · Jual: ${it.sellingPrice !== "" && it.sellingPrice != null ? Number(it.sellingPrice).toLocaleString('id-ID') : '-'} · Kategori: ${it.category||'-'}`;
+        small.textContent = `Unit: ${it.unit || '-'} · COGS: ${it.price !== "" && it.price != null ? Number(it.price).toLocaleString('id-ID') : '-'} · Jual: ${it.sellingPrice !== "" && it.sellingPrice != null ? Number(it.sellingPrice).toLocaleString('id-ID') : '-'} · Kategori: ${it.category || '-'}`;
         span.textContent = it.name;
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Hapus';
-        delBtn.className = 'btn secondary';
-        delBtn.addEventListener('click', () => {
-          if (!confirm(`Hapus item "${it.name}"?`)) return; // remove all matching names (case-insensitive)
-          const key = normalizeKey(it.name);
-          items = items.filter(x => normalizeKey(x.name) !== key);
-          localStorage.setItem('boq_items', JSON.stringify(items));
-          updateDatalist();
-          populateManageItems();
-        });
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'btn ghost';
-        renameBtn.addEventListener('click', () => {
-          const newName = sanitize(prompt('Ubah nama item:', it.name) || '');
-          if (!newName) return;
-          // update all matching items with same normalized key
-          const oldKey = normalizeKey(it.name);
-          items.forEach(x => {
-            if (normalizeKey(x.name) === oldKey) x.name = newName;
-          });
-          localStorage.setItem('boq_items', JSON.stringify(items));
-          updateDatalist();
-          populateManageItems();
-        });
-        const useBtn = document.createElement('button');
-        useBtn.textContent = 'Gunakan';
-        useBtn.className = 'btn';
-        useBtn.style.marginLeft = '8px';
-        useBtn.addEventListener('click', () => {
-          // autofill form with this item (user convenience)
-          nameInput.value = it.name;
-          autofillFromItem(it.name);
-          manageModal.style.display = 'none';
-        });
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.appendChild(span);
-        wrapper.appendChild(small);
-        li.appendChild(wrapper);
-        li.appendChild(useBtn);
-        li.appendChild(renameBtn);
-        li.appendChild(delBtn);
+        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
+        delBtn.addEventListener('click', () => { if (!confirm(`Hapus item "${it.name}"?`)) return; const key = normalizeKey(it.name); items = items.filter(x => normalizeKey(x.name) !== key); localStorage.setItem('boq_items', JSON.stringify(items)); updateDatalist(); populateManageItems(); });
+        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
+        renameBtn.addEventListener('click', () => { const newName = sanitize(prompt('Ubah nama item:', it.name) || ''); if (!newName) return; const oldKey = normalizeKey(it.name); items.forEach(x => { if (normalizeKey(x.name) === oldKey) x.name = newName; }); localStorage.setItem('boq_items', JSON.stringify(items)); updateDatalist(); populateManageItems(); });
+        const useBtn = document.createElement('button'); useBtn.textContent = 'Gunakan'; useBtn.className = 'btn'; useBtn.style.marginLeft = '8px';
+        useBtn.addEventListener('click', () => { nameInput.value = it.name; autofillFromItem(it.name); manageModal.style.display = 'none'; });
+        const wrapper = document.createElement('div'); wrapper.style.display = 'flex'; wrapper.style.flexDirection = 'column';
+        wrapper.appendChild(span); wrapper.appendChild(small);
+        li.appendChild(wrapper); li.appendChild(useBtn); li.appendChild(renameBtn); li.appendChild(delBtn);
         manageItemList.appendChild(li);
       });
     }
@@ -1758,54 +1268,18 @@
       const projects = loadProjectsObj();
       Object.keys(projects).forEach(name => {
         const li = document.createElement('li');
-        const span = document.createElement('span');
-        span.textContent = name;
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Hapus';
-        delBtn.className = 'btn secondary';
-        delBtn.addEventListener('click', () => {
-          if (!confirm(`Hapus project "${name}"?`)) return;
-          delete projects[name];
-          saveProjectsObj(projects);
-          populateManageProjects();
-          updateProjectList();
-        });
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'btn ghost';
-        renameBtn.addEventListener('click', () => {
-          const newName = sanitize(prompt('Ubah nama project:', name) || '');
-          if (!newName) return;
-          if (projects[newName]) {
-            showAlert('Nama project sudah ada.');
-            return;
-          }
-          projects[newName] = projects[name];
-          delete projects[name];
-          saveProjectsObj(projects);
-          if (currentProjectName === name) {
-            currentProjectName = newName;
-            localStorage.setItem('boq_current_name', currentProjectName);
-            updateNavProject();
-          }
-          populateManageProjects();
-          updateProjectList();
-        });
-        li.appendChild(span);
-        li.appendChild(renameBtn);
-        li.appendChild(delBtn);
-        manageProjectList.appendChild(li);
+        const span = document.createElement('span'); span.textContent = name;
+        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
+        delBtn.addEventListener('click', () => { if (!confirm(`Hapus project "${name}"?`)) return; delete projects[name]; saveProjectsObj(projects); populateManageProjects(); updateProjectList(); });
+        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
+        renameBtn.addEventListener('click', () => { const newName = sanitize(prompt('Ubah nama project:', name) || ''); if (!newName) return; if (projects[newName]) { showAlert('Nama project sudah ada.'); return; } projects[newName] = projects[name]; delete projects[name]; saveProjectsObj(projects); if (currentProjectName === name) { currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateNavProject(); } populateManageProjects(); updateProjectList(); });
+        li.appendChild(span); li.appendChild(renameBtn); li.appendChild(delBtn); manageProjectList.appendChild(li);
       });
     }
+
     window.addEventListener('click', (e) => {
-      if (e.target === manageModal) {
-        manageModal.style.display = 'none';
-        manageModal.setAttribute('aria-hidden', 'true');
-      }
-      if (e.target === projectsModal) {
-        projectsModal.style.display = 'none';
-        projectsModal.setAttribute('aria-hidden', 'true');
-      }
+      if (e.target === manageModal) { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden', 'true'); }
+      if (e.target === projectsModal) { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden', 'true'); }
     });
 
     function updateProjectList() {
@@ -1819,49 +1293,29 @@
     }
 
     function saveProject() {
-      if (!tableData.length) {
-        showAlert('Tidak ada data untuk disimpan.');
-        return;
-      }
+      if (!tableData.length) { showAlert('Tidak ada data untuk disimpan.'); return; }
       let name = prompt('Masukkan nama project:', currentProjectName || '');
       if (!name) return;
       name = sanitize(name);
       const projects = loadProjectsObj();
       if (projects[name] && !confirm('Nama project sudah ada. Timpa?')) return;
-      projects[name] = {
-        data: tableData,
-        commission: Number(currentCommission || 0)
-      };
+      projects[name] = { data: tableData, commission: Number(currentCommission || 0) };
       saveProjectsObj(projects);
       currentProjectName = name;
       localStorage.setItem('boq_current_name', currentProjectName);
-      updateProjectList();
-      updateNavProject();
+      updateProjectList(); updateNavProject();
       showAlert(`Project "${name}" berhasil disimpan.`);
     }
 
     function loadProject() {
       const name = sanitize(projectSearch.value || '');
-      if (!name) {
-        showAlert('Masukkan nama project terlebih dahulu.');
-        return;
-      }
+      if (!name) { showAlert('Masukkan nama project terlebih dahulu.'); return; }
       const projects = loadProjectsObj();
-      if (!projects[name]) {
-        showAlert('Project tidak ditemukan.');
-        return;
-      }
+      if (!projects[name]) { showAlert('Project tidak ditemukan.'); return; }
       const stored = projects[name];
-      if (Array.isArray(stored)) {
-        tableData = stored;
-        currentCommission = 0;
-      } else if (stored && typeof stored === 'object') {
-        tableData = stored.data || [];
-        currentCommission = Number(stored.commission || 0);
-      } else {
-        tableData = [];
-        currentCommission = 0;
-      }
+      if (Array.isArray(stored)) { tableData = stored; currentCommission = 0; }
+      else if (stored && typeof stored === 'object') { tableData = stored.data || []; currentCommission = Number(stored.commission || 0); }
+      else { tableData = []; currentCommission = 0; }
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       currentProjectName = name;
       localStorage.setItem('boq_current_name', currentProjectName);
@@ -1884,20 +1338,15 @@
       renderAll();
       showAlert('Project baru siap diisi.');
     }
+
     renameProjectBtn.addEventListener('click', () => {
-      if (!currentProjectName) {
-        showAlert('Tidak ada project aktif. Simpan project dulu agar bisa rename.');
-        return;
-      }
+      if (!currentProjectName) { showAlert('Tidak ada project aktif. Simpan project dulu agar bisa rename.'); return; }
       const newName = sanitize(prompt('Ubah nama project:', currentProjectName) || '');
       if (!newName) return;
       const projects = loadProjectsObj();
       if (projects[newName] && newName !== currentProjectName && !confirm('Nama project sudah ada. Timpa?')) return;
       if (projects[currentProjectName]) delete projects[currentProjectName];
-      projects[newName] = {
-        data: tableData,
-        commission: Number(currentCommission || 0)
-      };
+      projects[newName] = { data: tableData, commission: Number(currentCommission || 0) };
       saveProjectsObj(projects);
       currentProjectName = newName;
       localStorage.setItem('boq_current_name', currentProjectName);
@@ -1905,51 +1354,27 @@
       updateNavProject();
       showAlert('Nama project diubah.');
     });
+
     // ===== NEW: Backup & Restore seluruh data =====
     downloadJSONBtn.addEventListener('click', () => {
       const projects = loadProjectsObj();
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        projects: projects,
-        items: items || [],
-        working: tableData || [],
-        currentProjectName: currentProjectName || null,
-        unsavedCommission: Number(currentCommission || 0)
-      };
+      const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
       const ts = new Date();
       const pad = n => String(n).padStart(2, '0');
-      const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: 'application/json'
-      });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
+      const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     });
-    restoreJSONBtn.addEventListener('click', () => {
-      restoreInput.value = '';
-      restoreInput.click();
-    });
+
+    restoreJSONBtn.addEventListener('click', () => { restoreInput.value = ''; restoreInput.click(); });
     restoreInput.addEventListener('change', (ev) => {
       const f = ev.target.files && ev.target.files[0];
       if (!f) return;
       const reader = new FileReader();
       reader.onload = (e) => {
         let parsed = null;
-        try {
-          parsed = JSON.parse(String(e.target.result));
-        } catch (err) {
-          showAlert('File tidak valid: bukan JSON.');
-          return;
-        }
-        let restoreObj = {
-          projects: {},
-          items: [],
-          working: [],
-          currentProjectName: '',
-          unsavedCommission: 0
-        };
+        try { parsed = JSON.parse(String(e.target.result)); } catch (err) { showAlert('File tidak valid: bukan JSON.'); return; }
+        let restoreObj = { projects: {}, items: [], working: [], currentProjectName: '', unsavedCommission: 0 };
         if (parsed && typeof parsed === 'object') {
           if (parsed.projects && typeof parsed.projects === 'object') {
             restoreObj.projects = parsed.projects || {};
@@ -1960,10 +1385,7 @@
           } else if (parsed.project && parsed.data) {
             const projName = sanitize(parsed.project) || ('Imported Project ' + new Date().toISOString());
             restoreObj.projects = loadProjectsObj();
-            restoreObj.projects[projName] = {
-              data: Array.isArray(parsed.data) ? parsed.data : [],
-              commission: Number(parsed.commission || 0)
-            };
+            restoreObj.projects[projName] = { data: Array.isArray(parsed.data) ? parsed.data : [], commission: Number(parsed.commission || 0) };
             restoreObj.items = items || [];
             restoreObj.working = restoreObj.projects[projName].data;
             restoreObj.currentProjectName = projName;
@@ -1984,22 +1406,13 @@
             }
           }
         }
-        if (!confirm('Restore akan menimpa semua data lokal (projects, items, working, current project). Lanjutkan?')) {
-          return;
-        }
+        if (!confirm('Restore akan menimpa semua data lokal (projects, items, working, current project). Lanjutkan?')) { return; }
         try {
           saveProjectsObj(restoreObj.projects || {});
           localStorage.setItem('boq_items', JSON.stringify(restoreObj.items || []));
           localStorage.setItem('boq_working', JSON.stringify(restoreObj.working || []));
-          if (restoreObj.currentProjectName) {
-            localStorage.setItem('boq_current_name', restoreObj.currentProjectName);
-            currentProjectName = restoreObj.currentProjectName;
-          } else {
-            localStorage.removeItem('boq_current_name');
-            currentProjectName = '';
-          }
-          if (restoreObj.unsavedCommission && Number(restoreObj.unsavedCommission) !== 0) localStorage.setItem(UNSAVED_COMM_KEY, String(Number(restoreObj.unsavedCommission)));
-          else localStorage.removeItem(UNSAVED_COMM_KEY);
+          if (restoreObj.currentProjectName) { localStorage.setItem('boq_current_name', restoreObj.currentProjectName); currentProjectName = restoreObj.currentProjectName; } else { localStorage.removeItem('boq_current_name'); currentProjectName = ''; }
+          if (restoreObj.unsavedCommission && Number(restoreObj.unsavedCommission) !== 0) localStorage.setItem(UNSAVED_COMM_KEY, String(Number(restoreObj.unsavedCommission))); else localStorage.removeItem(UNSAVED_COMM_KEY);
           items = JSON.parse(localStorage.getItem('boq_items')) || [];
           tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
           loadCommissionForCurrentProject();
@@ -2008,13 +1421,11 @@
           updateDatalist();
           renderAll();
           showAlert('Restore berhasil. Data lokal telah diperbarui.');
-        } catch (err) {
-          console.error(err);
-          showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
-        }
+        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.'); }
       };
       reader.readAsText(f);
     });
+
     // INIT
     updateNavProject();
     updateProjectList();
