@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
   <meta charset="UTF-8" />
   <title>BOQ Manager — Project Cost Estimation Tool</title>
@@ -9,362 +8,77 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <style>
-    :root {
-      --nav-bg: #0b0b0b;
-      --nav-txt: #fff;
-      --container-pad: 20px;
-      --card: #fff;
-      --muted: #777;
-      --accent: #1976d2;
-    }
+    :root { --nav-bg: #0b0b0b; --nav-txt: #fff; --container-pad: 20px; --card: #fff; --muted: #777; --accent: #1976d2; }
+    * { box-sizing: border-box }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #111 }
+    .navbar-wrapper { background: var(--nav-bg); width: 100% }
+    .navbar { display: flex; align-items: center; gap: 16px; padding: 12px 0 }
+    .brand { font-weight: 700; color: var(--nav-txt) }
+    .project-name { opacity: .9; color: var(--nav-txt); font-weight: 400 }
+    .nav-actions { margin-left: auto; display: flex; gap: 8px; align-items: center }
+    .btn { background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
+    .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
+    .btn.ghost { background: transparent; border: 1px solid rgba(255, 255, 255, .3); color: var(--nav-txt) }
+    .container { padding: var(--container-pad); max-width: 1200px; margin: 0 auto }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; border-bottom: 1px solid #e6e6e6; padding-bottom: 6px; }
+    .tab-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative; transition: color .12s ease, background .12s ease; margin: 0; }
+    .tab-btn:focus { outline: none; }
+    .tab-btn.active { color: var(--accent); font-weight: 600; }
+    .tab-btn.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(25, 118, 210, 0.25); }
+    form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center }
+    input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 130px; }
+    input[type="number"] { width: 130px }
+    #itemName { flex: 1 }
+    #projectSearch { width: 220px }
+    button[type="submit"] { min-width: 140px; align-self: center }
+    .table-wrap { overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid #e6e6e6 }
+    table { width: 100%; border-collapse: collapse; background: transparent }
+    th, td { border: 1px solid #e9e9e9; padding: 8px; text-align: center; font-size: 13px }
+    th { background: #fbfbfb; font-weight: 700 }
+    td.left { text-align: left }
+    tfoot .total { background: #fff5e6; font-weight: 700 }
+    #cogsTable tfoot td.total.label, #sellingTable tfoot td.total.label { text-align: center; }
+    #cogsTable tfoot td.total.value, #sellingTable tfoot td.total.value { text-align: right; }
+    tr.section-row td { background: #f1f1f1; font-weight: 700; text-align: left; padding-left: 12px; border-top: 2px solid #e0e0e0 }
+    tr.selected { background: #e8f7fb }
+    .actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+    .actions label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted) }
+    .small-note { font-size: 12px; color: var(--muted) }
+    .hidden { display: none }
+    .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.5); }
+    .modal-content { background: #fff; margin: 6% auto; padding: 16px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2); border: 1px solid #ddd; }
+    .modal-header { font-weight: 700; margin-bottom: 8px }
+    .modal-list { max-height: 300px; overflow: auto; margin-bottom: 12px; padding: 0; list-style: none }
+    .modal-list li { display: flex; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid #eee }
+    .modal-list li span { flex: 1 }
+    .modal-close { float: right; cursor: pointer; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: #eee; border: 1px solid #ddd }
+    .calc-summary thead th { text-align: center; }
+    .calc-summary tbody td.value { font-weight: 400; text-align: center; min-width: 140px; }
+    .commission-input { width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center; }
 
-    * {
-      box-sizing: border-box
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #111
-    }
-
-    .navbar-wrapper {
-      background: var(--nav-bg);
-      width: 100%
-    }
-
-    .navbar {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 12px 0
-    }
-
-    .brand {
-      font-weight: 700;
-      color: var(--nav-txt)
-    }
-
-    .project-name {
-      opacity: .9;
-      color: var(--nav-txt);
-      font-weight: 400
-    }
-
-    .nav-actions {
-      margin-left: auto;
-      display: flex;
-      gap: 8px;
-      align-items: center
-    }
-
-    .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px
-    }
-
-    .btn.secondary {
-      background: #eee;
-      color: #111;
-      border: 1px solid #ccc
-    }
-
-    .btn.ghost {
+    /* Make ghost buttons visible inside white modal content */
+    .modal .btn.ghost {
       background: transparent;
-      border: 1px solid rgba(255, 255, 255, .3);
-      color: var(--nav-txt)
-    }
-
-    .container {
-      padding: var(--container-pad);
-      max-width: 1200px;
-      margin: 0 auto
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-      align-items: flex-end;
-      border-bottom: 1px solid #e6e6e6;
-      padding-bottom: 6px;
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      position: relative;
-      transition: color .12s ease, background .12s ease;
-      margin: 0;
-    }
-
-    .tab-btn:focus {
-      outline: none;
-    }
-
-    .tab-btn.active {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .tab-btn.active::after {
-      content: "";
-      position: absolute;
-      left: 18%;
-      right: 18%;
-      bottom: -8px;
-      height: 3px;
-      background: var(--accent);
-      border-radius: 2px;
-      box-shadow: 0 1px 4px rgba(25, 118, 210, 0.25);
-    }
-
-    form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 18px;
-      align-items: center
-    }
-
-    input[type="text"],
-    input[type="number"],
-    input[list] {
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #d6d6d6;
-      font-size: 14px;
-      min-height: 36px;
-      width: 130px;
-    }
-
-    input[type="number"] {
-      width: 130px
-    }
-
-    #itemName {
-      flex: 1
-    }
-
-    #projectSearch {
-      width: 220px
-    }
-
-    button[type="submit"] {
-      min-width: 140px;
-      align-self: center
-    }
-
-    .table-wrap {
-      overflow: auto;
-      background: var(--card);
-      border-radius: 6px;
-      padding: 8px;
-      border: 1px solid #e6e6e6
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: transparent
-    }
-
-    th,
-    td {
-      border: 1px solid #e9e9e9;
-      padding: 8px;
-      text-align: center;
-      font-size: 13px
-    }
-
-    th {
-      background: #fbfbfb;
-      font-weight: 700
-    }
-
-    td.left {
-      text-align: left
-    }
-
-    tfoot .total {
-      background: #fff5e6;
-      font-weight: 700
-    }
-
-    #cogsTable tfoot td.total.label,
-    #sellingTable tfoot td.total.label {
-      text-align: center;
-    }
-
-    #cogsTable tfoot td.total.value,
-    #sellingTable tfoot td.total.value {
-      text-align: right;
-    }
-
-    tr.section-row td {
-      background: #f1f1f1;
-      font-weight: 700;
-      text-align: left;
-      padding-left: 12px;
-      border-top: 2px solid #e0e0e0
-    }
-
-    tr.selected {
-      background: #e8f7fb
-    }
-
-    .actions {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center
-    }
-
-    .actions label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: var(--muted)
-    }
-
-    .small-note {
-      font-size: 12px;
-      color: var(--muted)
-    }
-
-    .hidden {
-      display: none
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 9999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-      background: #fff;
-      margin: 6% auto;
-      padding: 16px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 520px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-      border: 1px solid #ddd;
-    }
-
-    .modal-header {
-      font-weight: 700;
-      margin-bottom: 8px
-    }
-
-    .modal-list {
-      max-height: 300px;
-      overflow: auto;
-      margin-bottom: 12px;
-      padding: 0;
-      list-style: none
-    }
-
-    .modal-list li {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 4px;
-      border-bottom: 1px solid #eee
-    }
-
-    .modal-list li span {
-      flex: 1
-    }
-
-    .modal-close {
-      float: right;
-      cursor: pointer;
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 6px;
-      background: #eee;
-      border: 1px solid #ddd
-    }
-
-    .calc-summary thead th {
-      text-align: center;
-    }
-
-    .calc-summary tbody td.value {
-      font-weight: 400;
-      text-align: center;
-      min-width: 140px;
-    }
-
-    .commission-input {
-      width: 120px;
-      padding: 6px 8px;
-      border-radius: 6px;
       border: 1px solid #ccc;
-      text-align: center;
+      color: #333;
+      padding: 8px 12px;
     }
+
+    /* Slight spacing for action buttons inside modal list items */
+    .modal-list li button { margin-left: 8px; }
 
     @media (max-width:720px) {
-      .nav-actions {
-        display: none
-      }
-
-      .container {
-        padding: 12px
-      }
-
-      input[type="number"],
-      #projectSearch {
-        width: 100%
-      }
-
-      form {
-        flex-direction: column;
-        align-items: stretch
-      }
-
-      .actions {
-        flex-direction: column;
-        align-items: stretch
-      }
-
-      button[type="submit"] {
-        align-self: stretch
-      }
-
-      .calc-summary tbody td.value {
-        min-width: 100px;
-      }
-
-      .commission-input {
-        width: 100px;
-      }
+      .nav-actions { display: none }
+      .container { padding: 12px }
+      input[type="number"], #projectSearch { width: 100% }
+      form { flex-direction: column; align-items: stretch }
+      .actions { flex-direction: column; align-items: stretch }
+      button[type="submit"] { align-self: stretch }
+      .calc-summary tbody td.value { min-width: 100px; }
+      .commission-input { width: 100px; }
     }
   </style>
 </head>
-
 <body>
   <div class="navbar-wrapper">
     <div class="container navbar">
@@ -372,8 +86,7 @@
       <div class="nav-actions">
         <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
         <button class="btn ghost" id="manageBtn">Manage Items & Projects</button>
-        <button class="btn secondary" id="downloadJSON"
-          title="Backup semua data (projects, items, working, commission)">Backup Data</button>
+        <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup Data</button>
         <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore Data</button>
         <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
       </div>
@@ -403,22 +116,11 @@
       <div class="table-wrap">
         <table id="cogsTable" aria-label="COGS table">
           <thead>
-            <tr>
-              <th>No</th>
-              <th>Nama Item</th>
-              <th>Qty</th>
-              <th>Unit</th>
-              <th>Harga COGS</th>
-              <th>Total COGS</th>
-              <th>Margin (%)</th>
-            </tr>
+            <tr><th>No</th><th>Nama Item</th><th>Qty</th><th>Unit</th><th>Harga COGS</th><th>Total COGS</th><th>Margin (%)</th></tr>
           </thead>
           <tbody></tbody>
           <tfoot>
-            <tr>
-              <td colspan="6" class="total label">Grand Total COGS</td>
-              <td class="total value" id="grandCogs">0</td>
-            </tr>
+            <tr><td colspan="6" class="total label">Grand Total COGS</td><td class="total value" id="grandCogs">0</td></tr>
           </tfoot>
         </table>
       </div>
@@ -428,21 +130,11 @@
       <div class="table-wrap">
         <table id="sellingTable" aria-label="Selling table">
           <thead>
-            <tr>
-              <th>No</th>
-              <th>Nama Item</th>
-              <th>Qty</th>
-              <th>Unit</th>
-              <th>Harga Satuan</th>
-              <th>Total</th>
-            </tr>
+            <tr><th>No</th><th>Nama Item</th><th>Qty</th><th>Unit</th><th>Harga Satuan</th><th>Total</th></tr>
           </thead>
           <tbody></tbody>
           <tfoot>
-            <tr>
-              <td colspan="5" class="total label">Grand Total</td>
-              <td class="total value" id="grandSelling">0</td>
-            </tr>
+            <tr><td colspan="5" class="total label">Grand Total</td><td class="total value" id="grandSelling">0</td></tr>
           </tfoot>
         </table>
       </div>
@@ -452,20 +144,13 @@
       <div class="table-wrap">
         <table id="calcSummary" class="calc-summary" aria-label="Calculation summary">
           <thead>
-            <tr>
-              <th>Total COGS</th>
-              <th>Total Selling</th>
-              <th>Commission</th>
-              <th>Gross Profit</th>
-              <th>Total Margin</th>
-            </tr>
+            <tr><th>Total COGS</th><th>Total Selling</th><th>Commission</th><th>Gross Profit</th><th>Total Margin</th></tr>
           </thead>
           <tbody>
             <tr>
               <td id="calcTotalCogs" class="value">0</td>
               <td id="calcTotalSelling" class="value">0</td>
-              <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input"
-                  type="text" placeholder="0" /></td>
+              <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input" type="text" placeholder="0" /></td>
               <td id="calcGrossProfit" class="value">0</td>
               <td id="calcTotalMargin" class="value">0.00%</td>
             </tr>
@@ -623,7 +308,7 @@
         const key = it.name.trim();
         if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) map[key] = it;
       });
-      const arr = Object.values(map).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      const arr = Object.values(map).sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
       itemList.innerHTML = '';
       arr.forEach(it => {
         const opt = document.createElement('option');
@@ -683,7 +368,7 @@
         const k = normalizeKey(it.name);
         if (!map[k] || (it.updatedAt || 0) > (map[k].updatedAt || 0)) map[k] = it;
       });
-      items = Object.values(map).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      items = Object.values(map).sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
       localStorage.setItem('boq_items', JSON.stringify(items));
       updateDatalist();
     }
@@ -935,7 +620,7 @@
       }
     }
 
-    // EXPORT & PDF (updated title font + Grand Total label center + number right aligned)
+    // EXPORT & PDF (kept same as before)
     async function exportExcel() {
       if (!tableData.length) { showAlert('Tidak ada data untuk diekspor.'); return; }
       let filenameSuffix = '';
@@ -957,27 +642,22 @@
           { header: "Margin (%)", key: "margin", width: 12 }
         ];
 
-        // detect if header row content exists already
         const firstRowVals = sheet.getRow(1).values || [];
         const headerExists = firstRowVals.slice(1).some(v => v !== undefined && v !== null && String(v).trim() !== '');
 
-        // Insert title row (row 1) and spacer (row 2)
         sheet.insertRow(1, [titleText]);
         sheet.insertRow(2, []);
 
-        // Merge title across columns and style (use Arial, bold, size 11)
         const lastCol = sheet.columns.length;
         const titleRow = sheet.getRow(1);
         sheet.mergeCells(`A1:${excelColLetter(lastCol)}1`);
         const tCell = titleRow.getCell(1);
-        tCell.font = { name: 'Arial', bold: true, size: 11 }; // <-- ukuran diubah menjadi 11
+        tCell.font = { name: 'Arial', bold: true, size: 11 };
         tCell.alignment = { horizontal: 'left', vertical: 'middle' };
 
-        // header row at row 3 if not already present
         const headerValues = sheet.columns.map(c => c.header);
         if (!headerExists) sheet.insertRow(3, headerValues);
 
-        // Style header row (row 3)
         const headerRow = sheet.getRow(3);
         headerRow.eachCell((cell, colNum) => {
           cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
@@ -986,7 +666,6 @@
           cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         });
 
-        // write data grouped by category
         const grouped = {};
         tableData.forEach(r => {
           const cat = sanitize(r.category || "Uncategorized");
@@ -1024,11 +703,10 @@
           });
         }
 
-        // Grand total row: merge label across all columns except last; label center, total number RIGHT aligned
         const sumCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
         const tr = sheet.addRow([]);
         const lastColNow = sheet.columns.length;
-        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow - 1)}${tr.number}`);
+        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow-1)}${tr.number}`);
         const labelCell = tr.getCell(1);
         labelCell.value = "Grand Total COGS";
         labelCell.font = { name: 'Arial', bold: true };
@@ -1041,7 +719,7 @@
         totalCell.numFmt = "#,##0";
         totalCell.font = { name: 'Arial', bold: true };
         totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-        totalCell.alignment = { horizontal: "right", vertical: "middle" }; // angka RIGHT aligned
+        totalCell.alignment = { horizontal: "right", vertical: "middle" };
         totalCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
 
       } else {
@@ -1058,7 +736,6 @@
         const firstRowVals = sheet.getRow(1).values || [];
         const headerExists = firstRowVals.slice(1).some(v => v !== undefined && v !== null && String(v).trim() !== '');
 
-        // title + spacer
         sheet.insertRow(1, [titleText]);
         sheet.insertRow(2, []);
 
@@ -1066,7 +743,7 @@
         const titleRow = sheet.getRow(1);
         sheet.mergeCells(`A1:${excelColLetter(lastCol)}1`);
         const tCell = titleRow.getCell(1);
-        tCell.font = { name: 'Arial', bold: true, size: 11 }; // <-- ukuran diubah menjadi 11
+        tCell.font = { name: 'Arial', bold: true, size: 11 };
         tCell.alignment = { horizontal: 'left', vertical: 'middle' };
 
         const headerValues = sheet.columns.map(c => c.header);
@@ -1132,7 +809,7 @@
 
         const tr = sheet.addRow([]);
         const lastColNow = sheet.columns.length;
-        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow - 1)}${tr.number}`);
+        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow-1)}${tr.number}`);
         const labelCell = tr.getCell(1);
         labelCell.value = "Grand Total";
         labelCell.font = { name: 'Arial', bold: true };
@@ -1145,7 +822,7 @@
         totalCell.numFmt = "#,##0";
         totalCell.font = { name: 'Arial', bold: true };
         totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-        totalCell.alignment = { horizontal: "right", vertical: "middle" }; // angka RIGHT aligned
+        totalCell.alignment = { horizontal: "right", vertical: "middle" };
         totalCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       }
 
@@ -1242,23 +919,44 @@
     function populateManageItems() {
       manageItemList.innerHTML = '';
       const sorted = items.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-      sorted.forEach((it, idx) => {
+      sorted.forEach((it) => {
         const li = document.createElement('li');
+
+        // name span on the left (flex:1 makes it fill available space)
         const span = document.createElement('span');
-        const small = document.createElement('div');
-        small.style.fontSize = '12px';
-        small.style.color = '#666';
-        small.textContent = `Unit: ${it.unit || '-'} · COGS: ${it.price !== "" && it.price != null ? Number(it.price).toLocaleString('id-ID') : '-'} · Jual: ${it.sellingPrice !== "" && it.sellingPrice != null ? Number(it.sellingPrice).toLocaleString('id-ID') : '-'} · Kategori: ${it.category || '-'}`;
         span.textContent = it.name;
-        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
-        delBtn.addEventListener('click', () => { if (!confirm(`Hapus item "${it.name}"?`)) return; const key = normalizeKey(it.name); items = items.filter(x => normalizeKey(x.name) !== key); localStorage.setItem('boq_items', JSON.stringify(items)); updateDatalist(); populateManageItems(); });
-        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
-        renameBtn.addEventListener('click', () => { const newName = sanitize(prompt('Ubah nama item:', it.name) || ''); if (!newName) return; const oldKey = normalizeKey(it.name); items.forEach(x => { if (normalizeKey(x.name) === oldKey) x.name = newName; }); localStorage.setItem('boq_items', JSON.stringify(items)); updateDatalist(); populateManageItems(); });
-        const useBtn = document.createElement('button'); useBtn.textContent = 'Gunakan'; useBtn.className = 'btn'; useBtn.style.marginLeft = '8px';
-        useBtn.addEventListener('click', () => { nameInput.value = it.name; autofillFromItem(it.name); manageModal.style.display = 'none'; });
-        const wrapper = document.createElement('div'); wrapper.style.display = 'flex'; wrapper.style.flexDirection = 'column';
-        wrapper.appendChild(span); wrapper.appendChild(small);
-        li.appendChild(wrapper); li.appendChild(useBtn); li.appendChild(renameBtn); li.appendChild(delBtn);
+
+        // Rename button
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Rename';
+        renameBtn.className = 'btn ghost';
+        renameBtn.addEventListener('click', () => {
+          const newName = sanitize(prompt('Ubah nama item:', it.name) || '');
+          if (!newName) return;
+          const oldKey = normalizeKey(it.name);
+          items.forEach(x => { if (normalizeKey(x.name) === oldKey) x.name = newName; });
+          localStorage.setItem('boq_items', JSON.stringify(items));
+          updateDatalist();
+          populateManageItems();
+        });
+
+        // Hapus button
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Hapus';
+        delBtn.className = 'btn secondary';
+        delBtn.addEventListener('click', () => {
+          if (!confirm(`Hapus item "${it.name}"?`)) return;
+          const key = normalizeKey(it.name);
+          items = items.filter(x => normalizeKey(x.name) !== key);
+          localStorage.setItem('boq_items', JSON.stringify(items));
+          updateDatalist();
+          populateManageItems();
+        });
+
+        // Build li: name (left) then buttons (right)
+        li.appendChild(span);
+        li.appendChild(renameBtn);
+        li.appendChild(delBtn);
         manageItemList.appendChild(li);
       });
     }
@@ -1269,11 +967,41 @@
       Object.keys(projects).forEach(name => {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = name;
-        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
-        delBtn.addEventListener('click', () => { if (!confirm(`Hapus project "${name}"?`)) return; delete projects[name]; saveProjectsObj(projects); populateManageProjects(); updateProjectList(); });
-        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
-        renameBtn.addEventListener('click', () => { const newName = sanitize(prompt('Ubah nama project:', name) || ''); if (!newName) return; if (projects[newName]) { showAlert('Nama project sudah ada.'); return; } projects[newName] = projects[name]; delete projects[name]; saveProjectsObj(projects); if (currentProjectName === name) { currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateNavProject(); } populateManageProjects(); updateProjectList(); });
-        li.appendChild(span); li.appendChild(renameBtn); li.appendChild(delBtn); manageProjectList.appendChild(li);
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Hapus';
+        delBtn.className = 'btn secondary';
+        delBtn.addEventListener('click', () => {
+          if (!confirm(`Hapus project "${name}"?`)) return;
+          delete projects[name];
+          saveProjectsObj(projects);
+          populateManageProjects();
+          updateProjectList();
+        });
+
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Rename';
+        renameBtn.className = 'btn ghost';
+        renameBtn.addEventListener('click', () => {
+          const newName = sanitize(prompt('Ubah nama project:', name) || '');
+          if (!newName) return;
+          if (projects[newName]) { showAlert('Nama project sudah ada.'); return; }
+          projects[newName] = projects[name];
+          delete projects[name];
+          saveProjectsObj(projects);
+          if (currentProjectName === name) {
+            currentProjectName = newName;
+            localStorage.setItem('boq_current_name', currentProjectName);
+            updateNavProject();
+          }
+          populateManageProjects();
+          updateProjectList();
+        });
+
+        li.appendChild(span);
+        li.appendChild(renameBtn);
+        li.appendChild(delBtn);
+        manageProjectList.appendChild(li);
       });
     }
 
@@ -1361,7 +1089,7 @@
       const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
       const ts = new Date();
       const pad = n => String(n).padStart(2, '0');
-      const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
+      const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     });
@@ -1435,5 +1163,4 @@
     switchTo('cogs');
   </script>
 </body>
-
 </html>
