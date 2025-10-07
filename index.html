@@ -61,7 +61,7 @@
       background: transparent;
       border: 1px solid #ccc;
       color: #333;
-      padding: 8px 12px;
+      padding: 6px 10px;
     }
 
     /* Slight spacing for action buttons inside modal list items */
@@ -161,17 +161,17 @@
 
     <div class="actions">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn secondary" type="button" onclick="editRow()">Edit</button>
-        <button class="btn secondary" type="button" onclick="deleteRow()">Hapus</button>
-        <button class="btn" type="button" onclick="exportExcel()">Export Excel</button>
-        <button class="btn" type="button" onclick="exportPDF()">Export PDF</button>
+        <button id="editBtn" class="btn secondary" type="button">Edit</button>
+        <button class="btn secondary" id="deleteBtn" type="button">Hapus</button>
+        <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
+        <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input list="projectList" id="projectSearch" placeholder="Cari project..." />
         <datalist id="projectList"></datalist>
-        <button class="btn secondary" type="button" onclick="loadProject()">Muat Project</button>
-        <button class="btn secondary" type="button" onclick="saveProject()">Simpan Project</button>
-        <button class="btn" type="button" onclick="newProject()">Buat Project Baru</button>
+        <button class="btn secondary" type="button" id="loadProjectBtn">Muat Project</button>
+        <button class="btn secondary" type="button" id="saveProjectBtn">Simpan Project</button>
+        <button class="btn" type="button" id="newProjectBtn">Buat Project Baru</button>
       </div>
     </div>
   </div>
@@ -264,6 +264,15 @@
     const manageProjectsBtn = document.getElementById('manageProjectsBtn');
     const manageProjectList = document.getElementById('manageProjectList');
 
+    // buttons
+    const editBtn = document.getElementById('editBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const loadProjectBtn = document.getElementById('loadProjectBtn');
+    const saveProjectBtn = document.getElementById('saveProjectBtn');
+    const newProjectBtn = document.getElementById('newProjectBtn');
+
     // Calculation elements
     const calcTotalCogsEl = document.getElementById('calcTotalCogs');
     const calcTotalSellingEl = document.getElementById('calcTotalSelling');
@@ -272,10 +281,12 @@
     const calcTotalMarginEl = document.getElementById('calcTotalMargin');
 
     // Items now stored as array of objects:
-    // { name, unit, price, sellingPrice, category, updatedAt }
+    // { name, unit, price, sellingPrice, category, updatedAt, margin, qty, ... }
     let items = JSON.parse(localStorage.getItem('boq_items')) || [];
     let tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
-    let selectedIndex = null;
+    let selectedIndex = null;    // row clicked (selection only)
+    let editingIndex = null;     // index being edited (set only via Edit button)
+    let sellingInputManuallyEdited = false; // true when user typed into sellingInput
     let currentProjectName = localStorage.getItem('boq_current_name') || "";
     const PROJECTS_KEY = 'boq_projects_v2';
     const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
@@ -378,11 +389,19 @@
       if (it.unit !== undefined) unitInput.value = it.unit || "";
       if (it.price !== undefined && it.price !== "" && it.price !== null) {
         priceInput.value = Number(it.price).toLocaleString('id-ID');
-        sellingInput.value = '';
+        // Do not mark selling as manual — let compute decide
+        sellingInputManuallyEdited = false;
+        computeAndDisplaySelling(); // compute if possible
       } else {
         priceInput.value = '';
-        if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) sellingInput.value = Number(it.sellingPrice).toLocaleString('id-ID');
-        else sellingInput.value = '';
+        if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) {
+          // show stored selling as initial value, but DO NOT treat as manual (user can change via price/margin)
+          sellingInput.value = Number(it.sellingPrice).toLocaleString('id-ID');
+          sellingInputManuallyEdited = false;
+        } else {
+          sellingInput.value = '';
+          sellingInputManuallyEdited = false;
+        }
       }
       if (it.category !== undefined) categoryInput.value = it.category || "";
     }
@@ -392,6 +411,33 @@
       const found = getItemByName(v);
       if (found) autofillFromItem(v);
     });
+
+    // ---------- Auto-fill Harga Jual handling ----------
+    // When user types into sellingInput, treat as manual (stop auto updates)
+    sellingInput.addEventListener('input', (ev) => {
+      // user manually edited -> set manual flag
+      sellingInputManuallyEdited = true;
+    });
+
+    // Compute selling and display (rounded to thousand) if not manually edited
+    function computeAndDisplaySelling() {
+      const priceNum = parseNumberFormatted(priceInput.value);
+      const marginNum = (marginInput.value !== '') ? Number(marginInput.value) : null;
+      if ((priceNum != null && priceNum !== '') && (marginNum != null && isFinite(marginNum) && marginNum < 100)) {
+        const spRaw = calcSellingPrice(Number(priceNum), Number(marginNum));
+        const spRounded = (spRaw != null) ? roundUpToThousand(spRaw) : null;
+        if (!sellingInputManuallyEdited) {
+          if (spRounded != null) sellingInput.value = Number(spRounded).toLocaleString('id-ID');
+          else sellingInput.value = '';
+        }
+      } else {
+        if (!sellingInputManuallyEdited) sellingInput.value = '';
+      }
+    }
+
+    // trigger compute when price or margin change
+    priceInput.addEventListener('input', () => { computeAndDisplaySelling(); });
+    marginInput.addEventListener('input', () => { computeAndDisplaySelling(); });
 
     // ---------- Totals & rendering ----------
     function computeTotals() {
@@ -446,7 +492,12 @@
           tdMargin.textContent = (row.margin != null && row.margin !== "") ? Number(row.margin).toFixed(2) : "";
           if (totalCogs != null && isFinite(totalCogs)) grand += Number(totalCogs);
           tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdCogs); tr.appendChild(tdTotal); tr.appendChild(tdMargin);
-          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
+          tr.addEventListener('click', () => {
+            selectedIndex = tableData.indexOf(row);
+            // DO NOT set editingIndex here — editing only via Edit button
+            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+          });
           cogsTbody.appendChild(tr);
         });
       }
@@ -492,7 +543,11 @@
           tdTotalSelling.textContent = (totalSelling != null && isFinite(totalSelling)) ? Number(totalSelling).toLocaleString('id-ID') : "";
           if (totalSelling != null && isFinite(totalSelling)) grand += Number(totalSelling);
           tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdSelling); tr.appendChild(tdTotalSelling);
-          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
+          tr.addEventListener('click', () => {
+            selectedIndex = tableData.indexOf(row);
+            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+          });
           sellingTbody.appendChild(tr);
         });
       }
@@ -549,6 +604,30 @@
 
     function renderAll() { renderCogsTable(); renderSellingTable(); renderCalculation(); }
 
+    // ------------ Edit mode helpers ----------
+    function setEditingMode(idx) {
+      editingIndex = (typeof idx === 'number') ? idx : null;
+      updateEditButton();
+    }
+    function cancelEdit() {
+      setEditingMode(null);
+      selectedIndex = null;
+      sellingInputManuallyEdited = false;
+      form.reset();
+      // clear selection highlight
+      document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
+      nameInput.focus();
+    }
+    function updateEditButton() {
+      if (editingIndex === null) {
+        editBtn.textContent = 'Edit';
+        editBtn.classList.remove('btn'); editBtn.classList.add('btn', 'secondary'); // keep style
+      } else {
+        editBtn.textContent = 'Cancel Edit';
+        editBtn.classList.remove('btn'); editBtn.classList.add('btn', 'secondary');
+      }
+    }
+
     // FORM SUBMIT
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -569,6 +648,7 @@
       }
       const totalCogs = (qty !== "" && price !== "") ? Number(qty) * Number(price) : "";
       let sellingPriceComputed = "";
+      // Priority: if user provided sellingInput (manual or auto-filled), use that.
       if (sellingProvided !== "") sellingPriceComputed = sellingProvided;
       else if (price !== "" && margin < 100) {
         const sp = calcSellingPrice(price, margin);
@@ -577,7 +657,18 @@
       const sellingPriceRoundedForTotal = (sellingPriceComputed !== "" && sellingPriceComputed != null) ? roundUpToThousand(Number(sellingPriceComputed)) : "";
       const totalSelling = (qty !== "" && sellingPriceRoundedForTotal !== "" && sellingPriceRoundedForTotal != null) ? Number(qty) * Number(sellingPriceRoundedForTotal) : "";
       const newRow = { name, qty: qty !== "" ? qty : "", unit, price: price !== "" ? price : "", total: totalCogs !== "" ? totalCogs : "", margin: margin !== "" ? margin : 0, sellingPrice: (sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "", totalSellingPrice: (totalSelling !== "" && totalSelling != null) ? totalSelling : "", category };
-      if (selectedIndex !== null) { tableData[selectedIndex] = newRow; selectedIndex = null; } else tableData.push(newRow);
+
+      // Use editingIndex to decide replace vs push.
+      if (editingIndex !== null && typeof editingIndex === 'number') {
+        tableData[editingIndex] = newRow;
+        setEditingMode(null);
+      } else {
+        tableData.push(newRow);
+      }
+      // After submit, clear selection and editing state
+      selectedIndex = null;
+      sellingInputManuallyEdited = false;
+
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       const storePrice = (price !== "" && price != null) ? Number(price) : "";
       const storeSelling = (sellingProvided !== "" && sellingProvided != null) ? Number(sellingProvided) : ((sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "");
@@ -590,27 +681,49 @@
         projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
         saveProjectsObj(projects);
       }
+      updateEditButton();
     });
 
     // Row actions
-    function editRow() {
+    editBtn.addEventListener('click', () => {
+      if (editingIndex !== null) {
+        // currently editing -> cancel edit
+        cancelEdit();
+        updateEditButton();
+        return;
+      }
+      // not editing -> enter edit mode for selected row
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
+      setEditingMode(selectedIndex);
+      // prefill form with row data
       const r = tableData[selectedIndex];
       nameInput.value = r.name;
       qtyInput.value = r.qty !== "" ? r.qty : "";
       unitInput.value = r.unit || "";
       priceInput.value = r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "";
       marginInput.value = (r.margin !== undefined && r.margin !== null) ? r.margin : "";
-      sellingInput.value = (r.sellingPrice != null && r.sellingPrice !== "") ? Number(r.sellingPrice).toLocaleString('id-ID') : "";
-      categoryInput.value = r.category;
+      // Important: allow auto recalculation during edit unless user types into sellingInput
+      sellingInputManuallyEdited = false;
+      // If stored selling exists, prefill it (but still allow compute updates)
+      if (r.sellingPrice != null && r.sellingPrice !== "") {
+        sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID');
+      } else {
+        sellingInput.value = '';
+      }
+      // compute if possible (this will update sellingInput if not manually edited)
+      computeAndDisplaySelling();
+      categoryInput.value = r.category || "";
       switchTo('cogs');
       nameInput.focus();
-    }
-    function deleteRow() {
+      updateEditButton();
+    });
+
+    deleteBtn.addEventListener('click', () => {
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
       if (!confirm('Hapus baris ini?')) return;
       tableData.splice(selectedIndex, 1);
       selectedIndex = null;
+      setEditingMode(null);
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       renderAll();
       if (currentProjectName) {
@@ -618,9 +731,13 @@
         projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
         saveProjectsObj(projects);
       }
-    }
+      updateEditButton();
+    });
 
-    // EXPORT & PDF (kept same as before)
+    // EXPORT & PDF (kept same as before, hooked to new buttons)
+    exportExcelBtn.addEventListener('click', exportExcel);
+    exportPdfBtn.addEventListener('click', exportPDF);
+
     async function exportExcel() {
       if (!tableData.length) { showAlert('Tidak ada data untuk diekspor.'); return; }
       let filenameSuffix = '';
@@ -922,11 +1039,9 @@
       sorted.forEach((it) => {
         const li = document.createElement('li');
 
-        // name span on the left (flex:1 makes it fill available space)
         const span = document.createElement('span');
         span.textContent = it.name;
 
-        // Rename button
         const renameBtn = document.createElement('button');
         renameBtn.textContent = 'Rename';
         renameBtn.className = 'btn ghost';
@@ -940,7 +1055,6 @@
           populateManageItems();
         });
 
-        // Hapus button
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Hapus';
         delBtn.className = 'btn secondary';
@@ -953,7 +1067,6 @@
           populateManageItems();
         });
 
-        // Build li: name (left) then buttons (right)
         li.appendChild(span);
         li.appendChild(renameBtn);
         li.appendChild(delBtn);
@@ -1020,6 +1133,10 @@
       });
     }
 
+    saveProjectBtn.addEventListener('click', saveProject);
+    loadProjectBtn.addEventListener('click', () => loadProject());
+    newProjectBtn.addEventListener('click', () => newProject());
+
     function saveProject() {
       if (!tableData.length) { showAlert('Tidak ada data untuk disimpan.'); return; }
       let name = prompt('Masukkan nama project:', currentProjectName || '');
@@ -1044,27 +1161,43 @@
       if (Array.isArray(stored)) { tableData = stored; currentCommission = 0; }
       else if (stored && typeof stored === 'object') { tableData = stored.data || []; currentCommission = Number(stored.commission || 0); }
       else { tableData = []; currentCommission = 0; }
+
+      // Reset working form & editing state when loading project
+      form.reset();
+      sellingInputManuallyEdited = false;
+      setEditingMode(null);
+      selectedIndex = null;
+
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       currentProjectName = name;
       localStorage.setItem('boq_current_name', currentProjectName);
-      selectedIndex = null;
       updateNavProject();
       updateProjectList();
       renderAll();
+      // Clear project search input to make selecting another project easier
+      projectSearch.value = '';
       showAlert(`Project "${name}" berhasil dimuat.`);
+      updateEditButton();
     }
 
     function newProject() {
       if (!confirm('Buat project baru? Semua data saat ini akan dihapus.')) return;
       tableData = [];
       selectedIndex = null;
+      setEditingMode(null);
       currentProjectName = '';
       currentCommission = 0;
+
+      // Reset form
+      form.reset();
+      sellingInputManuallyEdited = false;
+
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       localStorage.removeItem('boq_current_name');
       updateNavProject();
       renderAll();
       showAlert('Project baru siap diisi.');
+      updateEditButton();
     }
 
     renameProjectBtn.addEventListener('click', () => {
@@ -1161,6 +1294,7 @@
     loadCommissionForCurrentProject();
     renderAll();
     switchTo('cogs');
+    updateEditButton();
   </script>
 </body>
 </html>
