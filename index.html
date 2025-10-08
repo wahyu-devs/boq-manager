@@ -614,7 +614,7 @@
 
     async function exportExcel() {
       // Export combined workbook with 3 sheets: COGS, Selling, Calculation
-      const filename = getSafeFileName(currentProjectName) + " (COGS+Selling+Calculation).xlsx";
+      const filename = getSafeFileName(currentProjectName) + ".xlsx";
       const workbook = new ExcelJS.Workbook();
 
       // ----- SHEET: COGS -----
