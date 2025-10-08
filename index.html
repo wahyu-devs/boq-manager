@@ -55,18 +55,8 @@
     .calc-summary thead th { text-align: center; }
     .calc-summary tbody td.value { font-weight: 400; text-align: center; min-width: 140px; }
     .commission-input { width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center; }
-
-    /* Make ghost buttons visible inside white modal content */
-    .modal .btn.ghost {
-      background: transparent;
-      border: 1px solid #ccc;
-      color: #333;
-      padding: 8px 12px;
-    }
-
-    /* Slight spacing for action buttons inside modal list items */
+    .modal .btn.ghost { background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 12px; }
     .modal-list li button { margin-left: 8px; }
-
     @media (max-width:720px) {
       .nav-actions { display: none }
       .container { padding: 12px }
@@ -204,15 +194,13 @@
     const tabSelling = document.getElementById('tabSelling');
     const tabCalc = document.getElementById('tabCalc');
     let activeTab = 'cogs';
+
     function switchTo(tab) {
       activeTab = tab;
       tabCogs.classList.add('hidden');
       tabSelling.classList.add('hidden');
       tabCalc.classList.add('hidden');
-      [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-selected', 'false');
-      });
+      [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
       if (tab === 'cogs') {
         tabCogs.classList.remove('hidden');
         tabCogsBtn.classList.add('active');
@@ -280,13 +268,11 @@
     const calcGrossProfitEl = document.getElementById('calcGrossProfit');
     const calcTotalMarginEl = document.getElementById('calcTotalMargin');
 
-    // Items now stored as array of objects:
-    // { name, unit, price, sellingPrice, category, updatedAt, margin, qty, ... }
     let items = JSON.parse(localStorage.getItem('boq_items')) || [];
     let tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
-    let selectedIndex = null;    // row clicked (selection only)
-    let editingIndex = null;     // index being edited (set only via Edit button)
-    let sellingInputManuallyEdited = false; // true when user typed into sellingInput
+    let selectedIndex = null;
+    let editingIndex = null;
+    let sellingInputManuallyEdited = false;
     let currentProjectName = localStorage.getItem('boq_current_name') || "";
     const PROJECTS_KEY = 'boq_projects_v2';
     const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
@@ -302,15 +288,7 @@
     formatThousandsInput(sellingInput);
 
     // Excel helper: convert column number to letters (A, B, ... Z, AA, AB ...)
-    function excelColLetter(n) {
-      let s = '';
-      while (n > 0) {
-        const m = (n - 1) % 26;
-        s = String.fromCharCode(65 + m) + s;
-        n = Math.floor((n - 1) / 26);
-      }
-      return s;
-    }
+    function excelColLetter(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 
     function updateDatalist() {
       const map = {};
@@ -335,13 +313,9 @@
       return Number(cogs) / (1 - m);
     }
 
-    function roundUpToThousand(n) {
-      if (n == null || !isFinite(n)) return null;
-      const eps = 1e-9;
-      return Math.ceil((n - eps) / 1000) * 1000;
-    }
+    function roundUpToThousand(n) { if (n == null || !isFinite(n)) return null; const eps = 1e-9; return Math.ceil((n - eps) / 1000) * 1000; }
 
-    // ---------- ITEM helpers (autofill & store) ----------
+    // ---------- ITEM helpers ----------
     function normalizeKey(name) { return String(name || '').trim().toLowerCase(); }
     function getItemByName(name) {
       if (!name) return null;
@@ -383,19 +357,18 @@
       localStorage.setItem('boq_items', JSON.stringify(items));
       updateDatalist();
     }
+
     function autofillFromItem(name) {
       const it = getItemByName(name);
       if (!it) return;
       if (it.unit !== undefined) unitInput.value = it.unit || "";
       if (it.price !== undefined && it.price !== "" && it.price !== null) {
         priceInput.value = Number(it.price).toLocaleString('id-ID');
-        // Do not mark selling as manual — let compute decide
         sellingInputManuallyEdited = false;
-        computeAndDisplaySelling(); // compute if possible
+        computeAndDisplaySelling();
       } else {
         priceInput.value = '';
         if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) {
-          // show stored selling as initial value, but DO NOT treat as manual (user can change via price/margin)
           sellingInput.value = Number(it.sellingPrice).toLocaleString('id-ID');
           sellingInputManuallyEdited = false;
         } else {
@@ -405,21 +378,14 @@
       }
       if (it.category !== undefined) categoryInput.value = it.category || "";
     }
+
     nameInput.addEventListener('change', (e) => {
-      const v = sanitize(e.target.value);
-      if (!v) return;
-      const found = getItemByName(v);
-      if (found) autofillFromItem(v);
+      const v = sanitize(e.target.value); if (!v) return; const found = getItemByName(v); if (found) autofillFromItem(v);
     });
 
     // ---------- Auto-fill Harga Jual handling ----------
-    // When user types into sellingInput, treat as manual (stop auto updates)
-    sellingInput.addEventListener('input', (ev) => {
-      // user manually edited -> set manual flag
-      sellingInputManuallyEdited = true;
-    });
+    sellingInput.addEventListener('input', (ev) => { sellingInputManuallyEdited = true; });
 
-    // Compute selling and display (rounded to thousand) if not manually edited
     function computeAndDisplaySelling() {
       const priceNum = parseNumberFormatted(priceInput.value);
       const marginNum = (marginInput.value !== '') ? Number(marginInput.value) : null;
@@ -427,25 +393,18 @@
         const spRaw = calcSellingPrice(Number(priceNum), Number(marginNum));
         const spRounded = (spRaw != null) ? roundUpToThousand(spRaw) : null;
         if (!sellingInputManuallyEdited) {
-          if (spRounded != null) sellingInput.value = Number(spRounded).toLocaleString('id-ID');
-          else sellingInput.value = '';
+          if (spRounded != null) sellingInput.value = Number(spRounded).toLocaleString('id-ID'); else sellingInput.value = '';
         }
       } else {
         if (!sellingInputManuallyEdited) sellingInput.value = '';
       }
     }
-
-    // trigger compute when price or margin change
     priceInput.addEventListener('input', () => { computeAndDisplaySelling(); });
     marginInput.addEventListener('input', () => { computeAndDisplaySelling(); });
 
     // ---------- Totals & rendering ----------
     function computeTotals() {
-      const totalCogs = tableData.reduce((acc, r) => {
-        const p = (r.price != null && r.price !== "") ? Number(r.price) : 0;
-        const q = Number(r.qty || 0);
-        return acc + (Number(p || 0) * q);
-      }, 0);
+      const totalCogs = tableData.reduce((acc, r) => { const p = (r.price != null && r.price !== "") ? Number(r.price) : 0; const q = Number(r.qty || 0); return acc + (Number(p || 0) * q); }, 0);
       const totalSelling = tableData.reduce((acc, r) => {
         let sp = null;
         if (r.sellingPrice != null && r.sellingPrice !== "") sp = Number(r.sellingPrice);
@@ -460,21 +419,11 @@
     function renderCogsTable() {
       cogsTbody.innerHTML = '';
       const grouped = {};
-      tableData.forEach(r => {
-        const cat = sanitize(r.category || 'Uncategorized');
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(r);
-      });
-      let idx = 1;
-      let grand = 0;
+      tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+      let idx = 1; let grand = 0;
       for (const cat of Object.keys(grouped)) {
-        const trSec = document.createElement('tr');
-        trSec.className = 'section-row';
-        const tdSec = document.createElement('td');
-        tdSec.colSpan = 7;
-        tdSec.textContent = cat;
-        trSec.appendChild(tdSec);
-        cogsTbody.appendChild(trSec);
+        const trSec = document.createElement('tr'); trSec.className = 'section-row';
+        const tdSec = document.createElement('td'); tdSec.colSpan = 7; tdSec.textContent = cat; trSec.appendChild(tdSec); cogsTbody.appendChild(trSec);
         grouped[cat].forEach(row => {
           const tr = document.createElement('tr');
           const tdNo = document.createElement('td'); tdNo.textContent = idx++;
@@ -492,12 +441,7 @@
           tdMargin.textContent = (row.margin != null && row.margin !== "") ? Number(row.margin).toFixed(2) : "";
           if (totalCogs != null && isFinite(totalCogs)) grand += Number(totalCogs);
           tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdCogs); tr.appendChild(tdTotal); tr.appendChild(tdMargin);
-          tr.addEventListener('click', () => {
-            selectedIndex = tableData.indexOf(row);
-            // DO NOT set editingIndex here — editing only via Edit button
-            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
-            tr.classList.add('selected');
-          });
+          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
           cogsTbody.appendChild(tr);
         });
       }
@@ -507,21 +451,11 @@
     function renderSellingTable() {
       sellingTbody.innerHTML = '';
       const grouped = {};
-      tableData.forEach(r => {
-        const cat = sanitize(r.category || 'Uncategorized');
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(r);
-      });
-      let idx = 1;
-      let grand = 0;
+      tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+      let idx = 1; let grand = 0;
       for (const cat of Object.keys(grouped)) {
-        const trSec = document.createElement('tr');
-        trSec.className = 'section-row';
-        const tdSec = document.createElement('td');
-        tdSec.colSpan = 6;
-        tdSec.textContent = cat;
-        trSec.appendChild(tdSec);
-        sellingTbody.appendChild(trSec);
+        const trSec = document.createElement('tr'); trSec.className = 'section-row';
+        const tdSec = document.createElement('td'); tdSec.colSpan = 6; tdSec.textContent = cat; trSec.appendChild(tdSec); sellingTbody.appendChild(trSec);
         grouped[cat].forEach(row => {
           const tr = document.createElement('tr');
           const tdNo = document.createElement('td'); tdNo.textContent = idx++;
@@ -532,10 +466,7 @@
           const tdTotalSelling = document.createElement('td'); tdTotalSelling.style.textAlign = 'right';
           let sellingPriceRaw = null;
           if (row.sellingPrice != null && row.sellingPrice !== "") sellingPriceRaw = Number(row.sellingPrice);
-          else {
-            const priceNum = (row.price != null && row.price !== "") ? Number(row.price) : null;
-            sellingPriceRaw = (priceNum != null) ? calcSellingPrice(priceNum, row.margin) : null;
-          }
+          else { const priceNum = (row.price != null && row.price !== "") ? Number(row.price) : null; sellingPriceRaw = (priceNum != null) ? calcSellingPrice(priceNum, row.margin) : null; }
           const sellingPriceRounded = sellingPriceRaw != null ? roundUpToThousand(sellingPriceRaw) : null;
           const qtyNum = (row.qty != null && row.qty !== "") ? Number(row.qty) : null;
           const totalSelling = (sellingPriceRounded != null && qtyNum != null) ? Number(sellingPriceRounded) * Number(qtyNum) : null;
@@ -543,11 +474,7 @@
           tdTotalSelling.textContent = (totalSelling != null && isFinite(totalSelling)) ? Number(totalSelling).toLocaleString('id-ID') : "";
           if (totalSelling != null && isFinite(totalSelling)) grand += Number(totalSelling);
           tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdSelling); tr.appendChild(tdTotalSelling);
-          tr.addEventListener('click', () => {
-            selectedIndex = tableData.indexOf(row);
-            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
-            tr.classList.add('selected');
-          });
+          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
           sellingTbody.appendChild(tr);
         });
       }
@@ -605,27 +532,11 @@
     function renderAll() { renderCogsTable(); renderSellingTable(); renderCalculation(); }
 
     // ------------ Edit mode helpers ----------
-    function setEditingMode(idx) {
-      editingIndex = (typeof idx === 'number') ? idx : null;
-      updateEditButton();
-    }
-    function cancelEdit() {
-      setEditingMode(null);
-      selectedIndex = null;
-      sellingInputManuallyEdited = false;
-      form.reset();
-      // clear selection highlight
-      document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
-      nameInput.focus();
-    }
+    function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
+    function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }
     function updateEditButton() {
-      if (editingIndex === null) {
-        editBtn.textContent = 'Edit';
-        editBtn.classList.remove('btn'); editBtn.classList.add('btn', 'secondary'); // keep style
-      } else {
-        editBtn.textContent = 'Cancel Edit';
-        editBtn.classList.remove('btn'); editBtn.classList.add('btn', 'secondary');
-      }
+      if (editingIndex === null) { editBtn.textContent = 'Edit'; editBtn.classList.remove('primary'); editBtn.classList.add('btn', 'secondary'); }
+      else { editBtn.textContent = 'Cancel Edit'; editBtn.classList.remove('primary'); editBtn.classList.add('btn', 'secondary'); }
     }
 
     // FORM SUBMIT
@@ -634,48 +545,34 @@
       const name = sanitize(nameInput.value);
       const category = sanitize(categoryInput.value);
       if (!name || !category) { showAlert('Nama item dan kategori harus diisi.'); return; }
-      const qtyRaw = qtyInput.value;
-      const qty = qtyRaw !== "" ? Number(qtyRaw) : "";
+      const qtyRaw = qtyInput.value; const qty = qtyRaw !== "" ? Number(qtyRaw) : "";
       const unit = sanitize(unitInput.value);
-      const priceRaw = priceInput.value.replace(/\./g, '').replace(/,/g, '');
-      const price = priceRaw !== "" ? Number(priceRaw) : "";
-      const marginRaw = marginInput.value;
-      const margin = marginRaw !== "" ? Number(marginRaw) : 0;
-      const sellingRawStr = sellingInput.value.replace(/\./g, '').replace(/,/g, '');
-      const sellingProvided = sellingRawStr !== "" ? Number(sellingRawStr) : "";
-      if (margin >= 100) {
-        if (!confirm('Margin 100% atau lebih akan membuat Harga Jual tidak terdefinisi. Lanjutkan?')) return;
-      }
+      const priceRaw = priceInput.value.replace(/\./g, '').replace(/,/g, ''); const price = priceRaw !== "" ? Number(priceRaw) : "";
+      const marginRaw = marginInput.value; const margin = marginRaw !== "" ? Number(marginRaw) : 0;
+      const sellingRawStr = sellingInput.value.replace(/\./g, '').replace(/,/g, ''); const sellingProvided = sellingRawStr !== "" ? Number(sellingRawStr) : "";
+      if (margin >= 100) { if (!confirm('Margin 100% atau lebih akan membuat Harga Jual tidak terdefinisi. Lanjutkan?')) return; }
       const totalCogs = (qty !== "" && price !== "") ? Number(qty) * Number(price) : "";
       let sellingPriceComputed = "";
-      // Priority: if user provided sellingInput (manual or auto-filled), use that.
       if (sellingProvided !== "") sellingPriceComputed = sellingProvided;
-      else if (price !== "" && margin < 100) {
-        const sp = calcSellingPrice(price, margin);
-        sellingPriceComputed = (sp != null) ? sp : "";
-      } else sellingPriceComputed = "";
+      else if (price !== "" && margin < 100) { const sp = calcSellingPrice(price, margin); sellingPriceComputed = (sp != null) ? sp : ""; }
+      else sellingPriceComputed = "";
       const sellingPriceRoundedForTotal = (sellingPriceComputed !== "" && sellingPriceComputed != null) ? roundUpToThousand(Number(sellingPriceComputed)) : "";
       const totalSelling = (qty !== "" && sellingPriceRoundedForTotal !== "" && sellingPriceRoundedForTotal != null) ? Number(qty) * Number(sellingPriceRoundedForTotal) : "";
-      const newRow = { name, qty: qty !== "" ? qty : "", unit, price: price !== "" ? price : "", total: totalCogs !== "" ? totalCogs : "", margin: margin !== "" ? margin : 0, sellingPrice: (sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "", totalSellingPrice: (totalSelling !== "" && totalSelling != null) ? totalSelling : "", category };
-
-      // Use editingIndex to decide replace vs push.
-      if (editingIndex !== null && typeof editingIndex === 'number') {
-        tableData[editingIndex] = newRow;
-        setEditingMode(null);
-      } else {
-        tableData.push(newRow);
-      }
-      // After submit, clear selection and editing state
-      selectedIndex = null;
-      sellingInputManuallyEdited = false;
-
+      const newRow = {
+        name, qty: qty !== "" ? qty : "", unit,
+        price: price !== "" ? price : "", total: totalCogs !== "" ? totalCogs : "",
+        margin: margin !== "" ? margin : 0,
+        sellingPrice: (sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "",
+        totalSellingPrice: (totalSelling !== "" && totalSelling != null) ? totalSelling : "",
+        category
+      };
+      if (editingIndex !== null && typeof editingIndex === 'number') { tableData[editingIndex] = newRow; setEditingMode(null); } else { tableData.push(newRow); }
+      selectedIndex = null; sellingInputManuallyEdited = false;
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       const storePrice = (price !== "" && price != null) ? Number(price) : "";
       const storeSelling = (sellingProvided !== "" && sellingProvided != null) ? Number(sellingProvided) : ((sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "");
       updateItemsWithEntry(name, unit || "", storePrice !== "" ? storePrice : "", storeSelling !== "" ? storeSelling : "", category || "");
-      form.reset();
-      nameInput.focus();
-      renderAll();
+      form.reset(); nameInput.focus(); renderAll();
       if (currentProjectName) {
         const projects = loadProjectsObj();
         projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
@@ -686,263 +583,285 @@
 
     // Row actions
     editBtn.addEventListener('click', () => {
-      if (editingIndex !== null) {
-        // currently editing -> cancel edit
-        cancelEdit();
-        updateEditButton();
-        return;
-      }
-      // not editing -> enter edit mode for selected row
+      if (editingIndex !== null) { cancelEdit(); updateEditButton(); return; }
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
       setEditingMode(selectedIndex);
-      // prefill form with row data
       const r = tableData[selectedIndex];
       nameInput.value = r.name;
       qtyInput.value = r.qty !== "" ? r.qty : "";
       unitInput.value = r.unit || "";
       priceInput.value = r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "";
       marginInput.value = (r.margin !== undefined && r.margin !== null) ? r.margin : "";
-      // Important: allow auto recalculation during edit unless user types into sellingInput
       sellingInputManuallyEdited = false;
-      // If stored selling exists, prefill it (but still allow compute updates)
-      if (r.sellingPrice != null && r.sellingPrice !== "") {
-        sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID');
-      } else {
-        sellingInput.value = '';
-      }
-      // compute if possible (this will update sellingInput if not manually edited)
+      if (r.sellingPrice != null && r.sellingPrice !== "") sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID'); else sellingInput.value = '';
       computeAndDisplaySelling();
       categoryInput.value = r.category || "";
-      switchTo('cogs');
-      nameInput.focus();
-      updateEditButton();
+      switchTo('cogs'); nameInput.focus(); updateEditButton();
     });
 
     deleteBtn.addEventListener('click', () => {
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
       if (!confirm('Hapus baris ini?')) return;
-      tableData.splice(selectedIndex, 1);
-      selectedIndex = null;
-      setEditingMode(null);
-      localStorage.setItem('boq_working', JSON.stringify(tableData));
-      renderAll();
-      if (currentProjectName) {
-        const projects = loadProjectsObj();
-        projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
-        saveProjectsObj(projects);
-      }
+      tableData.splice(selectedIndex, 1); selectedIndex = null; setEditingMode(null);
+      localStorage.setItem('boq_working', JSON.stringify(tableData)); renderAll();
+      if (currentProjectName) { const projects = loadProjectsObj(); projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) }; saveProjectsObj(projects); }
       updateEditButton();
     });
 
-    // EXPORT & PDF (kept same as before, hooked to new buttons)
+    // EXPORT & PDF
     exportExcelBtn.addEventListener('click', exportExcel);
     exportPdfBtn.addEventListener('click', exportPDF);
 
     async function exportExcel() {
-      if (!tableData.length) { showAlert('Tidak ada data untuk diekspor.'); return; }
-      let filenameSuffix = '';
-      if (activeTab === 'cogs') filenameSuffix = ' (COGS)';
-      else if (activeTab === 'selling') filenameSuffix = ' (Selling)';
-      const filename = getSafeFileName(currentProjectName) + (filenameSuffix ? filenameSuffix : '') + ".xlsx";
+      // Export combined workbook with 3 sheets: COGS, Selling, Calculation
+      const filename = getSafeFileName(currentProjectName) + " (COGS+Selling+Calculation).xlsx";
       const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet("BOQ");
-      const titleText = currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ';
 
-      if (activeTab === 'cogs') {
-        sheet.columns = [
-          { header: "No", key: "no", width: 6 },
-          { header: "Nama Item", key: "name", width: 40 },
-          { header: "Qty", key: "qty", width: 10 },
-          { header: "Unit", key: "unit", width: 12 },
-          { header: "Harga COGS", key: "price", width: 18 },
-          { header: "Total COGS", key: "totalCogs", width: 18 },
-          { header: "Margin (%)", key: "margin", width: 12 }
-        ];
+      // ----- SHEET: COGS -----
+      const sheetCogs = workbook.addWorksheet("COGS");
+      // Set columns (no header property to avoid auto header duplication)
+      sheetCogs.columns = [
+        { key: "no", width: 6 },
+        { key: "name", width: 40 },
+        { key: "qty", width: 10 },
+        { key: "unit", width: 12 },
+        { key: "price", width: 18 },
+        { key: "totalCogs", width: 18 },
+        { key: "margin", width: 12 }
+      ];
 
-        const firstRowVals = sheet.getRow(1).values || [];
-        const headerExists = firstRowVals.slice(1).some(v => v !== undefined && v !== null && String(v).trim() !== '');
+      // Title + spacer + header (single insertion)
+      sheetCogs.insertRow(1, [currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ']);
+      sheetCogs.insertRow(2, []);
+      const lastColCogs = sheetCogs.columns.length;
+      sheetCogs.mergeCells(`A1:${excelColLetter(lastColCogs)}1`);
+      // <-- set title font to Arial & bold -->
+      const titleRowC = sheetCogs.getRow(1);
+      const tCellC = titleRowC.getCell(1);
+      tCellC.font = { name: 'Arial', bold: true };
+      tCellC.alignment = { horizontal: 'left', vertical: 'middle' };
+      // ------------------------------------------------
+      const headerCogs = ["No", "Nama Item", "Qty", "Unit", "Harga COGS", "Total COGS", "Margin (%)"];
+      sheetCogs.insertRow(3, headerCogs);
 
-        sheet.insertRow(1, [titleText]);
-        sheet.insertRow(2, []);
+      // style header
+      const headerRowCogs = sheetCogs.getRow(3);
+      headerRowCogs.eachCell((cell, colNum) => {
+        cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      });
 
-        const lastCol = sheet.columns.length;
-        const titleRow = sheet.getRow(1);
-        sheet.mergeCells(`A1:${excelColLetter(lastCol)}1`);
-        const tCell = titleRow.getCell(1);
-        tCell.font = { name: 'Arial', bold: true, size: 11 };
-        tCell.alignment = { horizontal: 'left', vertical: 'middle' };
-
-        const headerValues = sheet.columns.map(c => c.header);
-        if (!headerExists) sheet.insertRow(3, headerValues);
-
-        const headerRow = sheet.getRow(3);
-        headerRow.eachCell((cell, colNum) => {
-          cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
-          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
-          cell.alignment = { horizontal: "center", vertical: "middle", wrapText: colNum === 2 ? true : false };
+      // Group by category and add rows
+      const groupedC = {};
+      tableData.forEach(r => { const cat = sanitize(r.category || "Uncategorized"); if (!groupedC[cat]) groupedC[cat] = []; groupedC[cat].push(r); });
+      let noC = 1;
+      for (const cat of Object.keys(groupedC)) {
+        const secRow = sheetCogs.addRow([cat]);
+        sheetCogs.mergeCells(`A${secRow.number}:${excelColLetter(lastColCogs)}${secRow.number}`);
+        // style section
+        for (let i = 1; i <= lastColCogs; i++) {
+          const cell = secRow.getCell(i);
+          cell.font = { name: 'Arial', bold: true };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
+          cell.alignment = { horizontal: "left", vertical: "middle" };
           cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-        });
-
-        const grouped = {};
-        tableData.forEach(r => {
-          const cat = sanitize(r.category || "Uncategorized");
-          if (!grouped[cat]) grouped[cat] = [];
-          grouped[cat].push(r);
-        });
-
-        let no = 1;
-        for (const cat of Object.keys(grouped)) {
-          const secRow = sheet.addRow([cat]);
-          sheet.mergeCells(`A${secRow.number}:${excelColLetter(lastCol)}${secRow.number}`);
-          for (let i = 1; i <= lastCol; i++) {
-            const cell = secRow.getCell(i);
-            cell.font = { name: 'Arial', bold: true };
-            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
-            cell.alignment = { horizontal: "left", vertical: "middle" };
-            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-          }
-          grouped[cat].forEach(r => {
-            const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
-            const rowObj = { no: no++, name: r.name, qty: r.qty, unit: r.unit, price: r.price, totalCogs: totalCogs, margin: r.margin };
-            const dr = sheet.addRow(rowObj);
-            dr.eachCell((cell, colNum) => {
-              cell.font = { name: 'Arial' };
-              cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-              if (colNum >= 5) {
-                cell.numFmt = "#,##0";
-                cell.alignment = { horizontal: "right", vertical: "middle" };
-              } else if (colNum === 2) {
-                cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
-              } else {
-                cell.alignment = { horizontal: "center", vertical: "middle" };
-              }
-            });
-          });
         }
-
-        const sumCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
-        const tr = sheet.addRow([]);
-        const lastColNow = sheet.columns.length;
-        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow-1)}${tr.number}`);
-        const labelCell = tr.getCell(1);
-        labelCell.value = "Grand Total COGS";
-        labelCell.font = { name: 'Arial', bold: true };
-        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-        labelCell.alignment = { horizontal: "center", vertical: "middle" };
-        labelCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-
-        const totalCell = tr.getCell(lastColNow);
-        totalCell.value = sumCogs;
-        totalCell.numFmt = "#,##0";
-        totalCell.font = { name: 'Arial', bold: true };
-        totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-        totalCell.alignment = { horizontal: "right", vertical: "middle" };
-        totalCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-
-      } else {
-        // Selling branch
-        sheet.columns = [
-          { header: "No", key: "no", width: 6 },
-          { header: "Nama Item", key: "name", width: 40 },
-          { header: "Qty", key: "qty", width: 10 },
-          { header: "Unit", key: "unit", width: 12 },
-          { header: "Harga Satuan", key: "sellingPrice", width: 18 },
-          { header: "Total", key: "totalSelling", width: 18 }
-        ];
-
-        const firstRowVals = sheet.getRow(1).values || [];
-        const headerExists = firstRowVals.slice(1).some(v => v !== undefined && v !== null && String(v).trim() !== '');
-
-        sheet.insertRow(1, [titleText]);
-        sheet.insertRow(2, []);
-
-        const lastCol = sheet.columns.length;
-        const titleRow = sheet.getRow(1);
-        sheet.mergeCells(`A1:${excelColLetter(lastCol)}1`);
-        const tCell = titleRow.getCell(1);
-        tCell.font = { name: 'Arial', bold: true, size: 11 };
-        tCell.alignment = { horizontal: 'left', vertical: 'middle' };
-
-        const headerValues = sheet.columns.map(c => c.header);
-        if (!headerExists) sheet.insertRow(3, headerValues);
-
-        const headerRow = sheet.getRow(3);
-        headerRow.eachCell((cell, colNum) => {
-          cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
-          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
-          cell.alignment = { horizontal: "center", vertical: "middle", wrapText: colNum === 2 ? true : false };
-          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-        });
-
-        const grouped = {};
-        tableData.forEach(r => {
-          const cat = sanitize(r.category || "Uncategorized");
-          if (!grouped[cat]) grouped[cat] = [];
-          grouped[cat].push(r);
-        });
-
-        let no = 1;
-        for (const cat of Object.keys(grouped)) {
-          const secRow = sheet.addRow([cat]);
-          const lastColNow = sheet.columns.length;
-          sheet.mergeCells(`A${secRow.number}:${excelColLetter(lastColNow)}${secRow.number}`);
-          for (let i = 1; i <= lastColNow; i++) {
-            const cell = secRow.getCell(i);
-            cell.font = { name: 'Arial', bold: true };
-            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
-            cell.alignment = { horizontal: "left", vertical: "middle" };
+        groupedC[cat].forEach(r => {
+          const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
+          const rowObj = [
+            noC++,
+            r.name,
+            r.qty,
+            r.unit,
+            (r.price !== "" && r.price != null) ? Number(r.price) : "",
+            (totalCogs !== "" ? totalCogs : ""),
+            (r.margin !== undefined && r.margin !== null) ? r.margin : ""
+          ];
+          const dr = sheetCogs.addRow(rowObj);
+          dr.eachCell((cell, colNum) => {
+            cell.font = { name: 'Arial' };
             cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-          }
-          grouped[cat].forEach(r => {
-            let spRaw = null;
-            if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
-            else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
-            const spRounded = spRaw != null ? roundUpToThousand(spRaw) : "";
-            const totalSp = (spRounded !== "") ? Number(r.qty || 0) * spRounded : "";
-            const rowObj = { no: no++, name: r.name, qty: r.qty, unit: r.unit, sellingPrice: spRounded, totalSelling: totalSp };
-            const dr = sheet.addRow(rowObj);
-            dr.eachCell((cell, colNum) => {
-              cell.font = { name: 'Arial' };
-              cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-              if (colNum >= 5) {
-                cell.numFmt = "#,##0";
-                cell.alignment = { horizontal: "right", vertical: "middle" };
-              } else if (colNum === 2) {
-                cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
-              } else {
-                cell.alignment = { horizontal: "center", vertical: "middle" };
-              }
-            });
+            if (colNum >= 5 && colNum <= 6) {
+              cell.numFmt = "#,##0";
+              cell.alignment = { horizontal: "right", vertical: "middle" };
+            } else if (colNum === 2) {
+              cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+            } else {
+              cell.alignment = { horizontal: "center", vertical: "middle" };
+            }
           });
-        }
-
-        const sumSelling = tableData.reduce((a, b) => {
-          let sp = null;
-          if (b.sellingPrice != null && b.sellingPrice !== "") sp = Number(b.sellingPrice);
-          else if (b.price != null && b.price !== "") sp = calcSellingPrice(Number(b.price), b.margin);
-          const spr = sp != null ? roundUpToThousand(sp) : 0;
-          return a + (spr ? (Number(b.qty || 0) * spr) : 0);
-        }, 0);
-
-        const tr = sheet.addRow([]);
-        const lastColNow = sheet.columns.length;
-        sheet.mergeCells(`A${tr.number}:${excelColLetter(lastColNow-1)}${tr.number}`);
-        const labelCell = tr.getCell(1);
-        labelCell.value = "Grand Total";
-        labelCell.font = { name: 'Arial', bold: true };
-        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-        labelCell.alignment = { horizontal: "center", vertical: "middle" };
-        labelCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-
-        const totalCell = tr.getCell(lastColNow);
-        totalCell.value = sumSelling;
-        totalCell.numFmt = "#,##0";
-        totalCell.font = { name: 'Arial', bold: true };
-        totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-        totalCell.alignment = { horizontal: "right", vertical: "middle" };
-        totalCell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+        });
       }
 
+      // footer total
+      const sumCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
+      const footRowCogs = sheetCogs.addRow([]);
+      const lastColNowC = sheetCogs.columns.length;
+      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColNowC-1)}${footRowCogs.number}`);
+      const labelCellC = footRowCogs.getCell(1);
+      labelCellC.value = "Grand Total COGS";
+      labelCellC.font = { name: 'Arial', bold: true };
+      labelCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      labelCellC.alignment = { horizontal: "center", vertical: "middle" };
+      labelCellC.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      const totalCellC = footRowCogs.getCell(lastColNowC);
+      totalCellC.value = sumCogs;
+      totalCellC.numFmt = "#,##0";
+      totalCellC.font = { name: 'Arial', bold: true };
+      totalCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      totalCellC.alignment = { horizontal: "right", vertical: "middle" };
+      totalCellC.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
+      // ----- SHEET: Selling -----
+      const sheetSelling = workbook.addWorksheet("Selling");
+      sheetSelling.columns = [
+        { key: "no", width: 6 },
+        { key: "name", width: 40 },
+        { key: "qty", width: 10 },
+        { key: "unit", width: 12 },
+        { key: "sellingPrice", width: 18 },
+        { key: "totalSelling", width: 18 }
+      ];
+      sheetSelling.insertRow(1, [currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ']);
+      sheetSelling.insertRow(2, []);
+      const lastColSell = sheetSelling.columns.length;
+      sheetSelling.mergeCells(`A1:${excelColLetter(lastColSell)}1`);
+      // <-- set title font to Arial & bold -->
+      const titleRowSell = sheetSelling.getRow(1);
+      const tCellSell = titleRowSell.getCell(1);
+      tCellSell.font = { name: 'Arial', bold: true };
+      tCellSell.alignment = { horizontal: 'left', vertical: 'middle' };
+      // ------------------------------------------------
+      const headerSell = ["No", "Nama Item", "Qty", "Unit", "Harga Satuan", "Total"];
+      sheetSelling.insertRow(3, headerSell);
+      const headerRowSell = sheetSelling.getRow(3);
+      headerRowSell.eachCell((cell) => {
+        cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      });
+
+      const groupedS = {};
+      tableData.forEach(r => { const cat = sanitize(r.category || "Uncategorized"); if (!groupedS[cat]) groupedS[cat] = []; groupedS[cat].push(r); });
+      let noS = 1;
+      for (const cat of Object.keys(groupedS)) {
+        const secRow = sheetSelling.addRow([cat]);
+        sheetSelling.mergeCells(`A${secRow.number}:${excelColLetter(lastColSell)}${secRow.number}`);
+        for (let i = 1; i <= lastColSell; i++) {
+          const cell = secRow.getCell(i);
+          cell.font = { name: 'Arial', bold: true };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+        }
+        groupedS[cat].forEach(r => {
+          let spRaw = null;
+          if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
+          else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
+          const spRounded = spRaw != null ? roundUpToThousand(spRaw) : "";
+          const totalSp = (spRounded !== "") ? Number(r.qty || 0) * spRounded : "";
+          const rowObj = [noS++, r.name, r.qty, r.unit, (spRounded !== "" ? spRounded : ""), (totalSp !== "" ? totalSp : "")];
+          const dr = sheetSelling.addRow(rowObj);
+          dr.eachCell((cell, colNum) => {
+            cell.font = { name: 'Arial' };
+            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+            if (colNum >= 5) { cell.numFmt = "#,##0"; cell.alignment = { horizontal: "right", vertical: "middle" }; }
+            else if (colNum === 2) { cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true }; }
+            else { cell.alignment = { horizontal: "center", vertical: "middle" }; }
+          });
+        });
+      }
+
+      const sumSelling = tableData.reduce((a, b) => {
+        let sp = null;
+        if (b.sellingPrice != null && b.sellingPrice !== "") sp = Number(b.sellingPrice);
+        else if (b.price != null && b.price !== "") sp = calcSellingPrice(Number(b.price), b.margin);
+        const spr = sp != null ? roundUpToThousand(sp) : 0;
+        return a + (spr ? (Number(b.qty || 0) * spr) : 0);
+      }, 0);
+      const footRowSell = sheetSelling.addRow([]);
+      const lastColNowS = sheetSelling.columns.length;
+      sheetSelling.mergeCells(`A${footRowSell.number}:${excelColLetter(lastColNowS-1)}${footRowSell.number}`);
+      const labelCellS = footRowSell.getCell(1);
+      labelCellS.value = "Grand Total";
+      labelCellS.font = { name: 'Arial', bold: true };
+      labelCellS.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      labelCellS.alignment = { horizontal: "center", vertical: "middle" };
+      labelCellS.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      const totalCellS = footRowSell.getCell(lastColNowS);
+      totalCellS.value = sumSelling;
+      totalCellS.numFmt = "#,##0";
+      totalCellS.font = { name: 'Arial', bold: true };
+      totalCellS.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      totalCellS.alignment = { horizontal: "right", vertical: "middle" };
+      totalCellS.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
+      // ----- SHEET: Calculation -----
+      const sheetCalc = workbook.addWorksheet("Calculation");
+      sheetCalc.columns = [
+        { key: "totalCogs", width: 18 },
+        { key: "totalSelling", width: 18 },
+        { key: "commission", width: 18 },
+        { key: "grossProfit", width: 18 },
+        { key: "totalMargin", width: 18 }
+      ];
+      sheetCalc.insertRow(1, [currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ']);
+      sheetCalc.insertRow(2, []);
+      const lastColCalc = sheetCalc.columns.length;
+      sheetCalc.mergeCells(`A1:${excelColLetter(lastColCalc)}1`);
+      // <-- set title font to Arial & bold -->
+      const titleRowCalc = sheetCalc.getRow(1);
+      const tCellCalc = titleRowCalc.getCell(1);
+      tCellCalc.font = { name: 'Arial', bold: true };
+      tCellCalc.alignment = { horizontal: 'left', vertical: 'middle' };
+      // ------------------------------------------------
+      const headerCalc = ["Total COGS", "Total Selling", "Commission", "Gross Profit", "Total Margin"];
+      sheetCalc.insertRow(3, headerCalc);
+      const headerRowCalc = sheetCalc.getRow(3);
+      headerRowCalc.eachCell((cell) => {
+        cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+      });
+
+      // compute calculation values
+      const totals = computeTotals();
+      const totalCogsVal = Number(totals.totalCogs || 0);
+      const totalSellingVal = Number(totals.totalSelling || 0);
+      const commissionVal = Number(currentCommission || 0);
+      const grossProfitVal = totalSellingVal - totalCogsVal - commissionVal;
+      const totalMarginPercent = (totalSellingVal === 0) ? 0 : (grossProfitVal / totalSellingVal * 100);
+
+      // add data row
+      const dataRowCalc = sheetCalc.addRow([
+        totalCogsVal,
+        totalSellingVal,
+        commissionVal,
+        grossProfitVal,
+        (isFinite(totalMarginPercent) ? totalMarginPercent.toFixed(2) + '%' : '0.00%')
+      ]);
+      dataRowCalc.eachCell((cell, colNum) => {
+        cell.font = { name: 'Arial' };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+        if (colNum <= 4) { cell.numFmt = "#,##0"; cell.alignment = { horizontal: "right", vertical: "middle" }; }
+        else { cell.alignment = { horizontal: "center", vertical: "middle" }; }
+      });
+
+      const footCalc = sheetCalc.addRow([]);
+      const lastColNowCalc = sheetCalc.columns.length;
+      sheetCalc.mergeCells(`A${footCalc.number}:${excelColLetter(lastColNowCalc)}${footCalc.number}`);
+      const labelCellCalc = footCalc.getCell(1);
+      labelCellCalc.value = "Calculation Summary";
+      labelCellCalc.font = { name: 'Arial', bold: true };
+      labelCellCalc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      labelCellCalc.alignment = { horizontal: "center", vertical: "middle" };
+      labelCellCalc.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+
+      // Write workbook and trigger download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const link = document.createElement('a');
@@ -952,10 +871,12 @@
     }
 
     function exportPDF() {
-      if (!tableData.length) { showAlert('Tidak ada data untuk diekspor.'); return; }
+      // allow calculation export even if tableData empty
+      if (!tableData.length && activeTab !== 'calculation') { showAlert('Tidak ada data untuk diekspor.'); return; }
       let filenameSuffix = '';
       if (activeTab === 'cogs') filenameSuffix = ' (COGS)';
       else if (activeTab === 'selling') filenameSuffix = ' (Selling)';
+      else if (activeTab === 'calculation') filenameSuffix = ' (Calculation)';
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(14);
@@ -963,12 +884,7 @@
       doc.text(title, 14, 15);
 
       const grouped = {};
-      tableData.forEach(r => {
-        const cat = sanitize(r.category || 'Uncategorized');
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(r);
-      });
-
+      tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
       const body = [];
       let rowNoGlobal = 1;
 
@@ -992,7 +908,7 @@
         body.push([{ content: "Grand Total COGS", colSpan: 6, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254, 243, 214] } }, { content: grandCogs.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254, 243, 214] } }]);
         const head = ["No", "Nama Item", "Qty", "Unit", "Harga COGS", "Total COGS", "Margin (%)"];
         doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, columnStyles: { 0: { halign: 'center', valign: 'middle' }, 2: { halign: 'center', valign: 'middle' }, 3: { halign: 'center', valign: 'middle' } }, styles: { fontSize: 10, cellPadding: 3 } });
-      } else {
+      } else if (activeTab === 'selling') {
         for (const cat of Object.keys(grouped)) {
           body.push([{ content: cat, colSpan: 6, styles: { fillColor: [238, 238, 238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
           grouped[cat].forEach(r => {
@@ -1021,13 +937,29 @@
         body.push([{ content: "Grand Total", colSpan: 5, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254, 243, 214] } }, { content: grandSelling.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254, 243, 214] } }]);
         const head = ["No", "Nama Item", "Qty", "Unit", "Harga Satuan", "Total"];
         doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, columnStyles: { 0: { halign: 'center', valign: 'middle' }, 2: { halign: 'center', valign: 'middle' }, 3: { halign: 'center', valign: 'middle' } }, styles: { fontSize: 10, cellPadding: 3 } });
+      } else if (activeTab === 'calculation') {
+        const totals = computeTotals();
+        const totalCogs = Number(totals.totalCogs || 0);
+        const totalSelling = Number(totals.totalSelling || 0);
+        const commission = Number(currentCommission || 0);
+        const grossProfit = totalSelling - totalCogs - commission;
+        const totalMargin = (totalSelling === 0) ? 0 : (grossProfit / totalSelling);
+        const head = ["Total COGS", "Total Selling", "Commission", "Gross Profit", "Total Margin"];
+        const row = [
+          { content: Number(totalCogs).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: Number(totalSelling).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: Number(commission).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: Number(grossProfit).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: (isFinite(totalMargin) ? (totalMargin * 100).toFixed(2) + '%' : '0.00%'), styles: { halign: 'center', valign: 'middle' } }
+        ];
+        doc.autoTable({ head: [head], body: [row], startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, styles: { fontSize: 10, cellPadding: 3 } });
       }
 
       const filename = getSafeFileName(currentProjectName) + (filenameSuffix ? filenameSuffix : '') + ".pdf";
       doc.save(filename);
     }
 
-    // MANAGE ITEMS & PROJECTS
+    // MANAGE ITEMS & PROJECTS (unchanged)
     manageBtn.addEventListener('click', () => { populateManageItems(); manageModal.style.display = 'block'; manageModal.setAttribute('aria-hidden', 'false'); });
     modalClose.addEventListener('click', () => { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden', 'true'); });
     projectsClose.addEventListener('click', () => { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden', 'true'); });
@@ -1038,39 +970,25 @@
       const sorted = items.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       sorted.forEach((it) => {
         const li = document.createElement('li');
-
-        const span = document.createElement('span');
-        span.textContent = it.name;
-
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'btn ghost';
+        const span = document.createElement('span'); span.textContent = it.name;
+        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
         renameBtn.addEventListener('click', () => {
           const newName = sanitize(prompt('Ubah nama item:', it.name) || '');
           if (!newName) return;
           const oldKey = normalizeKey(it.name);
           items.forEach(x => { if (normalizeKey(x.name) === oldKey) x.name = newName; });
           localStorage.setItem('boq_items', JSON.stringify(items));
-          updateDatalist();
-          populateManageItems();
+          updateDatalist(); populateManageItems();
         });
-
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Hapus';
-        delBtn.className = 'btn secondary';
+        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
         delBtn.addEventListener('click', () => {
           if (!confirm(`Hapus item "${it.name}"?`)) return;
           const key = normalizeKey(it.name);
           items = items.filter(x => normalizeKey(x.name) !== key);
           localStorage.setItem('boq_items', JSON.stringify(items));
-          updateDatalist();
-          populateManageItems();
+          updateDatalist(); populateManageItems();
         });
-
-        li.appendChild(span);
-        li.appendChild(renameBtn);
-        li.appendChild(delBtn);
-        manageItemList.appendChild(li);
+        li.appendChild(span); li.appendChild(renameBtn); li.appendChild(delBtn); manageItemList.appendChild(li);
       });
     }
 
@@ -1080,41 +998,21 @@
       Object.keys(projects).forEach(name => {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = name;
-
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Hapus';
-        delBtn.className = 'btn secondary';
+        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
         delBtn.addEventListener('click', () => {
           if (!confirm(`Hapus project "${name}"?`)) return;
-          delete projects[name];
-          saveProjectsObj(projects);
-          populateManageProjects();
-          updateProjectList();
+          delete projects[name]; saveProjectsObj(projects); populateManageProjects(); updateProjectList();
         });
-
-        const renameBtn = document.createElement('button');
-        renameBtn.textContent = 'Rename';
-        renameBtn.className = 'btn ghost';
+        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
         renameBtn.addEventListener('click', () => {
           const newName = sanitize(prompt('Ubah nama project:', name) || '');
           if (!newName) return;
           if (projects[newName]) { showAlert('Nama project sudah ada.'); return; }
-          projects[newName] = projects[name];
-          delete projects[name];
-          saveProjectsObj(projects);
-          if (currentProjectName === name) {
-            currentProjectName = newName;
-            localStorage.setItem('boq_current_name', currentProjectName);
-            updateNavProject();
-          }
-          populateManageProjects();
-          updateProjectList();
+          projects[newName] = projects[name]; delete projects[name]; saveProjectsObj(projects);
+          if (currentProjectName === name) { currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateNavProject(); }
+          populateManageProjects(); updateProjectList();
         });
-
-        li.appendChild(span);
-        li.appendChild(renameBtn);
-        li.appendChild(delBtn);
-        manageProjectList.appendChild(li);
+        li.appendChild(span); li.appendChild(renameBtn); li.appendChild(delBtn); manageProjectList.appendChild(li);
       });
     }
 
@@ -1126,11 +1024,7 @@
     function updateProjectList() {
       const projects = loadProjectsObj();
       projectList.innerHTML = '';
-      Object.keys(projects).forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k;
-        projectList.appendChild(opt);
-      });
+      Object.keys(projects).forEach(k => { const opt = document.createElement('option'); opt.value = k; projectList.appendChild(opt); });
     }
 
     saveProjectBtn.addEventListener('click', saveProject);
@@ -1146,9 +1040,7 @@
       if (projects[name] && !confirm('Nama project sudah ada. Timpa?')) return;
       projects[name] = { data: tableData, commission: Number(currentCommission || 0) };
       saveProjectsObj(projects);
-      currentProjectName = name;
-      localStorage.setItem('boq_current_name', currentProjectName);
-      updateProjectList(); updateNavProject();
+      currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName); updateProjectList(); updateNavProject();
       showAlert(`Project "${name}" berhasil disimpan.`);
     }
 
@@ -1161,43 +1053,20 @@
       if (Array.isArray(stored)) { tableData = stored; currentCommission = 0; }
       else if (stored && typeof stored === 'object') { tableData = stored.data || []; currentCommission = Number(stored.commission || 0); }
       else { tableData = []; currentCommission = 0; }
-
-      // Reset working form & editing state when loading project
-      form.reset();
-      sellingInputManuallyEdited = false;
-      setEditingMode(null);
-      selectedIndex = null;
-
+      form.reset(); sellingInputManuallyEdited = false; setEditingMode(null); selectedIndex = null;
       localStorage.setItem('boq_working', JSON.stringify(tableData));
-      currentProjectName = name;
-      localStorage.setItem('boq_current_name', currentProjectName);
-      updateNavProject();
-      updateProjectList();
-      renderAll();
-      // Clear project search input to make selecting another project easier
-      projectSearch.value = '';
+      currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
+      updateNavProject(); updateProjectList(); renderAll(); projectSearch.value = '';
       showAlert(`Project "${name}" berhasil dimuat.`);
       updateEditButton();
     }
 
     function newProject() {
       if (!confirm('Buat project baru? Semua data saat ini akan dihapus.')) return;
-      tableData = [];
-      selectedIndex = null;
-      setEditingMode(null);
-      currentProjectName = '';
-      currentCommission = 0;
-
-      // Reset form
-      form.reset();
-      sellingInputManuallyEdited = false;
-
-      localStorage.setItem('boq_working', JSON.stringify(tableData));
-      localStorage.removeItem('boq_current_name');
-      updateNavProject();
-      renderAll();
-      showAlert('Project baru siap diisi.');
-      updateEditButton();
+      tableData = []; selectedIndex = null; setEditingMode(null);
+      currentProjectName = ''; currentCommission = 0; form.reset(); sellingInputManuallyEdited = false;
+      localStorage.setItem('boq_working', JSON.stringify(tableData)); localStorage.removeItem('boq_current_name');
+      updateNavProject(); renderAll(); showAlert('Project baru siap diisi.'); updateEditButton();
     }
 
     renameProjectBtn.addEventListener('click', () => {
@@ -1208,15 +1077,10 @@
       if (projects[newName] && newName !== currentProjectName && !confirm('Nama project sudah ada. Timpa?')) return;
       if (projects[currentProjectName]) delete projects[currentProjectName];
       projects[newName] = { data: tableData, commission: Number(currentCommission || 0) };
-      saveProjectsObj(projects);
-      currentProjectName = newName;
-      localStorage.setItem('boq_current_name', currentProjectName);
-      updateProjectList();
-      updateNavProject();
-      showAlert('Nama project diubah.');
+      saveProjectsObj(projects); currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName);
+      updateProjectList(); updateNavProject(); showAlert('Nama project diubah.');
     });
 
-    // ===== NEW: Backup & Restore seluruh data =====
     downloadJSONBtn.addEventListener('click', () => {
       const projects = loadProjectsObj();
       const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
@@ -1228,9 +1092,9 @@
     });
 
     restoreJSONBtn.addEventListener('click', () => { restoreInput.value = ''; restoreInput.click(); });
+
     restoreInput.addEventListener('change', (ev) => {
-      const f = ev.target.files && ev.target.files[0];
-      if (!f) return;
+      const f = ev.target.files && ev.target.files[0]; if (!f) return;
       const reader = new FileReader();
       reader.onload = (e) => {
         let parsed = null;
@@ -1253,11 +1117,7 @@
             restoreObj.unsavedCommission = Number(parsed.commission || 0);
           } else {
             if (Array.isArray(parsed)) {
-              restoreObj.working = parsed;
-              restoreObj.items = items || [];
-              restoreObj.projects = loadProjectsObj();
-              restoreObj.currentProjectName = '';
-              restoreObj.unsavedCommission = 0;
+              restoreObj.working = parsed; restoreObj.items = items || []; restoreObj.projects = loadProjectsObj(); restoreObj.currentProjectName = ''; restoreObj.unsavedCommission = 0;
             } else {
               restoreObj.projects = parsed.projects || parsed.projectList || {};
               restoreObj.items = parsed.items || parsed.boq_items || [];
@@ -1277,24 +1137,17 @@
           items = JSON.parse(localStorage.getItem('boq_items')) || [];
           tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
           loadCommissionForCurrentProject();
-          updateNavProject();
-          updateProjectList();
-          updateDatalist();
-          renderAll();
+          updateNavProject(); updateProjectList(); updateDatalist(); renderAll();
           showAlert('Restore berhasil. Data lokal telah diperbarui.');
-        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.'); }
+        } catch (err) {
+          console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
+        }
       };
       reader.readAsText(f);
     });
 
     // INIT
-    updateNavProject();
-    updateProjectList();
-    updateDatalist();
-    loadCommissionForCurrentProject();
-    renderAll();
-    switchTo('cogs');
-    updateEditButton();
+    updateNavProject(); updateProjectList(); updateDatalist(); loadCommissionForCurrentProject(); renderAll(); switchTo('cogs'); updateEditButton();
   </script>
 </body>
 </html>
