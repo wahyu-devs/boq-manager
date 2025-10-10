@@ -17,6 +17,7 @@
     .project-name { opacity: .9; color: var(--nav-txt); font-weight: 400 }
     .nav-actions { margin-left: auto; display: flex; gap: 8px; align-items: center }
     .btn { background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
+    .btn[disabled] { opacity: .6; cursor: not-allowed; pointer-events: none; }
     .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
     .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); color: var(--nav-txt) }
     .container { padding: var(--container-pad); max-width: 1200px; margin: 0 auto }
@@ -31,6 +32,8 @@
     #itemName { flex: 1 }
     #projectSearch { width: 220px }
     button[type="submit"] { min-width: 140px; align-self: center }
+    .form-disabled { opacity: .7; filter: grayscale(10%); }
+    .form-disabled input, .form-disabled select, .form-disabled textarea { background: #f7f7f7; }
     .table-wrap { overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid #e6e6e6 }
     table { width: 100%; border-collapse: collapse; background: transparent }
     th, td { border: 1px solid #e9e9e9; padding: 8px; text-align: center; font-size: 13px }
@@ -49,10 +52,8 @@
     /* modal */
     .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
     .modal-content { background: #fff; margin: 6% auto; padding: 16px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid #ddd; }
-    /* header: title left, search right */
     .modal-header { font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:8px; justify-content: space-between; flex-wrap: wrap; }
     .modal-header .title { font-weight:700; }
-    /* slightly wider search on modal header, positioned to the right */
     .modal-search { margin: 0 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; width: 55%; max-width: 340px; min-width: 160px; }
     .modal-list { max-height: 300px; overflow: auto; margin-bottom: 12px; padding: 0; list-style: none }
     .modal-list li { display: flex; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid #eee }
@@ -73,7 +74,6 @@
       button[type="submit"] { align-self: stretch }
       .calc-summary tbody td.value { min-width: 100px; }
       .commission-input { width: 100px; }
-      /* modal header stacks on small screen; make search full width */
       .modal-header { justify-content: flex-start; }
       .modal-search { width: 100%; max-width: 100%; margin-top: 8px; margin-left: 0; }
     }
@@ -100,6 +100,7 @@
       <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
     </div>
 
+    <!-- FORM selalu tampil di semua tab; akan di-disable pada Selling & Calculation -->
     <form id="boqForm" autocomplete="off">
       <input type="text" id="itemName" placeholder="Nama Item" list="itemList" required />
       <datalist id="itemList"></datalist>
@@ -201,22 +202,48 @@
     const tabCogs = document.getElementById('tabCogs');
     const tabSelling = document.getElementById('tabSelling');
     const tabCalc = document.getElementById('tabCalc');
+    const form = document.getElementById('boqForm');
+
     let activeTab = 'cogs';
+
+    // Helper: enable/disable baris input atas tanpa menyembunyikan
+    function setFormDisabled(disabled) {
+      const controls = form.querySelectorAll('input, button, select, textarea');
+      controls.forEach(el => {
+        if (el.tagName.toLowerCase() === 'datalist') return;
+        if (disabled) el.setAttribute('disabled', 'disabled');
+        else el.removeAttribute('disabled');
+      });
+      if (disabled) form.classList.add('form-disabled');
+      else form.classList.remove('form-disabled');
+    }
+
     function switchTo(tab) {
       activeTab = tab;
       tabCogs.classList.add('hidden');
       tabSelling.classList.add('hidden');
       tabCalc.classList.add('hidden');
       [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected','false'); });
-      if (tab === 'cogs') { tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true'); document.getElementById('boqForm').style.display = ''; }
-      else if (tab === 'selling') { tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true'); document.getElementById('boqForm').style.display = 'none'; }
-      else if (tab === 'calculation') { tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true'); document.getElementById('boqForm').style.display = 'none'; renderCalculation(); }
+
+      if (tab === 'cogs') {
+        tabCogs.classList.remove('hidden');
+        tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true');
+        setFormDisabled(false); // aktif di COGS
+      } else if (tab === 'selling') {
+        tabSelling.classList.remove('hidden');
+        tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true');
+        setFormDisabled(true); // non-aktif tapi tetap tampil
+      } else if (tab === 'calculation') {
+        tabCalc.classList.remove('hidden');
+        tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true');
+        setFormDisabled(true); // non-aktif tapi tetap tampil
+        renderCalculation();
+      }
     }
     tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
     tabSellingBtn.addEventListener('click', () => switchTo('selling'));
     tabCalcBtn.addEventListener('click', () => switchTo('calculation'));
 
-    const form = document.getElementById('boqForm');
     const itemList = document.getElementById('itemList');
     const priceInput = document.getElementById('price');
     const marginInput = document.getElementById('margin');
@@ -245,7 +272,7 @@
     const manageProjectsBtn = document.getElementById('manageProjectsBtn');
     const manageProjectList = document.getElementById('manageProjectList');
 
-    // modal search inputs (IDs preserved)
+    // modal search inputs
     const manageItemSearch = document.getElementById('manageItemSearch');
     const manageProjectSearch = document.getElementById('manageProjectSearch');
 
@@ -284,10 +311,8 @@
     formatThousandsInput(priceInput);
     formatThousandsInput(sellingInput);
 
-    // Excel helper: convert column number to letters
     function excelColLetter(n) { let s=''; while (n>0) { const m = (n-1) % 26; s = String.fromCharCode(65+m) + s; n = Math.floor((n-1)/26); } return s; }
 
-    // Update datalist for items (sorted alphabetically)
     function updateDatalist() {
       const map = {};
       items.forEach(it => { if (!it || !it.name) return; const key = it.name.trim(); if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) map[key] = it; });
@@ -299,7 +324,6 @@
     function calcSellingPrice(cogs, marginPercent) { const m = Number(marginPercent)/100; if (!isFinite(m) || m >= 1) return null; if (cogs === "" || cogs == null) return null; return Number(cogs) / (1 - m); }
     function roundUpToThousand(n) { if (n == null || !isFinite(n)) return null; const eps = 1e-9; return Math.ceil((n - eps) / 1000) * 1000; }
 
-    // ---------- ITEM helpers ----------
     function normalizeKey(name) { return String(name || '').trim().toLowerCase(); }
     function getItemByName(name) { if (!name) return null; const key = normalizeKey(name); let best = null; for (const it of items) { if (!it || !it.name) continue; if (normalizeKey(it.name) === key) { if (!best || (it.updatedAt || 0) > (best.updatedAt || 0)) best = it; } } return best; }
 
@@ -348,14 +372,14 @@
       if (it.category !== undefined) categoryInput.value = it.category || "";
     }
 
-    nameInput.addEventListener('change', (e) => {
+    const nameInputChangeHandler = (e) => {
       const v = sanitize(e.target.value);
       if (!v) return;
       const found = getItemByName(v);
       if (found) autofillFromItem(v);
-    });
+    };
+    nameInput.addEventListener('change', nameInputChangeHandler);
 
-    // ---------- Auto-fill Harga Jual handling ----------
     sellingInput.addEventListener('input', (ev) => { sellingInputManuallyEdited = true; });
     function computeAndDisplaySelling() {
       const priceNum = parseNumberFormatted(priceInput.value);
@@ -369,7 +393,6 @@
     priceInput.addEventListener('input', () => { computeAndDisplaySelling(); });
     marginInput.addEventListener('input', () => { computeAndDisplaySelling(); });
 
-    // ---------- Totals & rendering ----------
     function computeTotals() {
       const totalCogs = tableData.reduce((acc, r) => { const p = (r.price != null && r.price !== "") ? Number(r.price) : 0; const q = Number(r.qty || 0); return acc + (Number(p || 0) * q); }, 0);
       const totalSelling = tableData.reduce((acc, r) => { let sp = null; if (r.sellingPrice != null && r.sellingPrice !== "") sp = Number(r.sellingPrice); else if (r.price != null && r.price !== "") sp = calcSellingPrice(Number(r.price), r.margin); const spr = sp != null ? roundUpToThousand(sp) : 0; const q = Number(r.qty || 0); return acc + (spr ? (spr * q) : 0); }, 0);
@@ -445,7 +468,6 @@
       grandSellingEl.textContent = grand.toLocaleString('id-ID');
     }
 
-    // Projects helper
     function loadProjectsObj() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || {}; } catch (e) { return {}; } }
     function saveProjectsObj(obj) { localStorage.setItem(PROJECTS_KEY, JSON.stringify(obj)); }
 
@@ -463,7 +485,6 @@
       calcTotalMarginEl.textContent = (isFinite(totalMargin) ? (totalMargin * 100).toFixed(2) : '0.00') + '%';
     }
 
-    // Commission formatting/persistence
     (function setupCommissionCell() {
       commissionCellInput.addEventListener('input', () => {
         const rawDigits = String(commissionCellInput.value).replace(/[^\d]/g, '');
@@ -494,14 +515,15 @@
 
     function renderAll() { renderCogsTable(); renderSellingTable(); renderCalculation(); }
 
-    // ------------ Edit mode helpers ----------
     function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
     function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }
     function updateEditButton() { if (editingIndex === null) { editBtn.textContent = 'Edit'; editBtn.classList.remove('primary'); editBtn.classList.add('btn','secondary'); } else { editBtn.textContent = 'Cancel Edit'; editBtn.classList.remove('primary'); editBtn.classList.add('btn','secondary'); } }
 
-    // FORM SUBMIT
     form.addEventListener('submit', e => {
       e.preventDefault();
+      // Jika kebetulan form disabled (tab Selling/Calculation), cegah submit
+      if (form.classList.contains('form-disabled')) return;
+
       const name = sanitize(nameInput.value);
       const category = sanitize(categoryInput.value);
       if (!name || !category) { showAlert('Nama item dan kategori harus diisi.'); return; }
@@ -534,7 +556,6 @@
       updateEditButton();
     });
 
-    // Row actions
     editBtn.addEventListener('click', () => {
       if (editingIndex !== null) { cancelEdit(); updateEditButton(); return; }
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
@@ -564,13 +585,8 @@
       updateEditButton();
     });
 
-    // EXPORT & PDF
     exportExcelBtn.addEventListener('click', exportExcel);
     exportPdfBtn.addEventListener('click', exportPDF);
-
-    // ... (exportExcel and exportPDF functions are identical to previous full implementation)
-    // For brevity in this reply they remain unchanged and fully functional as in your original code.
-    // I'll include them unchanged below to keep the file self-contained.
 
     async function exportExcel() {
       const filename = getSafeFileName(currentProjectName) + ".xlsx";
@@ -861,7 +877,7 @@
       doc.save(filename);
     }
 
-    // MANAGE ITEMS & PROJECTS (updated: alphabetical + search)
+    // MANAGE ITEMS & PROJECTS
     manageBtn.addEventListener('click', () => {
       manageItemSearch.value = '';
       populateManageItems();
@@ -879,7 +895,6 @@
       manageProjectSearch.focus();
     });
 
-    // populateManageItems: sorts alphabetically and filters by search input
     function populateManageItems() {
       manageItemList.innerHTML = '';
       const q = String(manageItemSearch.value || '').trim().toLowerCase();
@@ -912,7 +927,6 @@
       });
     }
 
-    // populateManageProjects: sorts alphabetically and filters by search input
     function populateManageProjects() {
       manageProjectList.innerHTML = '';
       const q = String(manageProjectSearch.value || '').trim().toLowerCase();
@@ -943,7 +957,6 @@
       if (e.target === projectsModal) { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden','true'); }
     });
 
-    // Update project datalist (dropdown) sorted alphabetically
     function updateProjectList() {
       const projects = loadProjectsObj();
       projectList.innerHTML = '';
@@ -951,11 +964,9 @@
       keys.forEach(k => { const opt = document.createElement('option'); opt.value = k; projectList.appendChild(opt); });
     }
 
-    // wire search inputs
     manageItemSearch.addEventListener('input', populateManageItems);
     manageProjectSearch.addEventListener('input', populateManageProjects);
 
-    // PROJECT actions
     saveProjectBtn.addEventListener('click', saveProject);
     loadProjectBtn.addEventListener('click', () => loadProject());
     newProjectBtn.addEventListener('click', () => newProject());
@@ -1019,6 +1030,7 @@
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     });
 
+    // gunakan deklarasi yang SUDAH ADA di atas, hanya pasang listener
     restoreJSONBtn.addEventListener('click', () => { restoreInput.value = ''; restoreInput.click(); });
     restoreInput.addEventListener('change', (ev) => {
       const f = ev.target.files && ev.target.files[0];
@@ -1082,7 +1094,7 @@
     updateDatalist();
     loadCommissionForCurrentProject();
     renderAll();
-    switchTo('cogs');
+    switchTo('cogs'); // akan mengaktifkan form
     updateEditButton();
   </script>
 </body>
