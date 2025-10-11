@@ -4,43 +4,125 @@
   <meta charset="UTF-8" />
   <title>BOQ Manager — Project Cost Estimation Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <style>
-    :root { --nav-bg: #0b0b0b; --nav-txt: #fff; --container-pad: 20px; --card: #fff; --muted: #777; --accent: #1976d2; }
+    /* ===================== THEME ===================== */
+    :root {
+      /* LIGHT (default) */
+      --bg: #f4f6f8;
+      --txt: #111;
+      --muted: #777;
+      --card: #fff;
+      --border: #e6e6e6;
+      --table-border: #e9e9e9;
+      --nav-bg: #0b0b0b;
+      --nav-txt: #fff;
+      --accent: #1976d2; /* dipakai hanya di light (eksisting) */
+      --accent-contrast: #fff;
+      --highlight: #fff5e6;
+      --section-row: #f1f1f1;
+      --table-head-bg: #fbfbfb;
+      --calc-head: #1f4e78; /* untuk export head warna biru */
+      --control-bg-disabled: #f7f7f7;
+    }
+
+    /* DARK ala TickTick: netral, tanpa unsur biru */
+    /* Pakai tone abu-abu pekat, aksen oranye lembut */
+    .theme-dark {
+      --bg: #1f1f1f;
+      --txt: #eaeaea;
+      --muted: #aaaaaa;
+      --card: #262626;
+      --border: #333;
+      --table-border: #3a3a3a;
+      --nav-bg: #151515;
+      --nav-txt: #f2f2f2;
+      --accent: #ff9f1a; /* oranye lembut */
+      --accent-contrast: #1a1a1a;
+      --highlight: #2b2b2b;
+      --section-row: #2a2a2a;
+      --table-head-bg: #2a2a2a;
+      --calc-head: #3a3a3a; /* untuk simulasi header di eksport (tidak memengaruhi pdf) */
+      --control-bg-disabled: #2a2a2a;
+    }
+
+    /* ===================== BASE ===================== */
     * { box-sizing: border-box }
-    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #111 }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+    }
     .navbar-wrapper { background: var(--nav-bg); width: 100% }
-    .navbar { display: flex; align-items: center; gap: 16px; padding: 12px 0 }
+    .navbar {
+      display: flex; align-items: center; gap: 16px; padding: 12px 0;
+    }
     .brand { font-weight: 700; color: var(--nav-txt) }
     .project-name { opacity: .9; color: var(--nav-txt); font-weight: 400 }
     .nav-actions { margin-left: auto; display: flex; gap: 8px; align-items: center }
-    .btn { background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
+
+    .btn {
+      background: var(--accent); color: var(--accent-contrast); border: none;
+      padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px
+    }
+    .btn[disabled] { opacity: .6; cursor: not-allowed; pointer-events: none; }
     .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
+    .theme-dark .btn.secondary { background: #2e2e2e; color: #eaeaea; border: 1px solid #3a3a3a }
     .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); color: var(--nav-txt) }
-    .container { padding: var(--container-pad); max-width: 1200px; margin: 0 auto }
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; border-bottom: 1px solid #e6e6e6; padding-bottom: 6px; }
-    .tab-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative; transition: color .12s ease, background .12s ease; margin: 0; }
+    .theme-dark .btn.ghost { border-color: #444; color: var(--nav-txt) }
+
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto }
+
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;
+      border-bottom: 1px solid var(--border); padding-bottom: 6px;
+    }
+    .tab-btn {
+      background: transparent; border: none; padding: 8px 12px; border-radius: 6px;
+      cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative;
+      transition: color .12s ease, background .12s ease; margin: 0;
+    }
+    .theme-dark .tab-btn { color: var(--txt) }
     .tab-btn:focus { outline: none; }
     .tab-btn.active { color: var(--accent); font-weight: 600; }
-    .tab-btn.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(25,118,210,0.25); }
+    .tab-btn.active::after {
+      content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px;
+      background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    /* Form bar selalu tampil (disabled di Selling & Calculation) */
     form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center }
-    input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 130px; }
+    input[type="text"], input[type="number"], input[list] {
+      padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6;
+      font-size: 14px; min-height: 36px; width: 130px; background: var(--card); color: var(--txt);
+    }
+    .theme-dark input[type="text"], .theme-dark input[type="number"], .theme-dark input[list] {
+      border-color: #3a3a3a;
+    }
     input[type="number"] { width: 130px }
     #itemName { flex: 1 }
     #projectSearch { width: 220px }
     button[type="submit"] { min-width: 140px; align-self: center }
-    .table-wrap { overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid #e6e6e6 }
+    .form-disabled { opacity: .7; filter: grayscale(10%); }
+    .form-disabled input, .form-disabled select, .form-disabled textarea { background: var(--control-bg-disabled); }
+
+    .table-wrap {
+      overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid var(--border)
+    }
     table { width: 100%; border-collapse: collapse; background: transparent }
-    th, td { border: 1px solid #e9e9e9; padding: 8px; text-align: center; font-size: 13px }
-    th { background: #fbfbfb; font-weight: 700 }
+    th, td { border: 1px solid var(--table-border); padding: 8px; text-align: center; font-size: 13px; color: var(--txt) }
+    th { background: var(--table-head-bg); font-weight: 700 }
     td.left { text-align: left }
-    tfoot .total { background: #fff5e6; font-weight: 700 }
+    tfoot .total { background: var(--highlight); font-weight: 700 }
     #cogsTable tfoot td.total.label, #sellingTable tfoot td.total.label { text-align: center; }
     #cogsTable tfoot td.total.value, #sellingTable tfoot td.total.value { text-align: right; }
-    tr.section-row td { background: #f1f1f1; font-weight: 700; text-align: left; padding-left: 12px; border-top: 2px solid #e0e0e0 }
-    tr.selected { background: #e8f7fb }
+    tr.section-row td { background: var(--section-row); font-weight: 700; text-align: left; padding-left: 12px; border-top: 2px solid var(--border) }
+    tr.selected { background: rgba(255,159,26,0.14) } /* seleksi hint; aman di dark & light */
+
     .actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
     .actions label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted) }
     .small-note { font-size: 12px; color: var(--muted) }
@@ -48,24 +130,59 @@
 
     /* modal */
     .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-    .modal-content { background: #fff; margin: 6% auto; padding: 16px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid #ddd; }
-    /* header: title left, search right */
+    .modal-content {
+      background: var(--card); color: var(--txt); margin: 6% auto; padding: 16px; border-radius: 8px;
+      width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid var(--border);
+    }
     .modal-header { font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:8px; justify-content: space-between; flex-wrap: wrap; }
     .modal-header .title { font-weight:700; }
-    /* slightly wider search on modal header, positioned to the right */
-    .modal-search { margin: 0 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; width: 55%; max-width: 340px; min-width: 160px; }
+    .modal-search {
+      margin: 0 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6;
+      font-size: 14px; width: 55%; max-width: 340px; min-width: 160px; background: var(--card); color: var(--txt);
+    }
+    .theme-dark .modal-search { border-color: #3a3a3a; }
     .modal-list { max-height: 300px; overflow: auto; margin-bottom: 12px; padding: 0; list-style: none }
-    .modal-list li { display: flex; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid #eee }
+    .modal-list li { display: flex; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--border) }
     .modal-list li span { flex: 1 }
     .modal-close { float: right; cursor: pointer; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: #eee; border: 1px solid #ddd }
+    .theme-dark .modal-close { background: #2d2d2d; border-color: #3a3a3a; color: var(--txt); }
     .calc-summary thead th { text-align: center; }
     .calc-summary tbody td.value { font-weight: 400; text-align: center; min-width: 140px; }
-    .commission-input { width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center; }
+    .commission-input {
+      width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center;
+      background: var(--card); color: var(--txt);
+    }
+    .theme-dark .commission-input { border-color: #3a3a3a; }
     .modal .btn.ghost { background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 12px; }
-    .modal-list li button { margin-left: 8px; }
+    .theme-dark .modal .btn.ghost { border-color: #3a3a3a; color: var(--txt); }
+
+    /* ===================== DARK MODE TOGGLE ===================== */
+    .theme-toggle {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--nav-txt); user-select: none;
+    }
+    .switch {
+      position: relative; width: 56px; height: 28px;
+      background: #8c8c8c; border-radius: 999px; cursor: pointer; transition: background .2s ease;
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .theme-dark .switch { background: #3a3a3a; border-color: #444; }
+    .switch input { display: none; }
+    .slider {
+      position: absolute; top: 1.2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
+      background: #fff; transition: left .2s ease, background .2s ease, box-shadow .2s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    .theme-dark .slider { background: #f0f0f0; }
+    .switch input:checked + .slider {
+      left: 30px;
+      background: #ff9f1a; /* aksen saat ON */
+      box-shadow: 0 1px 4px rgba(255,159,26,.5);
+    }
+    .toggle-label { font-size: 12px; opacity: .9; }
+    .theme-dark .toggle-label { opacity: .95; }
 
     @media (max-width:720px) {
-      .nav-actions { display: none }
+      .nav-actions { gap: 6px }
       .container { padding: 12px }
       input[type="number"], #projectSearch { width: 100% }
       form { flex-direction: column; align-items: stretch }
@@ -73,7 +190,6 @@
       button[type="submit"] { align-self: stretch }
       .calc-summary tbody td.value { min-width: 100px; }
       .commission-input { width: 100px; }
-      /* modal header stacks on small screen; make search full width */
       .modal-header { justify-content: flex-start; }
       .modal-search { width: 100%; max-width: 100%; margin-top: 8px; margin-left: 0; }
     }
@@ -83,7 +199,17 @@
   <div class="navbar-wrapper">
     <div class="container navbar">
       <div class="brand">BOQ Manager <span class="project-name" id="navProject">(no project)</span></div>
+
+      <!-- Toggle Dark Mode (slider) -->
       <div class="nav-actions">
+        <div class="theme-toggle" title="Toggle dark mode">
+          <span class="toggle-label" id="toggleLabel">Light</span>
+          <label class="switch" aria-label="Toggle dark mode">
+            <input type="checkbox" id="themeSwitch" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
         <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
         <button class="btn ghost" id="manageBtn">Manage</button>
         <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup Data</button>
@@ -100,6 +226,7 @@
       <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
     </div>
 
+    <!-- FORM selalu tampil di semua tab; akan di-disable pada Selling & Calculation -->
     <form id="boqForm" autocomplete="off">
       <input type="text" id="itemName" placeholder="Nama Item" list="itemList" required />
       <datalist id="itemList"></datalist>
@@ -201,22 +328,81 @@
     const tabCogs = document.getElementById('tabCogs');
     const tabSelling = document.getElementById('tabSelling');
     const tabCalc = document.getElementById('tabCalc');
+    const form = document.getElementById('boqForm');
+
+    /* ---------- THEME (Dark/Light) ---------- */
+    const themeSwitch = document.getElementById('themeSwitch');
+    const toggleLabel = document.getElementById('toggleLabel');
+
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('theme-dark');
+        toggleLabel.textContent = 'Dark';
+        themeSwitch.checked = true;
+      } else {
+        root.classList.remove('theme-dark');
+        toggleLabel.textContent = 'Light';
+        themeSwitch.checked = false;
+      }
+      localStorage.setItem('boq_theme', theme);
+    }
+
+    // Init theme: localStorage -> prefers-color-scheme -> light
+    (function initTheme(){
+      const saved = localStorage.getItem('boq_theme');
+      if (saved === 'dark' || saved === 'light') {
+        applyTheme(saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        applyTheme('dark');
+      } else {
+        applyTheme('light');
+      }
+    })();
+
+    themeSwitch.addEventListener('change', () => {
+      applyTheme(themeSwitch.checked ? 'dark' : 'light');
+    });
+
+    /* ---------- Form visible on all tabs; disabled on Selling/Calculation ---------- */
     let activeTab = 'cogs';
+    function setFormDisabled(disabled) {
+      const controls = form.querySelectorAll('input, button, select, textarea');
+      controls.forEach(el => {
+        if (el.tagName.toLowerCase() === 'datalist') return;
+        if (disabled) el.setAttribute('disabled', 'disabled');
+        else el.removeAttribute('disabled');
+      });
+      if (disabled) form.classList.add('form-disabled');
+      else form.classList.remove('form-disabled');
+    }
+
     function switchTo(tab) {
       activeTab = tab;
       tabCogs.classList.add('hidden');
       tabSelling.classList.add('hidden');
       tabCalc.classList.add('hidden');
       [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected','false'); });
-      if (tab === 'cogs') { tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true'); document.getElementById('boqForm').style.display = ''; }
-      else if (tab === 'selling') { tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true'); document.getElementById('boqForm').style.display = 'none'; }
-      else if (tab === 'calculation') { tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true'); document.getElementById('boqForm').style.display = 'none'; renderCalculation(); }
+
+      if (tab === 'cogs') {
+        tabCogs.classList.remove('hidden');
+        tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true');
+        setFormDisabled(false); // aktif di COGS
+      } else if (tab === 'selling') {
+        tabSelling.classList.remove('hidden');
+        tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true');
+        setFormDisabled(true); // non-aktif tapi tetap tampil
+      } else if (tab === 'calculation') {
+        tabCalc.classList.remove('hidden');
+        tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true');
+        setFormDisabled(true); // non-aktif tapi tetap tampil
+        renderCalculation();
+      }
     }
     tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
     tabSellingBtn.addEventListener('click', () => switchTo('selling'));
     tabCalcBtn.addEventListener('click', () => switchTo('calculation'));
 
-    const form = document.getElementById('boqForm');
     const itemList = document.getElementById('itemList');
     const priceInput = document.getElementById('price');
     const marginInput = document.getElementById('margin');
@@ -245,11 +431,9 @@
     const manageProjectsBtn = document.getElementById('manageProjectsBtn');
     const manageProjectList = document.getElementById('manageProjectList');
 
-    // modal search inputs (IDs preserved)
     const manageItemSearch = document.getElementById('manageItemSearch');
     const manageProjectSearch = document.getElementById('manageProjectSearch');
 
-    // buttons
     const editBtn = document.getElementById('editBtn');
     const deleteBtn = document.getElementById('deleteBtn');
     const exportExcelBtn = document.getElementById('exportExcelBtn');
@@ -258,7 +442,6 @@
     const saveProjectBtn = document.getElementById('saveProjectBtn');
     const newProjectBtn = document.getElementById('newProjectBtn');
 
-    // Calculation elements
     const calcTotalCogsEl = document.getElementById('calcTotalCogs');
     const calcTotalSellingEl = document.getElementById('calcTotalSelling');
     const commissionCellInput = document.getElementById('commissionCellInput');
@@ -284,10 +467,8 @@
     formatThousandsInput(priceInput);
     formatThousandsInput(sellingInput);
 
-    // Excel helper: convert column number to letters
     function excelColLetter(n) { let s=''; while (n>0) { const m = (n-1) % 26; s = String.fromCharCode(65+m) + s; n = Math.floor((n-1)/26); } return s; }
 
-    // Update datalist for items (sorted alphabetically)
     function updateDatalist() {
       const map = {};
       items.forEach(it => { if (!it || !it.name) return; const key = it.name.trim(); if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) map[key] = it; });
@@ -299,7 +480,6 @@
     function calcSellingPrice(cogs, marginPercent) { const m = Number(marginPercent)/100; if (!isFinite(m) || m >= 1) return null; if (cogs === "" || cogs == null) return null; return Number(cogs) / (1 - m); }
     function roundUpToThousand(n) { if (n == null || !isFinite(n)) return null; const eps = 1e-9; return Math.ceil((n - eps) / 1000) * 1000; }
 
-    // ---------- ITEM helpers ----------
     function normalizeKey(name) { return String(name || '').trim().toLowerCase(); }
     function getItemByName(name) { if (!name) return null; const key = normalizeKey(name); let best = null; for (const it of items) { if (!it || !it.name) continue; if (normalizeKey(it.name) === key) { if (!best || (it.updatedAt || 0) > (best.updatedAt || 0)) best = it; } } return best; }
 
@@ -348,14 +528,14 @@
       if (it.category !== undefined) categoryInput.value = it.category || "";
     }
 
-    nameInput.addEventListener('change', (e) => {
+    const nameInputChangeHandler = (e) => {
       const v = sanitize(e.target.value);
       if (!v) return;
       const found = getItemByName(v);
       if (found) autofillFromItem(v);
-    });
+    };
+    nameInput.addEventListener('change', nameInputChangeHandler);
 
-    // ---------- Auto-fill Harga Jual handling ----------
     sellingInput.addEventListener('input', (ev) => { sellingInputManuallyEdited = true; });
     function computeAndDisplaySelling() {
       const priceNum = parseNumberFormatted(priceInput.value);
@@ -369,7 +549,6 @@
     priceInput.addEventListener('input', () => { computeAndDisplaySelling(); });
     marginInput.addEventListener('input', () => { computeAndDisplaySelling(); });
 
-    // ---------- Totals & rendering ----------
     function computeTotals() {
       const totalCogs = tableData.reduce((acc, r) => { const p = (r.price != null && r.price !== "") ? Number(r.price) : 0; const q = Number(r.qty || 0); return acc + (Number(p || 0) * q); }, 0);
       const totalSelling = tableData.reduce((acc, r) => { let sp = null; if (r.sellingPrice != null && r.sellingPrice !== "") sp = Number(r.sellingPrice); else if (r.price != null && r.price !== "") sp = calcSellingPrice(Number(r.price), r.margin); const spr = sp != null ? roundUpToThousand(sp) : 0; const q = Number(r.qty || 0); return acc + (spr ? (spr * q) : 0); }, 0);
@@ -445,7 +624,6 @@
       grandSellingEl.textContent = grand.toLocaleString('id-ID');
     }
 
-    // Projects helper
     function loadProjectsObj() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || {}; } catch (e) { return {}; } }
     function saveProjectsObj(obj) { localStorage.setItem(PROJECTS_KEY, JSON.stringify(obj)); }
 
@@ -463,7 +641,6 @@
       calcTotalMarginEl.textContent = (isFinite(totalMargin) ? (totalMargin * 100).toFixed(2) : '0.00') + '%';
     }
 
-    // Commission formatting/persistence
     (function setupCommissionCell() {
       commissionCellInput.addEventListener('input', () => {
         const rawDigits = String(commissionCellInput.value).replace(/[^\d]/g, '');
@@ -494,14 +671,14 @@
 
     function renderAll() { renderCogsTable(); renderSellingTable(); renderCalculation(); }
 
-    // ------------ Edit mode helpers ----------
     function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
     function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }
-    function updateEditButton() { if (editingIndex === null) { editBtn.textContent = 'Edit'; editBtn.classList.remove('primary'); editBtn.classList.add('btn','secondary'); } else { editBtn.textContent = 'Cancel Edit'; editBtn.classList.remove('primary'); editBtn.classList.add('btn','secondary'); } }
+    function updateEditButton() { if (editingIndex === null) { editBtn.textContent = 'Edit'; } else { editBtn.textContent = 'Cancel Edit'; } }
 
-    // FORM SUBMIT
     form.addEventListener('submit', e => {
       e.preventDefault();
+      if (form.classList.contains('form-disabled')) return; // cegah submit di tab non-edit
+
       const name = sanitize(nameInput.value);
       const category = sanitize(categoryInput.value);
       if (!name || !category) { showAlert('Nama item dan kategori harus diisi.'); return; }
@@ -534,7 +711,6 @@
       updateEditButton();
     });
 
-    // Row actions
     editBtn.addEventListener('click', () => {
       if (editingIndex !== null) { cancelEdit(); updateEditButton(); return; }
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
@@ -564,13 +740,8 @@
       updateEditButton();
     });
 
-    // EXPORT & PDF
     exportExcelBtn.addEventListener('click', exportExcel);
     exportPdfBtn.addEventListener('click', exportPDF);
-
-    // ... (exportExcel and exportPDF functions are identical to previous full implementation)
-    // For brevity in this reply they remain unchanged and fully functional as in your original code.
-    // I'll include them unchanged below to keep the file self-contained.
 
     async function exportExcel() {
       const filename = getSafeFileName(currentProjectName) + ".xlsx";
@@ -861,7 +1032,7 @@
       doc.save(filename);
     }
 
-    // MANAGE ITEMS & PROJECTS (updated: alphabetical + search)
+    // MANAGE ITEMS & PROJECTS
     manageBtn.addEventListener('click', () => {
       manageItemSearch.value = '';
       populateManageItems();
@@ -879,7 +1050,6 @@
       manageProjectSearch.focus();
     });
 
-    // populateManageItems: sorts alphabetically and filters by search input
     function populateManageItems() {
       manageItemList.innerHTML = '';
       const q = String(manageItemSearch.value || '').trim().toLowerCase();
@@ -912,7 +1082,6 @@
       });
     }
 
-    // populateManageProjects: sorts alphabetically and filters by search input
     function populateManageProjects() {
       manageProjectList.innerHTML = '';
       const q = String(manageProjectSearch.value || '').trim().toLowerCase();
@@ -943,7 +1112,6 @@
       if (e.target === projectsModal) { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden','true'); }
     });
 
-    // Update project datalist (dropdown) sorted alphabetically
     function updateProjectList() {
       const projects = loadProjectsObj();
       projectList.innerHTML = '';
@@ -951,11 +1119,9 @@
       keys.forEach(k => { const opt = document.createElement('option'); opt.value = k; projectList.appendChild(opt); });
     }
 
-    // wire search inputs
     manageItemSearch.addEventListener('input', populateManageItems);
     manageProjectSearch.addEventListener('input', populateManageProjects);
 
-    // PROJECT actions
     saveProjectBtn.addEventListener('click', saveProject);
     loadProjectBtn.addEventListener('click', () => loadProject());
     newProjectBtn.addEventListener('click', () => newProject());
@@ -1071,19 +1237,24 @@
           loadCommissionForCurrentProject();
           updateNavProject(); updateProjectList(); updateDatalist(); renderAll();
           showAlert('Restore berhasil. Data lokal telah diperbarui.');
-        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.'); }
+        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
+        }
       };
       reader.readAsText(f);
     });
 
     // INIT
+    function updateEditButton(){ if (editingIndex === null) { editBtn.textContent = 'Edit'; } else { editBtn.textContent = 'Cancel Edit'; } }
+    function updateNavProject(){ navProject.textContent = currentProjectName ? `| ${currentProjectName}` : '(no project)'; }
     updateNavProject();
-    updateProjectList();
-    updateDatalist();
-    loadCommissionForCurrentProject();
-    renderAll();
-    switchTo('cogs');
-    updateEditButton();
+    (function init(){
+      updateProjectList();
+      updateDatalist();
+      loadCommissionForCurrentProject();
+      renderAll();
+      switchTo('cogs'); // aktifkan form
+      updateEditButton();
+    })();
   </script>
 </body>
 </html>
