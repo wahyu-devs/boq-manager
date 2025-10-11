@@ -12,7 +12,6 @@
   <style>
     /* ===================== THEME ===================== */
     :root {
-      /* LIGHT (default) */
       --bg: #f4f6f8;
       --txt: #111;
       --muted: #777;
@@ -21,17 +20,16 @@
       --table-border: #e9e9e9;
       --nav-bg: #0b0b0b;
       --nav-txt: #fff;
-      --accent: #1976d2; /* dipakai hanya di light (eksisting) */
+      --accent: #1976d2;
       --accent-contrast: #fff;
       --highlight: #fff5e6;
       --section-row: #f1f1f1;
       --table-head-bg: #fbfbfb;
-      --calc-head: #1f4e78; /* untuk export head warna biru */
+      --calc-head: #1f4e78;
       --control-bg-disabled: #f7f7f7;
+      --drag-halo: rgba(255,159,26,.18);
+      --drag-border: #ffa83a;
     }
-
-    /* DARK ala TickTick: netral, tanpa unsur biru */
-    /* Pakai tone abu-abu pekat, aksen oranye lembut */
     .theme-dark {
       --bg: #1f1f1f;
       --txt: #eaeaea;
@@ -41,35 +39,27 @@
       --table-border: #3a3a3a;
       --nav-bg: #151515;
       --nav-txt: #f2f2f2;
-      --accent: #ff9f1a; /* oranye lembut */
+      --accent: #ff9f1a;
       --accent-contrast: #1a1a1a;
       --highlight: #2b2b2b;
       --section-row: #2a2a2a;
       --table-head-bg: #2a2a2a;
-      --calc-head: #3a3a3a; /* untuk simulasi header di eksport (tidak memengaruhi pdf) */
+      --calc-head: #3a3a3a;
       --control-bg-disabled: #2a2a2a;
+      --drag-halo: rgba(255,159,26,.22);
+      --drag-border: #ff9f1a;
     }
 
     /* ===================== BASE ===================== */
     * { box-sizing: border-box }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--txt);
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--txt); }
     .navbar-wrapper { background: var(--nav-bg); width: 100% }
-    .navbar {
-      display: flex; align-items: center; gap: 16px; padding: 12px 0;
-    }
+    .navbar { display: flex; align-items: center; gap: 16px; padding: 12px 0; }
     .brand { font-weight: 700; color: var(--nav-txt) }
     .project-name { opacity: .9; color: var(--nav-txt); font-weight: 400 }
     .nav-actions { margin-left: auto; display: flex; gap: 8px; align-items: center }
 
-    .btn {
-      background: var(--accent); color: var(--accent-contrast); border: none;
-      padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px
-    }
+    .btn { background: var(--accent); color: var(--accent-contrast); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
     .btn[disabled] { opacity: .6; cursor: not-allowed; pointer-events: none; }
     .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
     .theme-dark .btn.secondary { background: #2e2e2e; color: #eaeaea; border: 1px solid #3a3a3a }
@@ -78,32 +68,16 @@
 
     .container { padding: 20px; max-width: 1200px; margin: 0 auto }
 
-    .tabs {
-      display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;
-      border-bottom: 1px solid var(--border); padding-bottom: 6px;
-    }
-    .tab-btn {
-      background: transparent; border: none; padding: 8px 12px; border-radius: 6px;
-      cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative;
-      transition: color .12s ease, background .12s ease; margin: 0;
-    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .tab-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative; transition: color .12s ease, background .12s ease; margin: 0; }
     .theme-dark .tab-btn { color: var(--txt) }
     .tab-btn:focus { outline: none; }
     .tab-btn.active { color: var(--accent); font-weight: 600; }
-    .tab-btn.active::after {
-      content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px;
-      background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-    }
+    .tab-btn.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
 
-    /* Form bar selalu tampil (disabled di Selling & Calculation) */
     form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center }
-    input[type="text"], input[type="number"], input[list] {
-      padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6;
-      font-size: 14px; min-height: 36px; width: 130px; background: var(--card); color: var(--txt);
-    }
-    .theme-dark input[type="text"], .theme-dark input[type="number"], .theme-dark input[list] {
-      border-color: #3a3a3a;
-    }
+    input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 130px; background: var(--card); color: var(--txt) }
+    .theme-dark input[type="text"], .theme-dark input[type="number"], .theme-dark input[list] { border-color: #3a3a3a; }
     input[type="number"] { width: 130px }
     #itemName { flex: 1 }
     #projectSearch { width: 220px }
@@ -111,9 +85,7 @@
     .form-disabled { opacity: .7; filter: grayscale(10%); }
     .form-disabled input, .form-disabled select, .form-disabled textarea { background: var(--control-bg-disabled); }
 
-    .table-wrap {
-      overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid var(--border)
-    }
+    .table-wrap { overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid var(--border) }
     table { width: 100%; border-collapse: collapse; background: transparent }
     th, td { border: 1px solid var(--table-border); padding: 8px; text-align: center; font-size: 13px; color: var(--txt) }
     th { background: var(--table-head-bg); font-weight: 700 }
@@ -122,7 +94,17 @@
     #cogsTable tfoot td.total.label, #sellingTable tfoot td.total.label { text-align: center; }
     #cogsTable tfoot td.total.value, #sellingTable tfoot td.total.value { text-align: right; }
     tr.section-row td { background: var(--section-row); font-weight: 700; text-align: left; padding-left: 12px; border-top: 2px solid var(--border) }
-    tr.selected { background: rgba(255,159,26,0.14) } /* seleksi hint; aman di dark & light */
+    tr.selected { background: rgba(255,159,26,0.14) }
+
+    /* ===== Drag & Drop ===== */
+    tr.draggable { cursor: grab; }
+    tr.dragging { opacity: .7; background: var(--drag-halo); }
+    tr.drag-over { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
+    tr.section-row { user-select: none; }
+    /* grip dihilangkan */
+
+    tr.section-row.draggable { cursor: grab; }
+    tr.section-row.drag-over td { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
 
     .actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
     .actions label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted) }
@@ -131,16 +113,10 @@
 
     /* modal */
     .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-    .modal-content {
-      background: var(--card); color: var(--txt); margin: 6% auto; padding: 16px; border-radius: 8px;
-      width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid var(--border);
-    }
+    .modal-content { background: var(--card); color: var(--txt); margin: 6% auto; padding: 16px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid var(--border); }
     .modal-header { font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:8px; justify-content: space-between; flex-wrap: wrap; }
     .modal-header .title { font-weight:700; }
-    .modal-search {
-      margin: 0 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6;
-      font-size: 14px; width: 55%; max-width: 340px; min-width: 160px; background: var(--card); color: var(--txt);
-    }
+    .modal-search { margin: 0 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; width: 55%; max-width: 340px; min-width: 160px; background: var(--card); color: var(--txt); }
     .theme-dark .modal-search { border-color: #3a3a3a; }
     .modal-list { max-height: 300px; overflow: auto; margin-bottom: 12px; padding: 0; list-style: none }
     .modal-list li { display: flex; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--border) }
@@ -149,36 +125,19 @@
     .theme-dark .modal-close { background: #2d2d2d; border-color: #3a3a3a; color: var(--txt); }
     .calc-summary thead th { text-align: center; }
     .calc-summary tbody td.value { font-weight: 400; text-align: center; min-width: 140px; }
-    .commission-input {
-      width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center;
-      background: var(--card); color: var(--txt);
-    }
+    .commission-input { width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center; background: var(--card); color: var(--txt); }
     .theme-dark .commission-input { border-color: #3a3a3a; }
     .modal .btn.ghost { background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 12px; }
     .theme-dark .modal .btn.ghost { border-color: #3a3a3a; color: var(--txt); }
 
     /* ===================== DARK MODE TOGGLE ===================== */
-    .theme-toggle {
-      display: inline-flex; align-items: center; gap: 8px; color: var(--nav-txt); user-select: none;
-    }
-    .switch {
-      position: relative; width: 56px; height: 28px;
-      background: #8c8c8c; border-radius: 999px; cursor: pointer; transition: background .2s ease;
-      border: 1px solid rgba(255,255,255,.25);
-    }
+    .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--nav-txt); user-select: none; }
+    .switch { position: relative; width: 56px; height: 28px; background: #8c8c8c; border-radius: 999px; cursor: pointer; transition: background .2s ease; border: 1px solid rgba(255,255,255,.25); }
     .theme-dark .switch { background: #3a3a3a; border-color: #444; }
     .switch input { display: none; }
-    .slider {
-      position: absolute; top: 1.2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
-      background: #fff; transition: left .2s ease, background .2s ease, box-shadow .2s ease;
-      box-shadow: 0 1px 4px rgba(0,0,0,.25);
-    }
+    .slider { position: absolute; top: 1.2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: left .2s ease, background .2s ease, box-shadow .2s ease; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
     .theme-dark .slider { background: #f0f0f0; }
-    .switch input:checked + .slider {
-      left: 30px;
-      background: #ff9f1a; /* aksen saat ON */
-      box-shadow: 0 1px 4px rgba(255,159,26,.5);
-    }
+    .switch input:checked + .slider { left: 30px; background: #ff9f1a; box-shadow: 0 1px 4px rgba(255,159,26,.5); }
     .toggle-label { font-size: 12px; opacity: .9; }
     .theme-dark .toggle-label { opacity: .95; }
 
@@ -201,7 +160,6 @@
     <div class="container navbar">
       <div class="brand">BOQ Manager <span class="project-name" id="navProject">(no project)</span></div>
 
-      <!-- Toggle Dark Mode (slider) -->
       <div class="nav-actions">
         <div class="theme-toggle" title="Toggle dark mode">
           <span class="toggle-label" id="toggleLabel">Light</span>
@@ -227,7 +185,6 @@
       <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
     </div>
 
-    <!-- FORM selalu tampil di semua tab; akan di-disable pada Selling & Calculation -->
     <form id="boqForm" autocomplete="off">
       <input type="text" id="itemName" placeholder="Nama Item" list="itemList" required />
       <datalist id="itemList"></datalist>
@@ -331,74 +288,39 @@
     const tabCalc = document.getElementById('tabCalc');
     const form = document.getElementById('boqForm');
 
-    /* ---------- THEME (Dark/Light) ---------- */
     const themeSwitch = document.getElementById('themeSwitch');
     const toggleLabel = document.getElementById('toggleLabel');
 
     function applyTheme(theme) {
       const root = document.documentElement;
       if (theme === 'dark') {
-        root.classList.add('theme-dark');
-        toggleLabel.textContent = 'Dark';
-        themeSwitch.checked = true;
+        root.classList.add('theme-dark'); toggleLabel.textContent = 'Dark'; themeSwitch.checked = true;
       } else {
-        root.classList.remove('theme-dark');
-        toggleLabel.textContent = 'Light';
-        themeSwitch.checked = false;
+        root.classList.remove('theme-dark'); toggleLabel.textContent = 'Light'; themeSwitch.checked = false;
       }
       localStorage.setItem('boq_theme', theme);
     }
-
-    // Init theme: localStorage -> prefers-color-scheme -> light
     (function initTheme(){
       const saved = localStorage.getItem('boq_theme');
-      if (saved === 'dark' || saved === 'light') {
-        applyTheme(saved);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        applyTheme('dark');
-      } else {
-        applyTheme('light');
-      }
+      if (saved === 'dark' || saved === 'light') applyTheme(saved);
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
+      else applyTheme('light');
     })();
+    themeSwitch.addEventListener('change', () => applyTheme(themeSwitch.checked ? 'dark' : 'light'));
 
-    themeSwitch.addEventListener('change', () => {
-      applyTheme(themeSwitch.checked ? 'dark' : 'light');
-    });
-
-    /* ---------- Form visible on all tabs; disabled on Selling/Calculation ---------- */
     let activeTab = 'cogs';
     function setFormDisabled(disabled) {
       const controls = form.querySelectorAll('input, button, select, textarea');
-      controls.forEach(el => {
-        if (el.tagName.toLowerCase() === 'datalist') return;
-        if (disabled) el.setAttribute('disabled', 'disabled');
-        else el.removeAttribute('disabled');
-      });
-      if (disabled) form.classList.add('form-disabled');
-      else form.classList.remove('form-disabled');
+      controls.forEach(el => { if (el.tagName.toLowerCase() !== 'datalist') disabled ? el.setAttribute('disabled','disabled') : el.removeAttribute('disabled'); });
+      form.classList.toggle('form-disabled', disabled);
     }
-
     function switchTo(tab) {
       activeTab = tab;
-      tabCogs.classList.add('hidden');
-      tabSelling.classList.add('hidden');
-      tabCalc.classList.add('hidden');
+      tabCogs.classList.add('hidden'); tabSelling.classList.add('hidden'); tabCalc.classList.add('hidden');
       [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected','false'); });
-
-      if (tab === 'cogs') {
-        tabCogs.classList.remove('hidden');
-        tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true');
-        setFormDisabled(false); // aktif di COGS
-      } else if (tab === 'selling') {
-        tabSelling.classList.remove('hidden');
-        tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true');
-        setFormDisabled(true); // non-aktif tapi tetap tampil
-      } else if (tab === 'calculation') {
-        tabCalc.classList.remove('hidden');
-        tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true');
-        setFormDisabled(true); // non-aktif tapi tetap tampil
-        renderCalculation();
-      }
+      if (tab === 'cogs') { tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true'); setFormDisabled(false); }
+      else if (tab === 'selling') { tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true'); setFormDisabled(true); }
+      else { tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true'); setFormDisabled(true); renderCalculation(); }
     }
     tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
     tabSellingBtn.addEventListener('click', () => switchTo('selling'));
@@ -456,7 +378,32 @@
     let sellingInputManuallyEdited = false;
     let currentProjectName = localStorage.getItem('boq_current_name') || "";
     const PROJECTS_KEY = 'boq_projects_v2';
-    const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
+    const UNSAVED_COMM_KEY = 'boq_unsaved_commission'; // <<< hanya sekali dideklarasikan
+
+    // ===== New: category order state (persisted global & per project) =====
+    let categoryOrder = JSON.parse(localStorage.getItem('boq_category_order')) || [];
+    function getAllCategories() {
+      const set = [];
+      tableData.forEach(r => {
+        const c = sanitize(r.category || 'Uncategorized');
+        if (!set.includes(c)) set.push(c);
+      });
+      return set;
+    }
+    function normalizeCategoryOrder() {
+      const cats = getAllCategories();
+      categoryOrder = categoryOrder.filter(c => cats.includes(c));
+      cats.forEach(c => { if (!categoryOrder.includes(c)) categoryOrder.push(c); });
+      localStorage.setItem('boq_category_order', JSON.stringify(categoryOrder));
+      if (currentProjectName) {
+        const projects = loadProjectsObj();
+        if (projects[currentProjectName]) {
+          projects[currentProjectName].categoryOrder = categoryOrder.slice();
+          saveProjectsObj(projects);
+        }
+      }
+    }
+
     let currentCommission = 0;
 
     function sanitize(s) { return String(s || '').replace(/<\/?[^>]+(>|$)/g, "").trim(); }
@@ -529,15 +476,14 @@
       if (it.category !== undefined) categoryInput.value = it.category || "";
     }
 
-    const nameInputChangeHandler = (e) => {
+    nameInput.addEventListener('change', (e) => {
       const v = sanitize(e.target.value);
       if (!v) return;
       const found = getItemByName(v);
       if (found) autofillFromItem(v);
-    };
-    nameInput.addEventListener('change', nameInputChangeHandler);
+    });
 
-    sellingInput.addEventListener('input', (ev) => { sellingInputManuallyEdited = true; });
+    sellingInput.addEventListener('input', () => { sellingInputManuallyEdited = true; });
     function computeAndDisplaySelling() {
       const priceNum = parseNumberFormatted(priceInput.value);
       const marginNum = (marginInput.value !== '') ? Number(marginInput.value) : null;
@@ -547,8 +493,8 @@
         if (!sellingInputManuallyEdited) { if (spRounded != null) sellingInput.value = Number(spRounded).toLocaleString('id-ID'); else sellingInput.value = ''; }
       } else { if (!sellingInputManuallyEdited) sellingInput.value = ''; }
     }
-    priceInput.addEventListener('input', () => { computeAndDisplaySelling(); });
-    marginInput.addEventListener('input', () => { computeAndDisplaySelling(); });
+    priceInput.addEventListener('input', computeAndDisplaySelling);
+    marginInput.addEventListener('input', computeAndDisplaySelling);
 
     function computeTotals() {
       const totalCogs = tableData.reduce((acc, r) => { const p = (r.price != null && r.price !== "") ? Number(r.price) : 0; const q = Number(r.qty || 0); return acc + (Number(p || 0) * q); }, 0);
@@ -556,18 +502,142 @@
       return { totalCogs, totalSelling };
     }
 
+    /* ===== Drag & Drop State ===== */
+    const dragState = { type: null, cat: null, fromPos: null, fromCat: null };
+
+    function moveItemInCategory(category, fromPos, toPos) {
+      if (fromPos === toPos) return;
+      const cat = sanitize(category || 'Uncategorized');
+      const indices = [];
+      tableData.forEach((r, i) => { if (sanitize(r.category || 'Uncategorized') === cat) indices.push(i); });
+      if (!indices.length) return;
+      if (fromPos < 0 || fromPos >= indices.length || toPos < 0 || toPos >= indices.length) return;
+
+      const fromIndex = indices[fromPos];
+      const [item] = tableData.splice(fromIndex, 1);
+
+      const indicesAfter = [];
+      tableData.forEach((r, i) => { if (sanitize(r.category || 'Uncategorized') === cat) indicesAfter.push(i); });
+      const toIndex = indicesAfter[toPos];
+
+      tableData.splice(toIndex, 0, item);
+
+      localStorage.setItem('boq_working', JSON.stringify(tableData));
+      renderAll();
+      persistProject();
+    }
+
+    function addRowDragHandlers(tr, cat, posInCat) {
+      tr.classList.add('draggable');
+      tr.setAttribute('draggable', 'true');
+
+      tr.addEventListener('dragstart', (e) => {
+        dragState.type = 'row';
+        dragState.cat = cat;
+        dragState.fromPos = posInCat;
+        tr.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', `row|${cat}|${posInCat}`); } catch(_) {}
+      });
+
+      tr.addEventListener('dragend', () => {
+        tr.classList.remove('dragging');
+        document.querySelectorAll('tr.drag-over').forEach(x => x.classList.remove('drag-over'));
+        dragState.type = null; dragState.cat = null; dragState.fromPos = null;
+      });
+
+      tr.addEventListener('dragover', (e) => {
+        if (dragState.type === 'row' && dragState.cat === cat) {
+          e.preventDefault();
+          tr.classList.add('drag-over');
+          e.dataTransfer.dropEffect = 'move';
+        }
+      });
+
+      tr.addEventListener('dragleave', () => tr.classList.remove('drag-over'));
+
+      tr.addEventListener('drop', (e) => {
+        e.preventDefault();
+        tr.classList.remove('drag-over');
+        if (!(dragState.type === 'row' && dragState.cat === cat && dragState.fromPos != null)) return;
+        const toPos = posInCat;
+        moveItemInCategory(cat, dragState.fromPos, toPos);
+      });
+    }
+
+    // ===== Section (Category) drag handlers =====
+    function addSectionDragHandlers(trSec, cat) {
+      trSec.classList.add('draggable');
+      trSec.setAttribute('draggable','true');
+
+      trSec.addEventListener('dragstart', (e) => {
+        dragState.type = 'group';
+        dragState.fromCat = cat;
+        trSec.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', `group|${cat}`); } catch(_) {}
+      });
+
+      trSec.addEventListener('dragend', () => {
+        trSec.classList.remove('dragging');
+        document.querySelectorAll('tr.section-row.drag-over').forEach(x => x.classList.remove('drag-over'));
+        dragState.type = null; dragState.fromCat = null;
+      });
+
+      trSec.addEventListener('dragover', (e) => {
+        if (dragState.type === 'group') {
+          e.preventDefault();
+          trSec.classList.add('drag-over');
+          e.dataTransfer.dropEffect = 'move';
+        }
+      });
+
+      trSec.addEventListener('dragleave', () => trSec.classList.remove('drag-over'));
+
+      trSec.addEventListener('drop', (e) => {
+        e.preventDefault();
+        trSec.classList.remove('drag-over');
+        if (dragState.type !== 'group' || !dragState.fromCat) return;
+        const fromIdx = categoryOrder.indexOf(dragState.fromCat);
+        const toIdx = categoryOrder.indexOf(cat);
+        if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+        const [moved] = categoryOrder.splice(fromIdx, 1);
+        categoryOrder.splice(toIdx, 0, moved);
+        localStorage.setItem('boq_category_order', JSON.stringify(categoryOrder));
+        persistProject();
+        renderAll();
+      });
+    }
+
+    /* ===== Rendering Tables (respect categoryOrder) ===== */
+    function buildGroupedByCategory() {
+      const grouped = {};
+      tableData.forEach(r => {
+        const cat = sanitize(r.category || 'Uncategorized');
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(r);
+      });
+      normalizeCategoryOrder();
+      return { grouped, orderedCats: categoryOrder.slice() };
+    }
+
     function renderCogsTable() {
       cogsTbody.innerHTML = '';
-      const grouped = {};
-      tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+      const { grouped, orderedCats } = buildGroupedByCategory();
       let idx = 1; let grand = 0;
-      for (const cat of Object.keys(grouped)) {
+
+      orderedCats.forEach(cat => {
+        // Section header (draggable group) — tanpa grip
         const trSec = document.createElement('tr'); trSec.className = 'section-row';
+        trSec.dataset.cat = cat;
         const tdSec = document.createElement('td'); tdSec.colSpan = 7; tdSec.textContent = cat;
         trSec.appendChild(tdSec);
+        addSectionDragHandlers(trSec, cat);
         cogsTbody.appendChild(trSec);
-        grouped[cat].forEach(row => {
+
+        (grouped[cat] || []).forEach((row, posInCat) => {
           const tr = document.createElement('tr');
+
           const tdNo = document.createElement('td'); tdNo.textContent = idx++;
           const tdName = document.createElement('td'); tdName.className = 'left'; tdName.textContent = sanitize(row.name);
           const tdQty = document.createElement('td'); tdQty.textContent = row.qty !== "" ? row.qty : "";
@@ -575,6 +645,7 @@
           const tdCogs = document.createElement('td'); tdCogs.style.textAlign = 'right';
           const tdTotal = document.createElement('td'); tdTotal.style.textAlign = 'right';
           const tdMargin = document.createElement('td'); tdMargin.style.textAlign = 'right';
+
           const priceNum = (row.price != null && row.price !== "") ? Number(row.price) : null;
           const qtyNum = (row.qty != null && row.qty !== "") ? Number(row.qty) : null;
           const totalCogs = (priceNum != null && qtyNum != null) ? Number(priceNum) * Number(qtyNum) : null;
@@ -582,32 +653,46 @@
           tdTotal.textContent = (totalCogs != null && isFinite(totalCogs)) ? Number(totalCogs).toLocaleString('id-ID') : "";
           tdMargin.textContent = (row.margin != null && row.margin !== "") ? Number(row.margin).toFixed(2) : "";
           if (totalCogs != null && isFinite(totalCogs)) grand += Number(totalCogs);
+
           tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdCogs); tr.appendChild(tdTotal); tr.appendChild(tdMargin);
-          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
+
+          tr.addEventListener('click', () => {
+            selectedIndex = tableData.indexOf(row);
+            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+          });
+
+          addRowDragHandlers(tr, cat, posInCat);
+
           cogsTbody.appendChild(tr);
         });
-      }
+      });
       grandCogsEl.textContent = grand.toLocaleString('id-ID');
     }
 
     function renderSellingTable() {
       sellingTbody.innerHTML = '';
-      const grouped = {};
-      tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+      const { grouped, orderedCats } = buildGroupedByCategory();
       let idx = 1; let grand = 0;
-      for (const cat of Object.keys(grouped)) {
+
+      orderedCats.forEach(cat => {
         const trSec = document.createElement('tr'); trSec.className = 'section-row';
-        const tdSec = document.createElement('td'); tdSec.colSpan = 6; tdSec.textContent = cat;
+        trSec.dataset.cat = cat;
+        const tdSec = document.createElement('td'); tdSec.colSpan = 6; tdSec.textContent = cat; // tanpa grip
         trSec.appendChild(tdSec);
+        addSectionDragHandlers(trSec, cat);
         sellingTbody.appendChild(trSec);
-        grouped[cat].forEach(row => {
+
+        (grouped[cat] || []).forEach((row, posInCat) => {
           const tr = document.createElement('tr');
+
           const tdNo = document.createElement('td'); tdNo.textContent = idx++;
           const tdName = document.createElement('td'); tdName.className = 'left'; tdName.textContent = sanitize(row.name);
           const tdQty = document.createElement('td'); tdQty.textContent = row.qty !== "" ? row.qty : "";
           const tdUnit = document.createElement('td'); tdUnit.textContent = row.unit || "";
           const tdSelling = document.createElement('td'); tdSelling.style.textAlign = 'right';
           const tdTotalSelling = document.createElement('td'); tdTotalSelling.style.textAlign = 'right';
+
           let sellingPriceRaw = null;
           if (row.sellingPrice != null && row.sellingPrice !== "") sellingPriceRaw = Number(row.sellingPrice);
           else { const priceNum = (row.price != null && row.price !== "") ? Number(row.price) : null; sellingPriceRaw = (priceNum != null) ? calcSellingPrice(priceNum, row.margin) : null; }
@@ -617,11 +702,20 @@
           tdSelling.textContent = (sellingPriceRounded != null && isFinite(sellingPriceRounded)) ? Number(sellingPriceRounded).toLocaleString('id-ID') : "";
           tdTotalSelling.textContent = (totalSelling != null && isFinite(totalSelling)) ? Number(totalSelling).toLocaleString('id-ID') : "";
           if (totalSelling != null && isFinite(totalSelling)) grand += Number(totalSelling);
+
           tr.appendChild(tdNo); tr.appendChild(tdName); tr.appendChild(tdQty); tr.appendChild(tdUnit); tr.appendChild(tdSelling); tr.appendChild(tdTotalSelling);
-          tr.addEventListener('click', () => { selectedIndex = tableData.indexOf(row); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); tr.classList.add('selected'); });
+
+          tr.addEventListener('click', () => {
+            selectedIndex = tableData.indexOf(row);
+            document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
+            tr.classList.add('selected');
+          });
+
+          addRowDragHandlers(tr, cat, posInCat);
+
           sellingTbody.appendChild(tr);
         });
-      }
+      });
       grandSellingEl.textContent = grand.toLocaleString('id-ID');
     }
 
@@ -648,14 +742,7 @@
         commissionCellInput.value = rawDigits ? Number(rawDigits).toLocaleString('id-ID') : '';
         const parsed = parseNumberFormatted(commissionCellInput.value) || 0;
         currentCommission = Number(parsed);
-        if (currentProjectName) {
-          const projects = loadProjectsObj();
-          projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) };
-          saveProjectsObj(projects);
-        } else {
-          if (currentCommission === 0) localStorage.removeItem(UNSAVED_COMM_KEY);
-          else localStorage.setItem(UNSAVED_COMM_KEY, String(currentCommission));
-        }
+        persistProject();
         renderCalculation();
       });
     })();
@@ -670,15 +757,30 @@
       currentCommission = unsaved != null ? Number(unsaved) : 0;
     }
 
-    function renderAll() { renderCogsTable(); renderSellingTable(); renderCalculation(); }
+    function persistProject() {
+      if (currentProjectName) {
+        const projects = loadProjectsObj();
+        projects[currentProjectName] = {
+          data: tableData,
+          commission: Number(currentCommission || 0),
+          categoryOrder: categoryOrder.slice()
+        };
+        saveProjectsObj(projects);
+      } else {
+        if (currentCommission === 0) localStorage.removeItem(UNSAVED_COMM_KEY);
+        else localStorage.setItem(UNSAVED_COMM_KEY, String(currentCommission));
+      }
+    }
+
+    function renderAll() { normalizeCategoryOrder(); renderCogsTable(); renderSellingTable(); renderCalculation(); }
 
     function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
     function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }
-    function updateEditButton() { if (editingIndex === null) { editBtn.textContent = 'Edit'; } else { editBtn.textContent = 'Cancel Edit'; } }
+    function updateEditButton() { editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      if (form.classList.contains('form-disabled')) return; // cegah submit di tab non-edit
+      if (form.classList.contains('form-disabled')) return;
 
       const name = sanitize(nameInput.value);
       const category = sanitize(categoryInput.value);
@@ -704,11 +806,13 @@
       if (editingIndex !== null && typeof editingIndex === 'number') { tableData[editingIndex] = newRow; setEditingMode(null); } else { tableData.push(newRow); }
       selectedIndex = null; sellingInputManuallyEdited = false;
       localStorage.setItem('boq_working', JSON.stringify(tableData));
+      normalizeCategoryOrder();
+
       const storePrice = (price !== "" && price != null) ? Number(price) : "";
       const storeSelling = (sellingProvided !== "" && sellingProvided != null) ? Number(sellingProvided) : ((sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "");
       updateItemsWithEntry(name, unit || "", storePrice !== "" ? storePrice : "", storeSelling !== "" ? storeSelling : "", category || "");
       form.reset(); nameInput.focus(); renderAll();
-      if (currentProjectName) { const projects = loadProjectsObj(); projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) }; saveProjectsObj(projects); }
+      persistProject();
       updateEditButton();
     });
 
@@ -723,8 +827,7 @@
       priceInput.value = r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "";
       marginInput.value = (r.margin !== undefined && r.margin !== null) ? r.margin : "";
       sellingInputManuallyEdited = false;
-      if (r.sellingPrice != null && r.sellingPrice !== "") sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID');
-      else sellingInput.value = '';
+      if (r.sellingPrice != null && r.sellingPrice !== "") sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID'); else sellingInput.value = '';
       computeAndDisplaySelling();
       categoryInput.value = r.category || "";
       switchTo('cogs'); nameInput.focus(); updateEditButton();
@@ -734,10 +837,11 @@
       if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
       if (!confirm('Hapus baris ini?')) return;
       tableData.splice(selectedIndex, 1);
-      selectedIndex = null; setEditingMode(null);
       localStorage.setItem('boq_working', JSON.stringify(tableData));
+      selectedIndex = null; setEditingMode(null);
+      normalizeCategoryOrder();
       renderAll();
-      if (currentProjectName) { const projects = loadProjectsObj(); projects[currentProjectName] = { data: tableData, commission: Number(currentCommission || 0) }; saveProjectsObj(projects); }
+      persistProject();
       updateEditButton();
     });
 
@@ -759,15 +863,14 @@
       sheetCogs.insertRow(2, []);
       const lastColCogs = sheetCogs.columns.length;
       sheetCogs.mergeCells(`A1:${excelColLetter(lastColCogs)}1`);
-      const titleRowC = sheetCogs.getRow(1);
-      const tCellC = titleRowC.getCell(1);
+      const tCellC = sheetCogs.getRow(1).getCell(1);
       tCellC.font = { name: 'Arial', bold: true };
       tCellC.alignment = { horizontal: 'left', vertical: 'middle' };
 
       const headerCogs = ["No","Nama Item","Qty","Unit","Harga COGS","Total COGS","Margin (%)"];
       sheetCogs.insertRow(3, headerCogs);
       const headerRowCogs = sheetCogs.getRow(3);
-      headerRowCogs.eachCell((cell, colNum) => {
+      headerRowCogs.eachCell((cell) => {
         cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -776,8 +879,9 @@
 
       const groupedC = {};
       tableData.forEach(r => { const cat = sanitize(r.category || "Uncategorized"); if (!groupedC[cat]) groupedC[cat] = []; groupedC[cat].push(r); });
+      normalizeCategoryOrder();
       let noC = 1;
-      Object.keys(groupedC).forEach(cat => {
+      categoryOrder.forEach(cat => {
         const secRow = sheetCogs.addRow([cat]);
         sheetCogs.mergeCells(`A${secRow.number}:${excelColLetter(lastColCogs)}${secRow.number}`);
         for (let i=1;i<=lastColCogs;i++){
@@ -787,7 +891,7 @@
           cell.alignment = { horizontal: "left", vertical: "middle" };
           cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
         }
-        groupedC[cat].forEach(r => {
+        (groupedC[cat]||[]).forEach(r => {
           const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
           const rowObj = [ noC++, r.name, r.qty, r.unit, (r.price!=="" && r.price!=null) ? Number(r.price) : "", (totalCogs !== "" ? totalCogs : ""), (r.margin!==undefined && r.margin!=null)? r.margin : "" ];
           const dr = sheetCogs.addRow(rowObj);
@@ -803,15 +907,14 @@
 
       const sumCogs = tableData.reduce((a,b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
       const footRowCogs = sheetCogs.addRow([]);
-      const lastColNowC = sheetCogs.columns.length;
-      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColNowC-1)}${footRowCogs.number}`);
+      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColCogs-1)}${footRowCogs.number}`);
       const labelCellC = footRowCogs.getCell(1);
       labelCellC.value = "Grand Total COGS";
       labelCellC.font = { name: 'Arial', bold: true };
       labelCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       labelCellC.alignment = { horizontal: "center", vertical: "middle" };
       labelCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-      const totalCellC = footRowCogs.getCell(lastColNowC);
+      const totalCellC = footRowCogs.getCell(lastColCogs);
       totalCellC.value = sumCogs;
       totalCellC.numFmt = "#,##0";
       totalCellC.font = { name: 'Arial', bold: true };
@@ -829,8 +932,7 @@
       sheetSelling.insertRow(2, []);
       const lastColSell = sheetSelling.columns.length;
       sheetSelling.mergeCells(`A1:${excelColLetter(lastColSell)}1`);
-      const titleRowSell = sheetSelling.getRow(1);
-      const tCellSell = titleRowSell.getCell(1);
+      const tCellSell = sheetSelling.getRow(1).getCell(1);
       tCellSell.font = { name: 'Arial', bold: true };
       tCellSell.alignment = { horizontal: 'left', vertical: 'middle' };
 
@@ -846,8 +948,9 @@
 
       const groupedS = {};
       tableData.forEach(r => { const cat = sanitize(r.category || "Uncategorized"); if (!groupedS[cat]) groupedS[cat] = []; groupedS[cat].push(r); });
+      normalizeCategoryOrder();
       let noS = 1;
-      Object.keys(groupedS).forEach(cat => {
+      categoryOrder.forEach(cat => {
         const secRow = sheetSelling.addRow([cat]);
         sheetSelling.mergeCells(`A${secRow.number}:${excelColLetter(lastColSell)}${secRow.number}`);
         for (let i=1;i<=lastColSell;i++){
@@ -857,7 +960,7 @@
           cell.alignment = { horizontal: "left", vertical: "middle" };
           cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
         }
-        groupedS[cat].forEach(r => {
+        (groupedS[cat]||[]).forEach(r => {
           let spRaw = null;
           if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
           else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
@@ -883,15 +986,14 @@
         return a + (spr ? (Number(b.qty || 0) * spr) : 0);
       }, 0);
       const footRowSell = sheetSelling.addRow([]);
-      const lastColNowS = sheetSelling.columns.length;
-      sheetSelling.mergeCells(`A${footRowSell.number}:${excelColLetter(lastColNowS-1)}${footRowSell.number}`);
+      sheetSelling.mergeCells(`A${footRowSell.number}:${excelColLetter(lastColSell-1)}${footRowSell.number}`);
       const labelCellS = footRowSell.getCell(1);
       labelCellS.value = "Grand Total";
       labelCellS.font = { name: 'Arial', bold: true };
       labelCellS.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       labelCellS.alignment = { horizontal: "center", vertical: "middle" };
       labelCellS.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-      const totalCellS = footRowSell.getCell(lastColNowS);
+      const totalCellS = footRowSell.getCell(lastColSell);
       totalCellS.value = sumSelling;
       totalCellS.numFmt = "#,##0";
       totalCellS.font = { name: 'Arial', bold: true };
@@ -909,8 +1011,7 @@
       sheetCalc.insertRow(2, []);
       const lastColCalc = sheetCalc.columns.length;
       sheetCalc.mergeCells(`A1:${excelColLetter(lastColCalc)}1`);
-      const titleRowCalc = sheetCalc.getRow(1);
-      const tCellCalc = titleRowCalc.getCell(1);
+      const tCellCalc = sheetCalc.getRow(1).getCell(1);
       tCellCalc.font = { name: 'Arial', bold: true };
       tCellCalc.alignment = { horizontal: 'left', vertical: 'middle' };
 
@@ -940,8 +1041,7 @@
       });
 
       const footCalc = sheetCalc.addRow([]);
-      const lastColNowCalc = sheetCalc.columns.length;
-      sheetCalc.mergeCells(`A${footCalc.number}:${excelColLetter(lastColNowCalc)}${footCalc.number}`);
+      sheetCalc.mergeCells(`A${footCalc.number}:${excelColLetter(lastColCalc)}${footCalc.number}`);
       const labelCellCalc = footCalc.getCell(1);
       labelCellCalc.value = "Calculation Summary";
       labelCellCalc.font = { name: 'Arial', bold: true };
@@ -965,14 +1065,15 @@
       doc.setFontSize(14);
       const title = currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ';
       doc.text(title, 14, 15);
-      const grouped = {};
-      tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+
+      const grouped = {}; tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+      normalizeCategoryOrder();
       const body = []; let rowNoGlobal = 1;
 
       if (activeTab === 'cogs') {
-        for (const cat of Object.keys(grouped)) {
+        categoryOrder.forEach(cat => {
           body.push([{ content: cat, colSpan: 7, styles: { fillColor: [238,238,238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
-          grouped[cat].forEach(r => {
+          (grouped[cat]||[]).forEach(r => {
             const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
             body.push([ rowNoGlobal++, r.name, r.qty, r.unit,
               { content: r.price != null && r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
@@ -980,16 +1081,16 @@
               { content: r.margin != null && r.margin !== "" ? Number(r.margin).toFixed(2) : "", styles: { halign: 'right', valign: 'middle' } }
             ]);
           });
-        }
+        });
         const grandCogs = tableData.reduce((a,b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
         body.push([{ content: "Grand Total COGS", colSpan: 6, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254,243,214] } }, { content: grandCogs.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254,243,214] } }]);
         const head = ["No","Nama Item","Qty","Unit","Harga COGS","Total COGS","Margin (%)"];
         doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31,78,120], textColor: [255,255,255], halign:'center', valign:'middle' }, columnStyles: { 0:{halign:'center'}, 2:{halign:'center'}, 3:{halign:'center'} }, styles: { fontSize: 10, cellPadding:3 } });
       }
       else if (activeTab === 'selling') {
-        for (const cat of Object.keys(grouped)) {
+        categoryOrder.forEach(cat => {
           body.push([{ content: cat, colSpan: 6, styles: { fillColor: [238,238,238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
-          grouped[cat].forEach(r => {
+          (grouped[cat]||[]).forEach(r => {
             let spRaw = null;
             if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
             else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
@@ -1000,7 +1101,7 @@
               { content: totalSp !== "" ? Number(totalSp).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } }
             ]);
           });
-        }
+        });
         const grandSelling = tableData.reduce((a,b) => {
           let sp = null;
           if (b.sellingPrice != null && b.sellingPrice !== "") sp = Number(b.sellingPrice);
@@ -1134,9 +1235,10 @@
       name = sanitize(name);
       const projects = loadProjectsObj();
       if (projects[name] && !confirm('Nama project sudah ada. Timpa?')) return;
-      projects[name] = { data: tableData, commission: Number(currentCommission || 0) };
+      projects[name] = { data: tableData, commission: Number(currentCommission || 0), categoryOrder: categoryOrder.slice() };
       saveProjectsObj(projects);
-      currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName); updateProjectList(); updateNavProject();
+      currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
+      updateProjectList(); updateNavProject();
       showAlert(`Project "${name}" berhasil disimpan.`);
     }
 
@@ -1146,11 +1248,15 @@
       const projects = loadProjectsObj();
       if (!projects[name]) { showAlert('Project tidak ditemukan.'); return; }
       const stored = projects[name];
-      if (Array.isArray(stored)) { tableData = stored; currentCommission = 0; }
-      else if (stored && typeof stored === 'object') { tableData = stored.data || []; currentCommission = Number(stored.commission || 0); }
-      else { tableData = []; currentCommission = 0; }
+      if (Array.isArray(stored)) { tableData = stored; currentCommission = 0; categoryOrder = []; }
+      else if (stored && typeof stored === 'object') {
+        tableData = stored.data || [];
+        currentCommission = Number(stored.commission || 0);
+        categoryOrder = (stored.categoryOrder && Array.isArray(stored.categoryOrder)) ? stored.categoryOrder.slice() : [];
+      } else { tableData = []; currentCommission = 0; categoryOrder = []; }
       form.reset(); sellingInputManuallyEdited = false; setEditingMode(null); selectedIndex = null;
       localStorage.setItem('boq_working', JSON.stringify(tableData));
+      localStorage.setItem('boq_category_order', JSON.stringify(categoryOrder));
       currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
       updateNavProject(); updateProjectList(); renderAll(); projectSearch.value = '';
       showAlert(`Project "${name}" berhasil dimuat.`); updateEditButton();
@@ -1159,8 +1265,10 @@
     function newProject() {
       if (!confirm('Buat project baru? Semua data saat ini akan dihapus.')) return;
       tableData = []; selectedIndex = null; setEditingMode(null); currentProjectName = ''; currentCommission = 0;
+      categoryOrder = [];
       form.reset(); sellingInputManuallyEdited = false;
       localStorage.setItem('boq_working', JSON.stringify(tableData));
+      localStorage.setItem('boq_category_order', JSON.stringify(categoryOrder));
       localStorage.removeItem('boq_current_name');
       updateNavProject(); renderAll(); showAlert('Project baru siap diisi.'); updateEditButton();
     }
@@ -1172,15 +1280,15 @@
       const projects = loadProjectsObj();
       if (projects[newName] && newName !== currentProjectName && !confirm('Nama project sudah ada. Timpa?')) return;
       if (projects[currentProjectName]) delete projects[currentProjectName];
-      projects[newName] = { data: tableData, commission: Number(currentCommission || 0) };
+      projects[newName] = { data: tableData, commission: Number(currentCommission || 0), categoryOrder: categoryOrder.slice() };
       saveProjectsObj(projects);
       currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateProjectList(); updateNavProject(); showAlert('Nama project diubah.');
     });
 
     downloadJSONBtn.addEventListener('click', () => {
       const projects = loadProjectsObj();
-      const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
-      const ts = new Date(); const pad = n => String(n).padStart(2,'0');
+      const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], categoryOrder: categoryOrder || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
+      const ts = new Date(); const pad = n => String(n).toString().padStart(2,'0');
       const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
@@ -1194,7 +1302,7 @@
       reader.onload = (e) => {
         let parsed = null;
         try { parsed = JSON.parse(String(e.target.result)); } catch (err) { showAlert('File tidak valid: bukan JSON.'); return; }
-        let restoreObj = { projects: {}, items: [], working: [], currentProjectName: '', unsavedCommission: 0 };
+        let restoreObj = { projects: {}, items: [], working: [], currentProjectName: '', unsavedCommission: 0, categoryOrder: [] };
         if (parsed && typeof parsed === 'object') {
           if (parsed.projects && typeof parsed.projects === 'object') {
             restoreObj.projects = parsed.projects || {};
@@ -1202,14 +1310,16 @@
             restoreObj.working = Array.isArray(parsed.working) ? parsed.working : (parsed.working || []);
             restoreObj.currentProjectName = parsed.currentProjectName || (parsed.project || '') || '';
             restoreObj.unsavedCommission = Number(parsed.unsavedCommission || parsed.commission || 0);
+            restoreObj.categoryOrder = Array.isArray(parsed.categoryOrder) ? parsed.categoryOrder : [];
           } else if (parsed.project && parsed.data) {
             const projName = sanitize(parsed.project) || ('Imported Project ' + new Date().toISOString());
             restoreObj.projects = loadProjectsObj();
-            restoreObj.projects[projName] = { data: Array.isArray(parsed.data) ? parsed.data : [], commission: Number(parsed.commission || 0) };
+            restoreObj.projects[projName] = { data: Array.isArray(parsed.data) ? parsed.data : [], commission: Number(parsed.commission || 0), categoryOrder: Array.isArray(parsed.categoryOrder) ? parsed.categoryOrder : [] };
             restoreObj.items = items || [];
             restoreObj.working = restoreObj.projects[projName].data;
             restoreObj.currentProjectName = projName;
             restoreObj.unsavedCommission = Number(parsed.commission || 0);
+            restoreObj.categoryOrder = restoreObj.projects[projName].categoryOrder || [];
           } else {
             if (Array.isArray(parsed)) {
               restoreObj.working = parsed;
@@ -1217,43 +1327,47 @@
               restoreObj.projects = loadProjectsObj();
               restoreObj.currentProjectName = '';
               restoreObj.unsavedCommission = 0;
+              restoreObj.categoryOrder = [];
             } else {
               restoreObj.projects = parsed.projects || parsed.projectList || {};
               restoreObj.items = parsed.items || parsed.boq_items || [];
               restoreObj.working = parsed.working || parsed.boq_working || [];
               restoreObj.currentProjectName = parsed.currentProjectName || parsed.current || '';
               restoreObj.unsavedCommission = Number(parsed.unsavedCommission || parsed.commission || 0);
+              restoreObj.categoryOrder = Array.isArray(parsed.categoryOrder) ? parsed.categoryOrder : [];
             }
           }
         }
-        if (!confirm('Restore akan menimpa semua data lokal (projects, items, working, current project). Lanjutkan?')) { return; }
+        if (!confirm('Restore akan menimpa semua data lokal (projects, items, working, category order, current project). Lanjutkan?')) { return; }
         try {
           saveProjectsObj(restoreObj.projects || {});
           localStorage.setItem('boq_items', JSON.stringify(restoreObj.items || []));
           localStorage.setItem('boq_working', JSON.stringify(restoreObj.working || []));
+          localStorage.setItem('boq_category_order', JSON.stringify(restoreObj.categoryOrder || []));
           if (restoreObj.currentProjectName) { localStorage.setItem('boq_current_name', restoreObj.currentProjectName); currentProjectName = restoreObj.currentProjectName; } else { localStorage.removeItem('boq_current_name'); currentProjectName = ''; }
           if (restoreObj.unsavedCommission && Number(restoreObj.unsavedCommission) !== 0) localStorage.setItem(UNSAVED_COMM_KEY, String(Number(restoreObj.unsavedCommission))); else localStorage.removeItem(UNSAVED_COMM_KEY);
           items = JSON.parse(localStorage.getItem('boq_items')) || [];
           tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
+          categoryOrder = JSON.parse(localStorage.getItem('boq_category_order')) || [];
           loadCommissionForCurrentProject();
           updateNavProject(); updateProjectList(); updateDatalist(); renderAll();
           showAlert('Restore berhasil. Data lokal telah diperbarui.');
-        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
-        }
+        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.'); }
       };
       reader.readAsText(f);
     });
 
     // INIT
-    function updateEditButton(){ if (editingIndex === null) { editBtn.textContent = 'Edit'; } else { editBtn.textContent = 'Cancel Edit'; } }
+    function updateEditButton(){ editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
     function updateNavProject(){ navProject.textContent = currentProjectName ? `| ${currentProjectName}` : '(no project)'; }
     updateNavProject();
     (function init(){
       updateProjectList();
       updateDatalist();
       loadCommissionForCurrentProject();
+      normalizeCategoryOrder();
       renderAll();
-      switchTo('cogs'); // aktifkan form
+      switchTo('cogs');
       updateEditButton();
     })();
   </script>
