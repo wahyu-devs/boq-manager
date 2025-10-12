@@ -12,6 +12,7 @@
   <style>
     /* ===================== THEME ===================== */
     :root {
+        color-scheme: light;
       --bg: #f4f6f8;
       --txt: #111;
       --muted: #777;
@@ -31,6 +32,7 @@
       --drag-border: #ffa83a;
     }
     .theme-dark {
+        color-scheme: dark;
       --bg: #1f1f1f;
       --txt: #eaeaea;
       --muted: #aaaaaa;
@@ -68,7 +70,9 @@
 
     .container { padding: 20px; max-width: 1200px; margin: 0 auto }
 
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    /* Tabs bar now also hosts the theme toggle on the right */
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 6px; justify-content: space-between; }
+    .tabs-left { display: flex; gap: 8px; align-items: flex-end; }
     .tab-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative; transition: color .12s ease, background .12s ease; margin: 0; }
     .theme-dark .tab-btn { color: var(--txt) }
     .tab-btn:focus { outline: none; }
@@ -101,8 +105,7 @@
     tr.dragging { opacity: .7; background: var(--drag-halo); }
     tr.drag-over { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
     tr.section-row { user-select: none; }
-    /* grip dihilangkan */
-
+    /* grip removed per request */
     tr.section-row.draggable { cursor: grab; }
     tr.section-row.drag-over td { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
 
@@ -130,9 +133,9 @@
     .modal .btn.ghost { background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 12px; }
     .theme-dark .modal .btn.ghost { border-color: #3a3a3a; color: var(--txt); }
 
-    /* ===================== DARK MODE TOGGLE ===================== */
-    .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--nav-txt); user-select: none; }
-    .switch { position: relative; width: 56px; height: 28px; background: #8c8c8c; border-radius: 999px; cursor: pointer; transition: background .2s ease; border: 1px solid rgba(255,255,255,.25); }
+    /* ===================== DARK MODE TOGGLE (moved to tabs bar) ===================== */
+    .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--txt); user-select: none; }
+    .switch { position: relative; width: 56px; height: 28px; background: #8c8c8c; border-radius: 999px; cursor: pointer; transition: background .2s ease; border: 1px solid var(--border); }
     .theme-dark .switch { background: #3a3a3a; border-color: #444; }
     .switch input { display: none; }
     .slider { position: absolute; top: 1.2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: left .2s ease, background .2s ease, box-shadow .2s ease; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
@@ -144,6 +147,8 @@
     @media (max-width:720px) {
       .nav-actions { gap: 6px }
       .container { padding: 12px }
+      .tabs { flex-wrap: wrap; gap: 6px; }
+      .tabs-left { width: 100%; }
       input[type="number"], #projectSearch { width: 100% }
       form { flex-direction: column; align-items: stretch }
       .actions { flex-direction: column; align-items: stretch }
@@ -161,14 +166,7 @@
       <div class="brand">BOQ Manager <span class="project-name" id="navProject">(no project)</span></div>
 
       <div class="nav-actions">
-        <div class="theme-toggle" title="Toggle dark mode">
-          <span class="toggle-label" id="toggleLabel">Light</span>
-          <label class="switch" aria-label="Toggle dark mode">
-            <input type="checkbox" id="themeSwitch" />
-            <span class="slider"></span>
-          </label>
-        </div>
-
+        <!-- theme toggle removed from navbar -->
         <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
         <button class="btn ghost" id="manageBtn">Manage</button>
         <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup Data</button>
@@ -179,10 +177,20 @@
   </div>
 
   <div class="container">
+    <!-- Tabs + Theme Toggle Row -->
     <div class="tabs" role="tablist" aria-label="Primary tabs">
-      <button class="tab-btn active" id="tabCogsBtn" role="tab" aria-selected="true">COGS</button>
-      <button class="tab-btn" id="tabSellingBtn" role="tab" aria-selected="false">Selling</button>
-      <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
+      <div class="tabs-left">
+        <button class="tab-btn active" id="tabCogsBtn" role="tab" aria-selected="true">COGS</button>
+        <button class="tab-btn" id="tabSellingBtn" role="tab" aria-selected="false">Selling</button>
+        <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
+      </div>
+      <div class="theme-toggle" title="Toggle dark mode">
+        <span class="toggle-label" id="toggleLabel">Light</span>
+        <label class="switch" aria-label="Toggle dark mode">
+          <input type="checkbox" id="themeSwitch" />
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
 
     <form id="boqForm" autocomplete="off">
@@ -378,9 +386,9 @@
     let sellingInputManuallyEdited = false;
     let currentProjectName = localStorage.getItem('boq_current_name') || "";
     const PROJECTS_KEY = 'boq_projects_v2';
-    const UNSAVED_COMM_KEY = 'boq_unsaved_commission'; // <<< hanya sekali dideklarasikan
+    const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
 
-    // ===== New: category order state (persisted global & per project) =====
+    // ===== Category order =====
     let categoryOrder = JSON.parse(localStorage.getItem('boq_category_order')) || [];
     function getAllCategories() {
       const set = [];
@@ -609,7 +617,7 @@
       });
     }
 
-    /* ===== Rendering Tables (respect categoryOrder) ===== */
+    /* ===== Rendering Tables ===== */
     function buildGroupedByCategory() {
       const grouped = {};
       tableData.forEach(r => {
@@ -627,7 +635,6 @@
       let idx = 1; let grand = 0;
 
       orderedCats.forEach(cat => {
-        // Section header (draggable group) — tanpa grip
         const trSec = document.createElement('tr'); trSec.className = 'section-row';
         trSec.dataset.cat = cat;
         const tdSec = document.createElement('td'); tdSec.colSpan = 7; tdSec.textContent = cat;
@@ -678,7 +685,7 @@
       orderedCats.forEach(cat => {
         const trSec = document.createElement('tr'); trSec.className = 'section-row';
         trSec.dataset.cat = cat;
-        const tdSec = document.createElement('td'); tdSec.colSpan = 6; tdSec.textContent = cat; // tanpa grip
+        const tdSec = document.createElement('td'); tdSec.colSpan = 6; tdSec.textContent = cat;
         trSec.appendChild(tdSec);
         addSectionDragHandlers(trSec, cat);
         sellingTbody.appendChild(trSec);
