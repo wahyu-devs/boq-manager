@@ -859,77 +859,9 @@
       const filename = getSafeFileName(currentProjectName) + ".xlsx";
       const workbook = new ExcelJS.Workbook();
 
-      // ----- SHEET: COGS -----
-      const sheetCogs = workbook.addWorksheet("COGS");
-      sheetCogs.columns = [
-        { key: "no", width: 6 }, { key: "name", width: 40 }, { key: "qty", width: 10 },
-        { key: "unit", width: 12 }, { key: "price", width: 18 }, { key: "totalCogs", width: 18 },
-        { key: "margin", width: 12 }
-      ];
-      sheetCogs.insertRow(1, [currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ']);
-      sheetCogs.insertRow(2, []);
-      const lastColCogs = sheetCogs.columns.length;
-      sheetCogs.mergeCells(`A1:${excelColLetter(lastColCogs)}1`);
-      const tCellC = sheetCogs.getRow(1).getCell(1);
-      tCellC.font = { name: 'Arial', bold: true };
-      tCellC.alignment = { horizontal: 'left', vertical: 'middle' };
+      // =================== SHEET ORDER: Selling -> COGS -> Calculation ===================
 
-      const headerCogs = ["No","Nama Item","Qty","Unit","Harga COGS","Total COGS","Margin (%)"];
-      sheetCogs.insertRow(3, headerCogs);
-      const headerRowCogs = sheetCogs.getRow(3);
-      headerRowCogs.eachCell((cell) => {
-        cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
-        cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-      });
-
-      const groupedC = {};
-      tableData.forEach(r => { const cat = sanitize(r.category || "Uncategorized"); if (!groupedC[cat]) groupedC[cat] = []; groupedC[cat].push(r); });
-      normalizeCategoryOrder();
-      let noC = 1;
-      categoryOrder.forEach(cat => {
-        const secRow = sheetCogs.addRow([cat]);
-        sheetCogs.mergeCells(`A${secRow.number}:${excelColLetter(lastColCogs)}${secRow.number}`);
-        for (let i=1;i<=lastColCogs;i++){
-          const cell = secRow.getCell(i);
-          cell.font = { name: 'Arial', bold: true };
-          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
-          cell.alignment = { horizontal: "left", vertical: "middle" };
-          cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-        }
-        (groupedC[cat]||[]).forEach(r => {
-          const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
-          const rowObj = [ noC++, r.name, r.qty, r.unit, (r.price!=="" && r.price!=null) ? Number(r.price) : "", (totalCogs !== "" ? totalCogs : ""), (r.margin!==undefined && r.margin!=null)? r.margin : "" ];
-          const dr = sheetCogs.addRow(rowObj);
-          dr.eachCell((cell, colNum) => {
-            cell.font = { name: 'Arial' };
-            cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-            if (colNum >= 5 && colNum <= 6) { cell.numFmt = "#,##0"; cell.alignment = { horizontal:"right", vertical:"middle" }; }
-            else if (colNum === 2) { cell.alignment = { horizontal:"left", vertical:"middle", wrapText:true }; }
-            else { cell.alignment = { horizontal:"center", vertical:"middle" }; }
-          });
-        });
-      });
-
-      const sumCogs = tableData.reduce((a,b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
-      const footRowCogs = sheetCogs.addRow([]);
-      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColCogs-1)}${footRowCogs.number}`);
-      const labelCellC = footRowCogs.getCell(1);
-      labelCellC.value = "Grand Total COGS";
-      labelCellC.font = { name: 'Arial', bold: true };
-      labelCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-      labelCellC.alignment = { horizontal: "center", vertical: "middle" };
-      labelCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-      const totalCellC = footRowCogs.getCell(lastColCogs);
-      totalCellC.value = sumCogs;
-      totalCellC.numFmt = "#,##0";
-      totalCellC.font = { name: 'Arial', bold: true };
-      totalCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
-      totalCellC.alignment = { horizontal: "right", vertical: "middle" };
-      totalCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-
-      // ----- SHEET: Selling -----
+      // ----- SHEET: Selling (FIRST) -----
       const sheetSelling = workbook.addWorksheet("Selling");
       sheetSelling.columns = [
         { key: "no", width: 6 }, { key: "name", width: 40 }, { key: "qty", width: 10 },
@@ -1008,7 +940,77 @@
       totalCellS.alignment = { horizontal: "right", vertical: "middle" };
       totalCellS.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
 
-      // ----- SHEET: Calculation -----
+      // ----- SHEET: COGS (SECOND) -----
+      const sheetCogs = workbook.addWorksheet("COGS");
+      sheetCogs.columns = [
+        { key: "no", width: 6 }, { key: "name", width: 40 }, { key: "qty", width: 10 },
+        { key: "unit", width: 12 }, { key: "price", width: 18 }, { key: "totalCogs", width: 18 },
+        { key: "margin", width: 12 }
+      ];
+      sheetCogs.insertRow(1, [currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ']);
+      sheetCogs.insertRow(2, []);
+      const lastColCogs = sheetCogs.columns.length;
+      sheetCogs.mergeCells(`A1:${excelColLetter(lastColCogs)}1`);
+      const tCellC = sheetCogs.getRow(1).getCell(1);
+      tCellC.font = { name: 'Arial', bold: true };
+      tCellC.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      const headerCogs = ["No","Nama Item","Qty","Unit","Harga COGS","Total COGS","Margin (%)"];
+      sheetCogs.insertRow(3, headerCogs);
+      const headerRowCogs = sheetCogs.getRow(3);
+      headerRowCogs.eachCell((cell) => {
+        cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      });
+
+      const groupedC = {};
+      tableData.forEach(r => { const cat = sanitize(r.category || "Uncategorized"); if (!groupedC[cat]) groupedC[cat] = []; groupedC[cat].push(r); });
+      normalizeCategoryOrder();
+      let noC = 1;
+      categoryOrder.forEach(cat => {
+        const secRow = sheetCogs.addRow([cat]);
+        sheetCogs.mergeCells(`A${secRow.number}:${excelColLetter(lastColCogs)}${secRow.number}`);
+        for (let i=1;i<=lastColCogs;i++){
+          const cell = secRow.getCell(i);
+          cell.font = { name: 'Arial', bold: true };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+          cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+        }
+        (groupedC[cat]||[]).forEach(r => {
+          const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
+          const rowObj = [ noC++, r.name, r.qty, r.unit, (r.price!=="" && r.price!=null) ? Number(r.price) : "", (totalCogs !== "" ? totalCogs : ""), (r.margin!==undefined && r.margin!=null)? r.margin : "" ];
+          const dr = sheetCogs.addRow(rowObj);
+          dr.eachCell((cell, colNum) => {
+            cell.font = { name: 'Arial' };
+            cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+            if (colNum >= 5 && colNum <= 6) { cell.numFmt = "#,##0"; cell.alignment = { horizontal:"right", vertical:"middle" }; }
+            else if (colNum === 2) { cell.alignment = { horizontal:"left", vertical:"middle", wrapText:true }; }
+            else { cell.alignment = { horizontal:"center", vertical:"middle" }; }
+          });
+        });
+      });
+
+      const sumCogs = tableData.reduce((a,b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
+      const footRowCogs = sheetCogs.addRow([]);
+      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColCogs-1)}${footRowCogs.number}`);
+      const labelCellC = footRowCogs.getCell(1);
+      labelCellC.value = "Grand Total COGS";
+      labelCellC.font = { name: 'Arial', bold: true };
+      labelCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      labelCellC.alignment = { horizontal: "center", vertical: "middle" };
+      labelCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      const totalCellC = footRowCogs.getCell(lastColCogs);
+      totalCellC.value = sumCogs;
+      totalCellC.numFmt = "#,##0";
+      totalCellC.font = { name: 'Arial', bold: true };
+      totalCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
+      totalCellC.alignment = { horizontal: "right", vertical: "middle" };
+      totalCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+
+      // ----- SHEET: Calculation (THIRD) -----
       const sheetCalc = workbook.addWorksheet("Calculation");
       sheetCalc.columns = [
         { key: "totalCogs", width: 18 }, { key: "totalSelling", width: 18 },
@@ -1056,6 +1058,7 @@
       labelCellCalc.alignment = { horizontal: "center", vertical: "middle" };
       labelCellCalc.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
 
+      // ----- SAVE FILE -----
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const link = document.createElement('a');
