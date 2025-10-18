@@ -105,7 +105,6 @@
     tr.dragging { opacity: .7; background: var(--drag-halo); }
     tr.drag-over { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
     tr.section-row { user-select: none; }
-    /* grip removed per request */
     tr.section-row.draggable { cursor: grab; }
     tr.section-row.drag-over td { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
 
@@ -202,7 +201,7 @@
       <input type="number" id="margin" placeholder="Margin (%)" min="0" max="999.99" step="0.01" />
       <input type="text" id="sellingInput" placeholder="Harga Jual" />
       <input type="text" id="category" placeholder="Kategori" required />
-      <button type="submit" class="btn">Tambah / Update</button>
+      <button type="submit" class="btn">Add / Update</button>
     </form>
 
     <div id="tabCogs" class="tab-panel">
@@ -245,16 +244,18 @@
     <div class="actions">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button id="editBtn" class="btn secondary" type="button">Edit</button>
-        <button class="btn secondary" id="deleteBtn" type="button">Hapus</button>
+        <button class="btn secondary" id="deleteBtn" type="button">Delete</button>
+        <!-- === Reorder toggle button (NEW) === -->
+        <button class="btn secondary" type="button" id="reorderBtn" title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
         <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
         <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input list="projectList" id="projectSearch" placeholder="Cari project..." />
         <datalist id="projectList"></datalist>
-        <button class="btn secondary" type="button" id="loadProjectBtn">Muat Project</button>
-        <button class="btn secondary" type="button" id="saveProjectBtn">Simpan Project</button>
-        <button class="btn" type="button" id="newProjectBtn">Project Baru</button>
+        <button class="btn secondary" type="button" id="loadProjectBtn">Load Project</button>
+        <button class="btn secondary" type="button" id="saveProjectBtn">Save Project</button>
+        <button class="btn" type="button" id="newProjectBtn">New Project</button>
       </div>
     </div>
   </div>
@@ -387,6 +388,26 @@
     let currentProjectName = localStorage.getItem('boq_current_name') || "";
     const PROJECTS_KEY = 'boq_projects_v2';
     const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
+
+    // ===== Reorder mode (NEW) =====
+    const reorderBtn = document.getElementById('reorderBtn');
+    let reorderMode = false;
+    function updateReorderButton() {
+      reorderBtn.textContent = reorderMode ? 'Done Reorder' : 'Reorder';
+      reorderBtn.classList.toggle('secondary', !reorderMode);
+      reorderBtn.title = reorderMode ? 'Selesai ubah urutan' : 'Aktifkan drag & drop untuk ubah urutan';
+    }
+    function clearDragVisuals() {
+      document.querySelectorAll('.drag-over, .dragging').forEach(el => el.classList.remove('drag-over','dragging'));
+    }
+    function setReorderMode(on) {
+      reorderMode = !!on;
+      clearDragVisuals();
+      updateReorderButton();
+      // Render ulang supaya handler drag di-attach/dilepas sesuai mode
+      renderAll();
+    }
+    reorderBtn.addEventListener('click', () => setReorderMode(!reorderMode));
 
     // ===== Category order =====
     let categoryOrder = JSON.parse(localStorage.getItem('boq_category_order')) || [];
@@ -536,6 +557,7 @@
     }
 
     function addRowDragHandlers(tr, cat, posInCat) {
+      // Handler hanya di-attach saat reorderMode = true
       tr.classList.add('draggable');
       tr.setAttribute('draggable', 'true');
 
@@ -639,7 +661,7 @@
         trSec.dataset.cat = cat;
         const tdSec = document.createElement('td'); tdSec.colSpan = 7; tdSec.textContent = cat;
         trSec.appendChild(tdSec);
-        addSectionDragHandlers(trSec, cat);
+        if (reorderMode) addSectionDragHandlers(trSec, cat);
         cogsTbody.appendChild(trSec);
 
         (grouped[cat] || []).forEach((row, posInCat) => {
@@ -669,7 +691,7 @@
             tr.classList.add('selected');
           });
 
-          addRowDragHandlers(tr, cat, posInCat);
+          if (reorderMode) addRowDragHandlers(tr, cat, posInCat);
 
           cogsTbody.appendChild(tr);
         });
@@ -687,7 +709,7 @@
         trSec.dataset.cat = cat;
         const tdSec = document.createElement('td'); tdSec.colSpan = 6; tdSec.textContent = cat;
         trSec.appendChild(tdSec);
-        addSectionDragHandlers(trSec, cat);
+        if (reorderMode) addSectionDragHandlers(trSec, cat);
         sellingTbody.appendChild(trSec);
 
         (grouped[cat] || []).forEach((row, posInCat) => {
@@ -718,7 +740,7 @@
             tr.classList.add('selected');
           });
 
-          addRowDragHandlers(tr, cat, posInCat);
+          if (reorderMode) addRowDragHandlers(tr, cat, posInCat);
 
           sellingTbody.appendChild(tr);
         });
@@ -1376,6 +1398,7 @@
       updateDatalist();
       loadCommissionForCurrentProject();
       normalizeCategoryOrder();
+      updateReorderButton();        // init label Reorder
       renderAll();
       switchTo('cogs');
       updateEditButton();
