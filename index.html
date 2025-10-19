@@ -80,12 +80,11 @@
     .tab-btn.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
 
     form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center }
-    input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 130px; background: var(--card); color: var(--txt) }
+    input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 120px; background: var(--card); color: var(--txt) }
     .theme-dark input[type="text"], .theme-dark input[type="number"], .theme-dark input[list] { border-color: #3a3a3a; }
-    input[type="number"] { width: 130px }
     #itemName { flex: 1 }
-    #projectSearch { width: 220px }
-    button[type="submit"] { min-width: 140px; align-self: center }
+    #projectSearch { flex: 1 }
+    button[type="submit"] { align-self: center; width: 120px; }
     .form-disabled { opacity: .7; filter: grayscale(10%); }
     .form-disabled input, .form-disabled select, .form-disabled textarea { background: var(--control-bg-disabled); }
 
@@ -142,21 +141,6 @@
     .switch input:checked + .slider { left: 30px; background: #ff9f1a; box-shadow: 0 1px 4px rgba(255,159,26,.5); }
     .toggle-label { font-size: 12px; opacity: .9; }
     .theme-dark .toggle-label { opacity: .95; }
-
-    @media (max-width:720px) {
-      .nav-actions { gap: 6px }
-      .container { padding: 12px }
-      .tabs { flex-wrap: wrap; gap: 6px; }
-      .tabs-left { width: 100%; }
-      input[type="number"], #projectSearch { width: 100% }
-      form { flex-direction: column; align-items: stretch }
-      .actions { flex-direction: column; align-items: stretch }
-      button[type="submit"] { align-self: stretch }
-      .calc-summary tbody td.value { min-width: 100px; }
-      .commission-input { width: 100px; }
-      .modal-header { justify-content: flex-start; }
-      .modal-search { width: 100%; max-width: 100%; margin-top: 8px; margin-left: 0; }
-    }
   </style>
 </head>
 <body>
@@ -168,8 +152,8 @@
         <!-- theme toggle removed from navbar -->
         <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
         <button class="btn ghost" id="manageBtn">Manage</button>
-        <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup Data</button>
-        <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore Data</button>
+        <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup</button>
+        <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore</button>
         <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
       </div>
     </div>
@@ -193,14 +177,14 @@
     </div>
 
     <form id="boqForm" autocomplete="off">
-      <input type="text" id="itemName" placeholder="Nama Item" list="itemList" required />
+      <input type="text" id="itemName" placeholder="Item Name" list="itemList" required />
       <datalist id="itemList"></datalist>
       <input type="number" id="qty" placeholder="Qty" />
       <input type="text" id="unit" placeholder="Unit" />
-      <input type="text" id="price" placeholder="Harga COGS" />
+      <input type="text" id="price" placeholder="COGS" />
       <input type="number" id="margin" placeholder="Margin (%)" min="0" max="999.99" step="0.01" />
-      <input type="text" id="sellingInput" placeholder="Harga Jual" />
-      <input type="text" id="category" placeholder="Kategori" required />
+      <input type="text" id="sellingInput" placeholder="Selling Price" />
+      <input type="text" id="category" placeholder="Category" required />
       <button type="submit" class="btn">Add / Update</button>
     </form>
 
@@ -242,21 +226,17 @@
     </div>
 
     <div class="actions">
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button id="editBtn" class="btn secondary" type="button">Edit</button>
         <button class="btn secondary" id="deleteBtn" type="button">Delete</button>
         <!-- === Reorder toggle button (NEW) === -->
         <button class="btn secondary" type="button" id="reorderBtn" title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
         <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
         <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input list="projectList" id="projectSearch" placeholder="Cari project..." />
+        <input list="projectList" id="projectSearch" placeholder="Search project..." autocomplete="off" />
         <datalist id="projectList"></datalist>
         <button class="btn secondary" type="button" id="loadProjectBtn">Load Project</button>
         <button class="btn secondary" type="button" id="saveProjectBtn">Save Project</button>
         <button class="btn" type="button" id="newProjectBtn">New Project</button>
-      </div>
     </div>
   </div>
 
