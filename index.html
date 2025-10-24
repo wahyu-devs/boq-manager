@@ -31,9 +31,12 @@
       --drag-halo: rgba(25,118,210,.14);
       --drag-border: #1976d2;
 
-      /* Selected row (biru di light) & footer height */
+      /* Selected row & fixed heights */
       --row-selected: rgba(25,118,210,.14);
       --footer-h: 44px;
+      --actions-h: 56px;   /* default, diupdate via JS/ResizeObserver */
+      --nav-h: 60px;       /* default, diupdate via JS/ResizeObserver */
+      --tabs-h: 52px;      /* default, diupdate via JS/ResizeObserver */
     }
     .theme-dark {
       color-scheme: dark;
@@ -54,8 +57,6 @@
       --control-bg-disabled: #2a2a2a;
       --drag-halo: rgba(255,159,26,.22);
       --drag-border: #ff9f1a;
-
-      /* Selected row (oranye di dark) */
       --row-selected: rgba(255,159,26,.18);
     }
 
@@ -69,9 +70,19 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding-bottom: var(--footer-h); /* ruang utk footer fixed */
+      /* ruang bawah = footer + actions dock + sedikit spasi */
+      padding-bottom: calc(var(--footer-h) + var(--actions-h) + 16px);
     }
-    main { flex: 1 0 auto;  }
+    main { flex: 1 0 auto; }
+
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto }
+
+    .btn { background: var(--accent); color: var(--accent-contrast); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
+    .btn[disabled] { opacity: .6; cursor: not-allowed; pointer-events: none; }
+    .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
+    .theme-dark .btn.secondary { background: #2e2e2e; color: #eaeaea; border: 1px solid #3a3a3a }
+    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); color: var(--nav-txt) }
+    .theme-dark .btn.ghost { border-color: #444; color: var(--nav-txt) }
 
     /* ===== Sticky Navbar ===== */
     .navbar-wrapper {
@@ -83,28 +94,25 @@
       border-bottom: 1px solid rgba(255,255,255,.06);
       transition: box-shadow .18s ease, backdrop-filter .18s ease, background-color .18s ease;
     }
-    .navbar-wrapper.is-stuck {
-      box-shadow: 0 4px 14px rgba(0,0,0,.18);
-      backdrop-filter: saturate(120%) blur(2px);
-      background: color-mix(in oklab, var(--nav-bg) 92%, black);
-    }
-
-    .navbar { display: flex; align-items: center; gap: 16px; padding: 12px 0; }
+    
+    .navbar { display: flex; align-items: center; gap: 16px;  }
     .brand { font-weight: 700; color: var(--nav-txt) }
     .project-name { opacity: .9; color: var(--nav-txt); font-weight: 400 }
     .nav-actions { margin-left: auto; display: flex; gap: 8px; align-items: center }
 
-    .btn { background: var(--accent); color: var(--accent-contrast); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; pointer-events: none; }
-    .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
-    .theme-dark .btn.secondary { background: #2e2e2e; color: #eaeaea; border: 1px solid #3a3a3a }
-    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); color: var(--nav-txt) }
-    .theme-dark .btn.ghost { border-color: #444; color: var(--nav-txt) }
-
-    .container { padding: 20px; max-width: 1200px; margin: 0 auto }
+    /* ===== Sticky Tabs Bar (di bawah navbar) ===== */
+    .tabs-bar {
+      position: sticky;
+      top: var(--nav-h);
+      z-index: 950;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      transition: box-shadow .18s ease, backdrop-filter .18s ease, background-color .18s ease;
+    }
+    
 
     /* Tabs + theme toggle */
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 6px; justify-content: space-between; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; padding: 10px 0 6px; justify-content: space-between; }
     .tabs-left { display: flex; gap: 8px; align-items: flex-end; }
     .tab-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative; transition: color .12s ease, background .12s ease; margin: 0; }
     .theme-dark .tab-btn { color: var(--txt) }
@@ -112,7 +120,22 @@
     .tab-btn.active { color: var(--accent); font-weight: 600; }
     .tab-btn.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
 
-    form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; align-items: center }
+    /* ===== Sticky Form Bar (di bawah tabs) ===== */
+    .form-bar {
+      position: sticky;
+      top: calc(var(--nav-h) + var(--tabs-h));
+      z-index: 940;
+      background: var(--bg);
+      transition: box-shadow .18s ease, backdrop-filter .18s ease, background-color .18s ease;
+    }
+    
+    .form-bar .container { padding-top: 12px; padding-bottom: 12px; width: 100%}
+    .form-bar { padding: 12px 0; }
+
+    .form-bar form { margin: 0; }
+
+    /* ===== Form controls ===== */
+    form { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; align-items: center;}
     input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 120px; background: var(--card); color: var(--txt) }
     .theme-dark input[type="text"], .theme-dark input[type="number"], .theme-dark input[list] { border-color: #3a3a3a; }
     #itemName { flex: 1 }
@@ -130,8 +153,6 @@
     #cogsTable tfoot td.total.label, #sellingTable tfoot td.total.label { text-align: center; }
     #cogsTable tfoot td.total.value, #sellingTable tfoot td.total.value { text-align: right; }
     tr.section-row td { background: var(--section-row); font-weight: 700; text-align: left; padding-left: 12px; border-top: 2px solid var(--border) }
-
-    /* Selected row via CSS variable */
     tr.selected { background: var(--row-selected); }
 
     /* ===== Drag & Drop ===== */
@@ -142,12 +163,66 @@
     tr.section-row.draggable { cursor: grab; }
     tr.section-row.drag-over td { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
 
-    .actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+    /* ===================== THEME SLIDER BUTTON (bukan checkbox) ===================== */
+    .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--txt); user-select: none; }
+    .toggle-label { font-size: 12px; opacity: .9; }
+    .theme-dark .toggle-label { opacity: .95; }
+    .switch { position: relative; width: 56px; height: 28px; background: #8c8c8c; border-radius: 999px; border: 1px solid var(--border); cursor: pointer; transition: background .2s ease, border-color .2s ease; display: inline-block; }
+    .theme-dark .switch { background: #3a3a3a; border-color: #444; }
+    .switch .slider { position: absolute; top: 1.2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: transform .2s ease, background .2s ease, box-shadow .2s ease; will-change: transform; }
+    .theme-dark .switch .slider { background: #f0f0f0; }
+    .switch.on { background: #3a3a3a; }
+    .switch.on .slider { transform: translateX(28px); background: #ff9f1a; box-shadow: 0 1px 4px rgba(255,159,26,.5); }
+
+    /* ===================== ACTIONS DOCK (fixed di atas footer) ===================== */
+    .actions-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--footer-h);
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      z-index: 1100;
+      will-change: height;
+    }
+    .actions-dock-inner {
+      min-height: 56px;
+      padding-top: 8px;
+      padding-bottom: 0px;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .actions {
+      margin: 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      width: 100%;
+    }
     .actions label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted) }
+    .actions input#projectSearch {
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: 220px;
+      min-width: 160px;
+    }
     .small-note { font-size: 12px; color: var(--muted) }
     .hidden { display: none }
 
-    /* modal */
+    /* ===================== FOOTER (FIXED & SPLIT) ===================== */
+    .app-footer {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: var(--card);
+      z-index: 1000; height: var(--footer-h);
+      display: flex; align-items: center; width: 100%;
+    }
+    .app-footer .container { width: 100%; padding-top: 0; padding-bottom: 0; }
+    .footer-inner { font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .footer-right { white-space: nowrap; }
+
+    /* ===================== MODAL ===================== */
     .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
     .modal-content { background: var(--card); color: var(--txt); margin: 6% auto; padding: 16px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid var(--border); }
     .modal-header { font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:8px; justify-content: space-between; flex-wrap: wrap; }
@@ -165,54 +240,6 @@
     .theme-dark .commission-input { border-color: #3a3a3a; }
     .modal .btn.ghost { background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 12px; }
     .theme-dark .modal .btn.ghost { border-color: #3a3a3a; color: var(--txt); }
-
-    /* ===================== THEME SLIDER BUTTON (bukan checkbox) ===================== */
-    .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--txt); user-select: none; }
-    .toggle-label { font-size: 12px; opacity: .9; }
-    .theme-dark .toggle-label { opacity: .95; }
-
-    .switch {
-      position: relative;
-      width: 56px; height: 28px;
-      background: #8c8c8c;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: background .2s ease, border-color .2s ease;
-      display: inline-block;
-    }
-    .theme-dark .switch { background: #3a3a3a; border-color: #444; }
-    .switch .slider {
-      position: absolute; top: 1.2px; left: 2px;
-      width: 24px; height: 24px; border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,.25);
-      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
-      will-change: transform;
-    }
-    .theme-dark .switch .slider { background: #f0f0f0; }
-    /* Saat ON (dark) knob geser kanan + aksen */
-    .switch.on { background: #3a3a3a; }
-    .switch.on .slider { transform: translateX(28px); background: #ff9f1a; box-shadow: 0 1px 4px rgba(255,159,26,.5); }
-
-    /* ===================== FOOTER (FIXED & SPLIT) ===================== */
-    .app-footer {
-      position: fixed; left: 0; right: 0; bottom: 0;
-      background: var(--card);
-      border-top: 1px solid var(--border);
-      z-index: 1000; height: var(--footer-h);
-      display: flex; align-items: center; width: 100%;
-    }
-    .app-footer .container {
-      width: 100%;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-    .footer-inner {
-      font-size: 13px; color: var(--muted);
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    }
-    .footer-right { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -233,34 +260,47 @@
   <!-- MAIN CONTENT -->
   <main>
     <div class="container">
-      <!-- Tabs + Theme Toggle Row -->
-      <div class="tabs" role="tablist" aria-label="Primary tabs">
-        <div class="tabs-left">
-          <button class="tab-btn active" id="tabCogsBtn" role="tab" aria-selected="true">COGS</button>
-          <button class="tab-btn" id="tabSellingBtn" role="tab" aria-selected="false">Selling</button>
-          <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
-        </div>
-        <div class="theme-toggle" title="Toggle dark mode">
-          <span class="toggle-label" id="toggleLabel">Light</span>
-          <!-- Slider Button (bukan checkbox) -->
-          <button id="themeSwitchBtn" class="switch" role="button" aria-pressed="false" aria-label="Toggle dark mode">
-            <span class="slider" aria-hidden="true"></span>
-          </button>
+      <!-- Sentinel untuk tabs -->
+      <div id="tabsSentinel" style="height:1px;"></div>
+
+      <!-- Tabs Bar (Sticky) -->
+      <div class="tabs-bar" id="tabsBar">
+        <div class="tabs" role="tablist" aria-label="Primary tabs">
+          <div class="tabs-left">
+            <button class="tab-btn active" id="tabCogsBtn" role="tab" aria-selected="true">COGS</button>
+            <button class="tab-btn" id="tabSellingBtn" role="tab" aria-selected="false">Selling</button>
+            <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
+          </div>
+          <div class="theme-toggle" title="Toggle dark mode">
+            <span class="toggle-label" id="toggleLabel">Light</span>
+            <button id="themeSwitchBtn" class="switch" role="button" aria-pressed="false" aria-label="Toggle dark mode">
+              <span class="slider" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <form id="boqForm" autocomplete="off">
-        <input type="text" id="itemName" placeholder="Item Name" list="itemList" required />
-        <datalist id="itemList"></datalist>
-        <input type="number" id="qty" placeholder="Qty" />
-        <input type="text" id="unit" placeholder="Unit" />
-        <input type="text" id="price" placeholder="COGS" />
-        <input type="number" id="margin" placeholder="Margin (%)" min="0" max="999.99" step="0.01" />
-        <input type="text" id="sellingInput" placeholder="Selling Price" />
-        <input type="text" id="category" placeholder="Category" required />
-        <button type="submit" class="btn">Add / Update</button>
-      </form>
+      <!-- Sentinel untuk form sticky -->
+      <div id="formSentinel" style="height:1px;"></div>
 
+      <!-- FORM (Sticky) -->
+      <div class="form-bar" id="formBar">
+        
+          <form id="boqForm" autocomplete="off">
+            <input type="text" id="itemName" placeholder="Item Name" list="itemList" required />
+            <datalist id="itemList"></datalist>
+            <input type="number" id="qty" placeholder="Qty" />
+            <input type="text" id="unit" placeholder="Unit" />
+            <input type="text" id="price" placeholder="COGS" />
+            <input type="number" id="margin" placeholder="Margin (%)" min="0" max="999.99" step="0.01" />
+            <input type="text" id="sellingInput" placeholder="Selling Price" />
+            <input type="text" id="category" placeholder="Category" required />
+            <button type="submit" class="btn">Add / Update</button>
+          </form>
+        
+      </div>
+
+      <!-- TAB PANELS -->
       <div id="tabCogs" class="tab-panel">
         <div class="table-wrap">
           <table id="cogsTable" aria-label="COGS table">
@@ -297,7 +337,12 @@
           </table>
         </div>
       </div>
+    </div>
+  </main>
 
+  <!-- ===== ACTIONS DOCK (selalu tampil di atas footer) ===== -->
+  <div class="actions-dock" id="actionsDock" role="region" aria-label="Actions dock">
+    <div class="container actions-dock-inner">
       <div class="actions">
         <button id="editBtn" class="btn secondary" type="button">Edit</button>
         <button class="btn secondary" id="deleteBtn" type="button">Delete</button>
@@ -311,7 +356,7 @@
         <button class="btn" type="button" id="newProjectBtn">New Project</button>
       </div>
     </div>
-  </main>
+  </div>
 
   <!-- ====== FOOTER (fixed & split) ====== -->
   <footer class="app-footer" role="contentinfo" aria-label="Footer">
@@ -354,6 +399,10 @@
   </div>
 
   <script>
+    /* ===== Utilities kecil ===== */
+    function cgsTbodyAppend(node, tbody){ tbody.appendChild(node); }
+    const rootStyle = document.documentElement.style;
+
     // ===== Sticky navbar shadow toggler =====
     const navbarWrapper = document.getElementById('navbarWrapper');
     const setStickinessShadow = () => {
@@ -362,6 +411,49 @@
     };
     setStickinessShadow();
     window.addEventListener('scroll', setStickinessShadow, { passive: true });
+
+    // ===== Hitung tinggi navbar, tabs, actions untuk CSS vars =====
+    const tabsBar = document.getElementById('tabsBar');
+    const actionsDock = document.getElementById('actionsDock');
+    function updateHeightsVars() {
+      const navH = navbarWrapper.offsetHeight || 60;
+      const tabsH = tabsBar.offsetHeight || 52;
+      const actH = actionsDock.offsetHeight || 56;
+      rootStyle.setProperty('--nav-h', navH + 'px');
+      rootStyle.setProperty('--tabs-h', tabsH + 'px');
+      rootStyle.setProperty('--actions-h', actH + 'px');
+    }
+    window.addEventListener('load', updateHeightsVars);
+    window.addEventListener('resize', updateHeightsVars);
+
+    /* Perbarui tinggi secara reaktif bila konten berubah (wrap/unwarp) */
+    if (typeof ResizeObserver !== 'undefined') {
+      const navResizeObserver = new ResizeObserver(updateHeightsVars);
+      navResizeObserver.observe(navbarWrapper);
+
+      const tabsResizeObserver = new ResizeObserver(updateHeightsVars);
+      tabsResizeObserver.observe(tabsBar);
+
+      const actionsResizeObserver = new ResizeObserver(updateHeightsVars);
+      actionsResizeObserver.observe(actionsDock);
+    }
+
+    // ===== Sticky Tabs: shadow saat melekat =====
+    const tabsSentinel = document.getElementById('tabsSentinel');
+    const tabsIO = new IntersectionObserver(([entry]) => {
+      if (entry && !entry.isIntersecting) tabsBar.classList.add('is-stuck');
+      else tabsBar.classList.remove('is-stuck');
+    }, { threshold: 0 });
+    tabsIO.observe(tabsSentinel);
+
+    // ===== Sticky Form: shadow saat melekat =====
+    const formBar = document.getElementById('formBar');
+    const formSentinel = document.getElementById('formSentinel');
+    const formIO = new IntersectionObserver(([entry]) => {
+      if (entry && !entry.isIntersecting) formBar.classList.add('is-stuck');
+      else formBar.classList.remove('is-stuck');
+    }, { threshold: 0 });
+    formIO.observe(formSentinel);
 
     // ===== STATE & HELPERS =====
     const tabCogsBtn = document.getElementById('tabCogsBtn');
@@ -384,6 +476,7 @@
       themeSwitchBtn.classList.toggle('on', isDark);
       themeSwitchBtn.setAttribute('aria-pressed', String(isDark));
       localStorage.setItem('boq_theme', isDark ? 'dark' : 'light');
+      updateHeightsVars();
     }
     (function initTheme(){
       const saved = localStorage.getItem('boq_theme');
@@ -391,7 +484,6 @@
       else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
       else applyTheme('light');
     })();
-    // Click & keyboard toggle
     themeSwitchBtn.addEventListener('click', () => {
       applyTheme(document.documentElement.classList.contains('theme-dark') ? 'light' : 'dark');
     });
@@ -412,6 +504,7 @@
       if (tab === 'cogs') { tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true'); setFormDisabled(false); }
       else if (tab === 'selling') { tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true'); setFormDisabled(true); }
       else { tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true'); setFormDisabled(true); renderCalculation(); }
+      updateHeightsVars();
     }
     tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
     tabSellingBtn.addEventListener('click', () => switchTo('selling'));
@@ -572,7 +665,7 @@
       if (it.price !== undefined && it.price !== "" && it.price !== null) {
         priceInput.value = Number(it.price).toLocaleString('id-ID');
         sellingInputManuallyEdited = false;
-        computeAndDisplaySelling(); // no-op jika margin belum valid
+        computeAndDisplaySelling();
       } else {
         priceInput.value = '';
         if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) {
@@ -595,24 +688,21 @@
 
     sellingInput.addEventListener('input', () => { sellingInputManuallyEdited = true; });
 
-    // === FIX: jangan kosongkan selling; hanya hitung jika COGS & margin valid.
     function computeAndDisplaySelling(opts = {}) {
       const { force = false } = opts;
       const priceNum = parseNumberFormatted(priceInput.value);
       const marginNum = (marginInput.value !== '') ? Number(marginInput.value) : null;
       const canCompute = (priceNum != null && priceNum !== '' && marginNum != null && isFinite(marginNum) && marginNum < 100);
-      if (!canCompute) return; // penting: biarkan nilai Selling yang sudah ada (manual) tetap tampil
+      if (!canCompute) return;
 
       const spRaw = calcSellingPrice(Number(priceNum), Number(marginNum));
       const spRounded = (spRaw != null) ? roundUpToThousand(spRaw) : null;
 
       if (spRounded != null && (force || !sellingInputManuallyEdited)) {
         sellingInput.value = Number(spRounded).toLocaleString('id-ID');
-        sellingInputManuallyEdited = false; // sekarang jadi hasil auto
+        sellingInputManuallyEdited = false;
       }
     }
-
-    // === FIX: kalau user mengubah COGS/Margin, aktifkan lagi autofill
     priceInput.addEventListener('input', () => { sellingInputManuallyEdited = false; computeAndDisplaySelling(); });
     marginInput.addEventListener('input', () => { sellingInputManuallyEdited = false; computeAndDisplaySelling(); });
 
@@ -651,7 +741,7 @@
 
       localStorage.setItem('boq_working', JSON.stringify(tableData));
       renderAll();
-      persistProject(); // update last saved
+      persistProject();
     }
 
     function addRowDragHandlers(tr, cat, posInCat) {
@@ -692,7 +782,6 @@
       });
     }
 
-    // ===== Section (Category) drag handlers =====
     function addSectionDragHandlers(trSec, cat) {
       trSec.classList.add('draggable');
       trSec.setAttribute('draggable','true');
@@ -731,12 +820,11 @@
         const [moved] = categoryOrder.splice(fromIdx, 1);
         categoryOrder.splice(toIdx, 0, moved);
         localStorage.setItem('boq_category_order', JSON.stringify(categoryOrder));
-        persistProject(); // update last saved
+        persistProject();
         renderAll();
       });
     }
 
-    /* ===== Rendering Tables ===== */
     function buildGroupedByCategory() {
       const grouped = {};
       tableData.forEach(r => {
@@ -796,8 +884,6 @@
       });
       grandCogsEl.textContent = grand.toLocaleString('id-ID');
     }
-    // small helper to avoid layout thrash
-    function cgsTbodyAppend(node, tbody){ tbody.appendChild(node); }
 
     function renderSellingTable() {
       const sellingTbody = document.querySelector('#sellingTable tbody');
@@ -872,7 +958,7 @@
         commissionCellInput.value = rawDigits ? Number(rawDigits).toLocaleString('id-ID') : '';
         const parsed = parseNumberFormatted(commissionCellInput.value) || 0;
         currentCommission = Number(parsed);
-        persistProject(); // update last saved
+        persistProject();
         renderCalculation();
       });
     })();
@@ -887,7 +973,6 @@
       currentCommission = unsaved != null ? Number(unsaved) : 0;
     }
 
-    /* ===== Last Saved UI (label tampil: Last Updated) ===== */
     function formatLastSaved(ts) {
       if (!ts) return '—';
       try {
@@ -908,7 +993,7 @@
           data: tableData,
           commission: Number(currentCommission || 0),
           categoryOrder: categoryOrder.slice(),
-          lastSaved: Date.now()   // update last saved setiap perubahan data
+          lastSaved: Date.now()
         };
         saveProjectsObj(projects);
         updateFooterLastSaved();
@@ -923,6 +1008,7 @@
     function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
     function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }
     function updateEditButton() { editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
+    function updateEditBtnInit(){ editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
 
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -958,7 +1044,7 @@
       const storeSelling = (sellingProvided !== "" && sellingProvided != null) ? Number(sellingProvided) : ((sellingPriceComputed !== "" && sellingPriceComputed != null) ? Number(sellingPriceComputed) : "");
       updateItemsWithEntry(name, unit || "", storePrice !== "" ? storePrice : "", storeSelling !== "" ? storeSelling : "", category || "");
       form.reset(); nameInput.focus(); renderAll();
-      persistProject(); // update last saved
+      persistProject();
       updateEditButton();
     });
 
@@ -974,11 +1060,9 @@
       marginInput.value = (r.margin !== undefined && r.margin !== null && r.margin !== "") ? r.margin : "";
       sellingInputManuallyEdited = false;
 
-      // === FIX: Pertahankan harga jual manual saat edit.
       if (r.sellingPrice != null && r.sellingPrice !== "") {
         sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID');
       } else {
-        // Hitung hanya jika COGS & Margin lengkap
         const hasCOGS = r.price !== "" && r.price != null;
         const hasMargin = (r.margin !== undefined && r.margin !== null && r.margin !== "");
         if (hasCOGS && hasMargin) computeAndDisplaySelling();
@@ -997,7 +1081,7 @@
       selectedIndex = null; setEditingMode(null);
       normalizeCategoryOrder();
       renderAll();
-      persistProject(); // update last saved
+      persistProject();
       updateEditButton();
     });
 
@@ -1215,14 +1299,22 @@
 
     function exportPDF() {
       if (!tableData.length && activeTab !== 'calculation') { showAlert('Tidak ada data untuk diekspor.'); return; }
-      let filenameSuffix = ''; if (activeTab === 'cogs') filenameSuffix = ' (COGS)'; else if (activeTab === 'selling') filenameSuffix = ' (Selling)'; else if (activeTab === 'calculation') filenameSuffix = ' (Calculation)';
+      let filenameSuffix = '';
+      if (activeTab === 'cogs') filenameSuffix = ' (COGS)';
+      else if (activeTab === 'selling') filenameSuffix = ' (Selling)';
+      else if (activeTab === 'calculation') filenameSuffix = ' (Calculation)';
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(14);
       const title = currentProjectName ? `BOQ - ${currentProjectName}` : 'BOQ';
       doc.text(title, 14, 15);
 
-      const grouped = {}; tableData.forEach(r => { const cat = sanitize(r.category || 'Uncategorized'); if (!grouped[cat]) grouped[cat] = []; grouped[cat].push(r); });
+      const grouped = {};
+      tableData.forEach(r => {
+        const cat = sanitize(r.category || 'Uncategorized');
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(r);
+      });
       normalizeCategoryOrder();
       const body = []; let rowNoGlobal = 1;
 
@@ -1290,7 +1382,7 @@
       doc.save(filename);
     }
 
-    // MANAGE ITEMS & PROJECTS
+    // MANAGE ITEMS & PROJECTS (tanpa deklarasi ganda)
     manageBtn.addEventListener('click', () => {
       manageItemSearch.value = '';
       populateManageItems();
@@ -1318,8 +1410,8 @@
       filtered.forEach((it) => {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = it.name;
-        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
-        renameBtn.addEventListener('click', () => {
+        const renameBtnEl = document.createElement('button'); renameBtnEl.textContent = 'Rename'; renameBtnEl.className = 'btn ghost';
+        renameBtnEl.addEventListener('click', () => {
           const newName = sanitize(prompt('Ubah nama item:', it.name) || '');
           if (!newName) return;
           const oldKey = normalizeKey(it.name);
@@ -1327,15 +1419,15 @@
           localStorage.setItem('boq_items', JSON.stringify(items));
           updateDatalist(); populateManageItems();
         });
-        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
-        delBtn.addEventListener('click', () => {
+        const delBtnEl = document.createElement('button'); delBtnEl.textContent = 'Hapus'; delBtnEl.className = 'btn secondary';
+        delBtnEl.addEventListener('click', () => {
           if (!confirm(`Hapus item "${it.name}"?`)) return;
           const key = normalizeKey(it.name);
           items = items.filter(x => normalizeKey(x.name) !== key);
           localStorage.setItem('boq_items', JSON.stringify(items));
           updateDatalist(); populateManageItems();
         });
-        li.appendChild(span); li.appendChild(renameBtn); li.appendChild(delBtn);
+        li.appendChild(span); li.appendChild(renameBtnEl); li.appendChild(delBtnEl);
         manageItemList.appendChild(li);
       });
     }
@@ -1349,21 +1441,21 @@
       filtered.forEach(name => {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = name;
-        const delBtn = document.createElement('button'); delBtn.textContent = 'Hapus'; delBtn.className = 'btn secondary';
-        delBtn.addEventListener('click', () => { if (!confirm(`Hapus project "${name}"?`)) return; delete projects[name]; saveProjectsObj(projects); populateManageProjects(); updateProjectList(); updateFooterLastSaved(); });
-        const renameBtn = document.createElement('button'); renameBtn.textContent = 'Rename'; renameBtn.className = 'btn ghost';
-        renameBtn.addEventListener('click', () => {
+        const delBtnEl = document.createElement('button'); delBtnEl.textContent = 'Hapus'; delBtnEl.className = 'btn secondary';
+        delBtnEl.addEventListener('click', () => { if (!confirm(`Hapus project "${name}"?`)) return; delete projects[name]; saveProjectsObj(projects); populateManageProjects(); updateProjectList(); updateFooterLastSaved(); });
+        const renameBtnEl = document.createElement('button'); renameBtnEl.textContent = 'Rename'; renameBtnEl.className = 'btn ghost';
+        renameBtnEl.addEventListener('click', () => {
           const newName = sanitize(prompt('Ubah nama project:', name) || '');
           if (!newName) return;
           if (projects[newName]) { showAlert('Nama project sudah ada.'); return; }
           projects[newName] = projects[name];
-          projects[newName].lastSaved = Date.now(); // rename dianggap update
+          projects[newName].lastSaved = Date.now();
           delete projects[name];
           saveProjectsObj(projects);
           if (currentProjectName === name) { currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateNavProject(); updateFooterLastSaved(); }
           populateManageProjects(); updateProjectList();
         });
-        li.appendChild(span); li.appendChild(renameBtn); li.appendChild(delBtn);
+        li.appendChild(span); li.appendChild(renameBtnEl); li.appendChild(delBtnEl);
         manageProjectList.appendChild(li);
       });
     }
@@ -1437,7 +1529,7 @@
       localStorage.setItem('boq_category_order', JSON.stringify(categoryOrder));
       localStorage.removeItem('boq_current_name');
       updateNavProject(); renderAll(); updateEditButton();
-      updateFooterLastSaved(); // no project => '—'
+      updateFooterLastSaved();
       showAlert('Project baru siap diisi.');
     }
 
@@ -1452,13 +1544,14 @@
         data: tableData,
         commission: Number(currentCommission || 0),
         categoryOrder: categoryOrder.slice(),
-        lastSaved: Date.now() // rename dianggap update
+        lastSaved: Date.now()
       };
       saveProjectsObj(projects);
       currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateProjectList(); updateNavProject(); updateFooterLastSaved();
       showAlert('Nama project diubah.');
     });
 
+    // Backup / Restore
     downloadJSONBtn.addEventListener('click', () => {
       const projects = loadProjectsObj();
       const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], categoryOrder: categoryOrder || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
@@ -1518,16 +1611,17 @@
           updateNavProject(); updateProjectList(); updateDatalist(); renderAll();
           updateFooterLastSaved();
           showAlert('Restore berhasil. Data lokal telah diperbarui.');
-        } catch (err) { console.error(err); showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
+        } catch (err) {
+          console.error(err);
+          showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
         }
       };
       reader.readAsText(f);
     });
 
     // INIT
-    function updateEditButton(){ editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
-    updateNavProject();
-    (function init(){
+    function init(){
+      updateHeightsVars();
       updateProjectList();
       updateDatalist();
       loadCommissionForCurrentProject();
@@ -1535,9 +1629,11 @@
       updateReorderButton();
       renderAll();
       switchTo('cogs');
-      updateEditButton();
+      updateEditBtnInit();
       updateFooterLastSaved();
-    })();
+      updateNavProject();
+    }
+    init();
   </script>
 </body>
 </html>
