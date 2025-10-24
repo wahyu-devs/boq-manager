@@ -204,10 +204,10 @@
       display: flex; align-items: center; width: 100%;
     }
     .app-footer .container {
-  width: 100%;
-  padding-top: 0;
-  padding-bottom: 0;
-}
+      width: 100%;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
     .footer-inner {
       font-size: 13px; color: var(--muted);
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -572,7 +572,7 @@
       if (it.price !== undefined && it.price !== "" && it.price !== null) {
         priceInput.value = Number(it.price).toLocaleString('id-ID');
         sellingInputManuallyEdited = false;
-        computeAndDisplaySelling();
+        computeAndDisplaySelling(); // no-op jika margin belum valid
       } else {
         priceInput.value = '';
         if (it.sellingPrice !== undefined && it.sellingPrice !== "" && it.sellingPrice !== null) {
@@ -594,21 +594,38 @@
     });
 
     sellingInput.addEventListener('input', () => { sellingInputManuallyEdited = true; });
-    function computeAndDisplaySelling() {
+
+    // === FIX: jangan kosongkan selling; hanya hitung jika COGS & margin valid.
+    function computeAndDisplaySelling(opts = {}) {
+      const { force = false } = opts;
       const priceNum = parseNumberFormatted(priceInput.value);
       const marginNum = (marginInput.value !== '') ? Number(marginInput.value) : null;
-      if ((priceNum != null && priceNum !== '') && (marginNum != null && isFinite(marginNum) && marginNum < 100)) {
-        const spRaw = calcSellingPrice(Number(priceNum), Number(marginNum));
-        const spRounded = (spRaw != null) ? roundUpToThousand(spRaw) : null;
-        if (!sellingInputManuallyEdited) { if (spRounded != null) sellingInput.value = Number(spRounded).toLocaleString('id-ID'); else sellingInput.value = ''; }
-      } else { if (!sellingInputManuallyEdited) sellingInput.value = ''; }
+      const canCompute = (priceNum != null && priceNum !== '' && marginNum != null && isFinite(marginNum) && marginNum < 100);
+      if (!canCompute) return; // penting: biarkan nilai Selling yang sudah ada (manual) tetap tampil
+
+      const spRaw = calcSellingPrice(Number(priceNum), Number(marginNum));
+      const spRounded = (spRaw != null) ? roundUpToThousand(spRaw) : null;
+
+      if (spRounded != null && (force || !sellingInputManuallyEdited)) {
+        sellingInput.value = Number(spRounded).toLocaleString('id-ID');
+        sellingInputManuallyEdited = false; // sekarang jadi hasil auto
+      }
     }
-    priceInput.addEventListener('input', computeAndDisplaySelling);
-    marginInput.addEventListener('input', computeAndDisplaySelling);
+
+    // === FIX: kalau user mengubah COGS/Margin, aktifkan lagi autofill
+    priceInput.addEventListener('input', () => { sellingInputManuallyEdited = false; computeAndDisplaySelling(); });
+    marginInput.addEventListener('input', () => { sellingInputManuallyEdited = false; computeAndDisplaySelling(); });
 
     function computeTotals() {
       const totalCogs = tableData.reduce((acc, r) => { const p = (r.price != null && r.price !== "") ? Number(r.price) : 0; const q = Number(r.qty || 0); return acc + (Number(p || 0) * q); }, 0);
-      const totalSelling = tableData.reduce((acc, r) => { let sp = null; if (r.sellingPrice != null && r.sellingPrice !== "") sp = Number(r.sellingPrice); else if (r.price != null && r.price !== "") sp = calcSellingPrice(Number(r.price), r.margin); const spr = sp != null ? roundUpToThousand(sp) : 0; const q = Number(r.qty || 0); return acc + (spr ? (spr * q) : 0); }, 0);
+      const totalSelling = tableData.reduce((acc, r) => {
+        let sp = null;
+        if (r.sellingPrice != null && r.sellingPrice !== "") sp = Number(r.sellingPrice);
+        else if (r.price != null && r.price !== "") sp = calcSellingPrice(Number(r.price), r.margin);
+        const spr = sp != null ? roundUpToThousand(sp) : 0;
+        const q = Number(r.qty || 0);
+        return acc + (spr ? (spr * q) : 0);
+      }, 0);
       return { totalCogs, totalSelling };
     }
 
@@ -954,10 +971,20 @@
       qtyInput.value = r.qty !== "" ? r.qty : "";
       unitInput.value = r.unit || "";
       priceInput.value = r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "";
-      marginInput.value = (r.margin !== undefined && r.margin !== null) ? r.margin : "";
+      marginInput.value = (r.margin !== undefined && r.margin !== null && r.margin !== "") ? r.margin : "";
       sellingInputManuallyEdited = false;
-      if (r.sellingPrice != null && r.sellingPrice !== "") sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID'); else sellingInput.value = '';
-      computeAndDisplaySelling();
+
+      // === FIX: Pertahankan harga jual manual saat edit.
+      if (r.sellingPrice != null && r.sellingPrice !== "") {
+        sellingInput.value = Number(r.sellingPrice).toLocaleString('id-ID');
+      } else {
+        // Hitung hanya jika COGS & Margin lengkap
+        const hasCOGS = r.price !== "" && r.price != null;
+        const hasMargin = (r.margin !== undefined && r.margin !== null && r.margin !== "");
+        if (hasCOGS && hasMargin) computeAndDisplaySelling();
+        else sellingInput.value = '';
+      }
+
       categoryInput.value = r.category || "";
       switchTo('cogs'); nameInput.focus(); updateEditButton();
     });
