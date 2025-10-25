@@ -285,19 +285,17 @@
 
       <!-- FORM (Sticky) -->
       <div class="form-bar" id="formBar">
-        
-          <form id="boqForm" autocomplete="off">
-            <input type="text" id="itemName" placeholder="Item Name" list="itemList" required />
-            <datalist id="itemList"></datalist>
-            <input type="number" id="qty" placeholder="Qty" />
-            <input type="text" id="unit" placeholder="Unit" />
-            <input type="text" id="price" placeholder="COGS" />
-            <input type="number" id="margin" placeholder="Margin (%)" min="0" max="999.99" step="0.01" />
-            <input type="text" id="sellingInput" placeholder="Selling Price" />
-            <input type="text" id="category" placeholder="Category" required />
-            <button type="submit" class="btn">Add / Update</button>
-          </form>
-        
+        <form id="boqForm" autocomplete="off">
+          <input type="text" id="itemName" placeholder="Item Name" list="itemList" required />
+          <datalist id="itemList"></datalist>
+          <input type="number" id="qty" placeholder="Qty" />
+          <input type="text" id="unit" placeholder="Unit" />
+          <input type="text" id="price" placeholder="COGS" />
+          <input type="number" id="margin" placeholder="Margin (%)" min="0" max="999.99" step="0.01" />
+          <input type="text" id="sellingInput" placeholder="Selling Price" />
+          <input type="text" id="category" placeholder="Category" required />
+          <button type="submit" class="btn">Add / Update</button>
+        </form>
       </div>
 
       <!-- TAB PANELS -->
@@ -501,9 +499,20 @@
       activeTab = tab;
       tabCogs.classList.add('hidden'); tabSelling.classList.add('hidden'); tabCalc.classList.add('hidden');
       [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected','false'); });
-      if (tab === 'cogs') { tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true'); setFormDisabled(false); }
-      else if (tab === 'selling') { tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true'); setFormDisabled(true); }
-      else { tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true'); setFormDisabled(true); renderCalculation(); }
+
+      if (tab === 'cogs') {
+        tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true');
+        setFormDisabled(false); // aktif di COGS
+      }
+      else if (tab === 'selling') {
+        tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true');
+        setFormDisabled(false); // 🔹 sekarang aktif juga di Selling
+      }
+      else {
+        tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true');
+        setFormDisabled(true);  // tetap non-aktif di Calculation
+        renderCalculation();
+      }
       updateHeightsVars();
     }
     tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
@@ -1070,7 +1079,9 @@
       }
 
       categoryInput.value = r.category || "";
-      switchTo('cogs'); nameInput.focus(); updateEditButton();
+      // 🔹 Tidak lagi memaksa pindah ke tab COGS; tetap di tab aktif (COGS atau Selling).
+      nameInput.focus(); 
+      updateEditButton();
     });
 
     deleteBtn.addEventListener('click', () => {
