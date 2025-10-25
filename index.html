@@ -159,9 +159,26 @@
     tr.draggable { cursor: grab; }
     tr.dragging { opacity: .7; background: var(--drag-halo); }
     tr.drag-over { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
-    tr.section-row { user-select: none; }
-    tr.section-row.draggable { cursor: grab; }
-    tr.section-row.drag-over td { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
+
+    /* --- Category row text is selectable & copyable by default --- */
+    tr.section-row td {
+      user-select: text; -webkit-user-select: text; -moz-user-select: text;
+      cursor: text;
+    }
+    /* When Reorder mode is ON, force hand-grab cursor on category rows (match item rows) */
+    .reorder-mode tr.section-row,
+    .reorder-mode tr.section-row td {
+      user-select: none; -webkit-user-select: none; -moz-user-select: none;
+      cursor: grab;
+    }
+    .reorder-mode tr.section-row.dragging,
+    .reorder-mode tr.section-row.dragging td {
+      cursor: grabbing;
+    }
+    .reorder-mode tr.section-row.drag-over td {
+      outline: 2px dashed var(--drag-border);
+      outline-offset: -2px;
+    }
 
     /* ===================== THEME SLIDER BUTTON (bukan checkbox) ===================== */
     .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--txt); user-select: none; }
@@ -506,7 +523,7 @@
       }
       else if (tab === 'selling') {
         tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true');
-        setFormDisabled(false); // 🔹 sekarang aktif juga di Selling
+        setFormDisabled(false); // aktif juga di Selling
       }
       else {
         tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true');
@@ -586,6 +603,7 @@
     }
     function setReorderMode(on) {
       reorderMode = !!on;
+      document.body.classList.toggle('reorder-mode', reorderMode); // gate DnD vs text-select
       clearDragVisuals();
       updateReorderButton();
       renderAll();
@@ -1019,6 +1037,19 @@
     function updateEditButton() { editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
     function updateEditBtnInit(){ editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
 
+    function clearSelectionOnly() {
+      selectedIndex = null;
+      document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected'));
+    }
+
+    /* Unselect row when clicking outside the tables */
+    document.addEventListener('click', (e) => {
+      const insideAnyTable = e.target.closest('#cogsTable') || e.target.closest('#sellingTable');
+      if (!insideAnyTable) {
+        clearSelectionOnly();
+      }
+    });
+
     form.addEventListener('submit', e => {
       e.preventDefault();
       if (form.classList.contains('form-disabled')) return;
@@ -1059,7 +1090,7 @@
 
     editBtn.addEventListener('click', () => {
       if (editingIndex !== null) { cancelEdit(); updateEditButton(); return; }
-      if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
+      if (selectedIndex === null) { alert('Pilih baris dulu!'); return; }
       setEditingMode(selectedIndex);
       const r = tableData[selectedIndex];
       nameInput.value = r.name;
@@ -1079,13 +1110,12 @@
       }
 
       categoryInput.value = r.category || "";
-      // 🔹 Tidak lagi memaksa pindah ke tab COGS; tetap di tab aktif (COGS atau Selling).
       nameInput.focus(); 
       updateEditButton();
     });
 
     deleteBtn.addEventListener('click', () => {
-      if (selectedIndex === null) { showAlert('Pilih baris dulu!'); return; }
+      if (selectedIndex === null) { alert('Pilih baris dulu!'); return; }
       if (!confirm('Hapus baris ini?')) return;
       tableData.splice(selectedIndex, 1);
       localStorage.setItem('boq_working', JSON.stringify(tableData));
@@ -1309,7 +1339,7 @@
     }
 
     function exportPDF() {
-      if (!tableData.length && activeTab !== 'calculation') { showAlert('Tidak ada data untuk diekspor.'); return; }
+      if (!tableData.length && activeTab !== 'calculation') { alert('Tidak ada data untuk diekspor.'); return; }
       let filenameSuffix = '';
       if (activeTab === 'cogs') filenameSuffix = ' (COGS)';
       else if (activeTab === 'selling') filenameSuffix = ' (Selling)';
@@ -1349,7 +1379,7 @@
       else if (activeTab === 'selling') {
         categoryOrder.forEach(cat => {
           body.push([{ content: cat, colSpan: 6, styles: { fillColor: [238,238,238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
-          (grouped[cat]||[]).forEach(r => {
+        (grouped[cat]||[]).forEach(r => {
             let spRaw = null;
             if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
             else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
@@ -1458,7 +1488,7 @@
         renameBtnEl.addEventListener('click', () => {
           const newName = sanitize(prompt('Ubah nama project:', name) || '');
           if (!newName) return;
-          if (projects[newName]) { showAlert('Nama project sudah ada.'); return; }
+          if (projects[newName]) { alert('Nama project sudah ada.'); return; }
           projects[newName] = projects[name];
           projects[newName].lastSaved = Date.now();
           delete projects[name];
@@ -1491,7 +1521,7 @@
     newProjectBtn.addEventListener('click', () => newProject());
 
     function saveProject() {
-      if (!tableData.length) { showAlert('Tidak ada data untuk disimpan.'); return; }
+      if (!tableData.length) { alert('Tidak ada data untuk disimpan.'); return; }
       let name = prompt('Masukkan nama project:', currentProjectName || '');
       if (!name) return;
       name = sanitize(name);
@@ -1506,14 +1536,14 @@
       saveProjectsObj(projects);
       currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
       updateProjectList(); updateNavProject(); updateFooterLastSaved();
-      showAlert(`Project "${name}" berhasil disimpan.`);
+      alert(`Project "${name}" berhasil disimpan.`);
     }
 
     function loadProject() {
       const name = sanitize(projectSearch.value || '');
-      if (!name) { showAlert('Masukkan nama project terlebih dahulu.'); return; }
+      if (!name) { alert('Masukkan nama project terlebih dahulu.'); return; }
       const projects = loadProjectsObj();
-      if (!projects[name]) { showAlert('Project tidak ditemukan.'); return; }
+      if (!projects[name]) { alert('Project tidak ditemukan.'); return; }
       const stored = projects[name];
       if (Array.isArray(stored)) { tableData = stored; currentCommission = 0; categoryOrder = []; }
       else if (stored && typeof stored === 'object') {
@@ -1527,7 +1557,7 @@
       currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
       updateNavProject(); updateProjectList(); renderAll(); projectSearch.value = '';
       updateFooterLastSaved();
-      showAlert(`Project "${name}" berhasil dimuat.`);
+      alert(`Project "${name}" berhasil dimuat.`);
       updateEditButton();
     }
 
@@ -1541,11 +1571,11 @@
       localStorage.removeItem('boq_current_name');
       updateNavProject(); renderAll(); updateEditButton();
       updateFooterLastSaved();
-      showAlert('Project baru siap diisi.');
+      alert('Project baru siap diisi.');
     }
 
     renameProjectBtn.addEventListener('click', () => {
-      if (!currentProjectName) { showAlert('Tidak ada project aktif. Simpan project dulu agar bisa rename.'); return; }
+      if (!currentProjectName) { alert('Tidak ada project aktif. Simpan project dulu agar bisa rename.'); return; }
       const newName = sanitize(prompt('Ubah nama project:', currentProjectName) || '');
       if (!newName) return;
       const projects = loadProjectsObj();
@@ -1559,7 +1589,7 @@
       };
       saveProjectsObj(projects);
       currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateProjectList(); updateNavProject(); updateFooterLastSaved();
-      showAlert('Nama project diubah.');
+      alert('Nama project diubah.');
     });
 
     // Backup / Restore
@@ -1579,7 +1609,7 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         let parsed = null;
-        try { parsed = JSON.parse(String(e.target.result)); } catch (err) { showAlert('File tidak valid: bukan JSON.'); return; }
+        try { parsed = JSON.parse(String(e.target.result)); } catch (err) { alert('File tidak valid: bukan JSON.'); return; }
         let restoreObj = { projects: {}, items: [], working: [], currentProjectName: '', unsavedCommission: 0, categoryOrder: [] };
         if (parsed && typeof parsed === 'object') {
           if (parsed.projects && typeof parsed.projects === 'object') {
@@ -1621,10 +1651,10 @@
           loadCommissionForCurrentProject();
           updateNavProject(); updateProjectList(); updateDatalist(); renderAll();
           updateFooterLastSaved();
-          showAlert('Restore berhasil. Data lokal telah diperbarui.');
+          alert('Restore berhasil. Data lokal telah diperbarui.');
         } catch (err) {
           console.error(err);
-          showAlert('Terjadi kesalahan saat menyimpan data ke localStorage.');
+          alert('Terjadi kesalahan saat menyimpan data ke localStorage.');
         }
       };
       reader.readAsText(f);
