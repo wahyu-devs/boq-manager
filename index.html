@@ -325,6 +325,22 @@
     .theme-dark .floating-field input:not(:focus):not(:placeholder-shown) + label {
       color: var(--muted);
     }
+    /* ===== Floating label: search project ===== */
+    #projectSearch {
+      flex: unset;
+    }
+
+    .actions .floating-field.project-search {
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: 220px;
+      min-width: 160px;
+      width: auto;
+    }
+
+    .actions .floating-field.project-search input {
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -461,7 +477,10 @@
         <button class="btn secondary" type="button" id="reorderBtn" title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
         <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
         <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
-        <input list="projectList" id="projectSearch" placeholder="Search project..." autocomplete="off" />
+        <div class="floating-field project-search">
+          <input list="projectList" id="projectSearch" placeholder=" " autocomplete="off" />
+          <label for="projectSearch">Search project</label>
+        </div>
         <datalist id="projectList"></datalist>
         <button class="btn secondary" type="button" id="loadProjectBtn">Load Project</button>
         <button class="btn secondary" type="button" id="saveProjectBtn">Save Project</button>
@@ -474,7 +493,7 @@
   <footer class="app-footer" role="contentinfo" aria-label="Footer">
     <div class="container">
       <div class="footer-inner">
-        <div class="footer-left">© 2025 BOQ Manager. All rights reserved. Developed by <b>Wahyu</b>.</div>
+        <div class="footer-left">© 2026 BOQ Manager. All rights reserved. Developed by <b>Wahyu</b>.</div>
         <div class="footer-right">
           <span>Last updated:</span>
           <span id="lastSavedText">—</span>
