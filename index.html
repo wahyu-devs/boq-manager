@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <title>BOQ Manager — Project Cost Estimation Tool</title>
@@ -29,16 +30,20 @@
       --table-head-bg: #fbfbfb;
       --calc-head: #1f4e78;
       --control-bg-disabled: #f7f7f7;
-      --drag-halo: rgba(25,118,210,.14);
+      --drag-halo: rgba(25, 118, 210, .14);
       --drag-border: #1976d2;
 
       /* Selected row & fixed heights */
-      --row-selected: rgba(25,118,210,.14);
+      --row-selected: rgba(25, 118, 210, .14);
       --footer-h: 44px;
-      --actions-h: 56px;   /* default, diupdate via JS/ResizeObserver */
-      --nav-h: 60px;       /* default, diupdate via JS/ResizeObserver */
-      --tabs-h: 52px;      /* default, diupdate via JS/ResizeObserver */
+      --actions-h: 56px;
+      /* default, diupdate via JS/ResizeObserver */
+      --nav-h: 60px;
+      /* default, diupdate via JS/ResizeObserver */
+      --tabs-h: 52px;
+      /* default, diupdate via JS/ResizeObserver */
     }
+
     .theme-dark {
       color-scheme: dark;
       --bg: #1f1f1f;
@@ -56,13 +61,16 @@
       --table-head-bg: #2a2a2a;
       --calc-head: #3a3a3a;
       --control-bg-disabled: #2a2a2a;
-      --drag-halo: rgba(255,159,26,.22);
+      --drag-halo: rgba(255, 159, 26, .22);
       --drag-border: #ff9f1a;
-      --row-selected: rgba(255,159,26,.18);
+      --row-selected: rgba(255, 159, 26, .18);
     }
 
     /* ===================== BASE ===================== */
-    * { box-sizing: border-box }
+    * {
+      box-sizing: border-box
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -74,16 +82,70 @@
       /* ruang bawah = footer + actions dock + sedikit spasi */
       padding-bottom: calc(var(--footer-h) + var(--actions-h) + 16px);
     }
-    main { flex: 1 0 auto; }
 
-    .container { padding: 20px; max-width: 1200px; margin: 0 auto }
+    main {
+      flex: 1 0 auto;
+    }
 
-    .btn { background: var(--accent); color: var(--accent-contrast); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; pointer-events: none; }
-    .btn.secondary { background: #eee; color: #111; border: 1px solid #ccc }
-    .theme-dark .btn.secondary { background: #2e2e2e; color: #eaeaea; border: 1px solid #3a3a3a }
-    .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,.3); color: var(--nav-txt) }
-    .theme-dark .btn.ghost { border-color: #444; color: var(--nav-txt) }
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    .btn {
+      background: var(--accent);
+      color: var(--accent-contrast);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px
+    }
+
+    .btn[disabled] {
+      opacity: .6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn.secondary {
+      background: #eee;
+      color: #111;
+      border: 1px solid #ccc
+    }
+
+    .theme-dark .btn.secondary {
+      background: #2e2e2e;
+      color: #eaeaea;
+      border: 1px solid #3a3a3a
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, .3);
+      color: var(--nav-txt)
+    }
+
+    .theme-dark .btn.ghost {
+      border-color: #444;
+      color: var(--nav-txt)
+    }
+
+    .btn:focus,
+    .btn:focus-visible,
+    .tab-btn:focus,
+    .tab-btn:focus-visible,
+    .switch:focus,
+    .switch:focus-visible,
+    .modal-close:focus,
+    .modal-close:focus-visible,
+    button:focus,
+    button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 1px var(--accent);
+      border-color: var(--accent);
+    }
 
     /* ===== Sticky Navbar ===== */
     .navbar-wrapper {
@@ -92,14 +154,33 @@
       position: sticky;
       top: 0;
       z-index: 1000;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
       transition: box-shadow .18s ease, backdrop-filter .18s ease, background-color .18s ease;
     }
-    
-    .navbar { display: flex; align-items: center; gap: 16px;  }
-    .brand { font-weight: 700; color: var(--nav-txt) }
-    .project-name { opacity: .9; color: var(--nav-txt); font-weight: 400 }
-    .nav-actions { margin-left: auto; display: flex; gap: 8px; align-items: center }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      font-weight: 700;
+      color: var(--nav-txt)
+    }
+
+    .project-name {
+      opacity: .9;
+      color: var(--nav-txt);
+      font-weight: 400
+    }
+
+    .nav-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
 
     /* ===== Sticky Tabs Bar (di bawah navbar) ===== */
     .tabs-bar {
@@ -110,16 +191,62 @@
       border-bottom: 1px solid var(--border);
       transition: box-shadow .18s ease, backdrop-filter .18s ease, background-color .18s ease;
     }
-    
+
 
     /* Tabs + theme toggle */
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; padding: 10px 0 6px; justify-content: space-between; }
-    .tabs-left { display: flex; gap: 8px; align-items: flex-end; }
-    .tab-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333; position: relative; transition: color .12s ease, background .12s ease; margin: 0; }
-    .theme-dark .tab-btn { color: var(--txt) }
-    .tab-btn:focus { outline: none; }
-    .tab-btn.active { color: var(--accent); font-weight: 600; }
-    .tab-btn.active::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -8px; height: 3px; background: var(--accent); border-radius: 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: flex-end;
+      padding: 10px 0 6px;
+      justify-content: space-between;
+    }
+
+    .tabs-left {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      position: relative;
+      transition: color .12s ease, background .12s ease;
+      margin: 0;
+    }
+
+    .theme-dark .tab-btn {
+      color: var(--txt)
+    }
+
+    .tab-btn:focus {
+      outline: none;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: -8px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
 
     /* ===== Sticky Form Bar (di bawah tabs) ===== */
     .form-bar {
@@ -129,68 +256,245 @@
       background: var(--bg);
       transition: box-shadow .18s ease, backdrop-filter .18s ease, background-color .18s ease;
     }
-    
-    .form-bar .container { padding-top: 12px; padding-bottom: 12px; width: 100%}
-    .form-bar { padding: 12px 0; }
 
-    .form-bar form { margin: 0; }
+    .form-bar .container {
+      padding-top: 12px;
+      padding-bottom: 12px;
+      width: 100%
+    }
+
+    .form-bar {
+      padding: 12px 0;
+    }
+
+    .form-bar form {
+      margin: 0;
+    }
 
     /* ===== Form controls ===== */
-    form { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; align-items: center;}
-    input[type="text"], input[type="number"], input[list] { padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; min-height: 36px; width: 120px; background: var(--card); color: var(--txt) }
-    .theme-dark input[type="text"], .theme-dark input[type="number"], .theme-dark input[list] { border-color: #3a3a3a; }
-    #itemName { flex: 1 }
-    #projectSearch { flex: 1 }
-    button[type="submit"] { align-self: center; width: 120px; }
-    .form-disabled { opacity: .7; filter: grayscale(10%); }
-    .form-disabled input, .form-disabled select, .form-disabled textarea { background: var(--control-bg-disabled); }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0;
+      align-items: center;
+    }
 
-    .table-wrap { overflow: auto; background: var(--card); border-radius: 6px; padding: 8px; border: 1px solid var(--border) }
-    table { width: 100%; border-collapse: collapse; background: transparent }
-    th, td { border: 1px solid var(--table-border); padding: 8px; text-align: center; font-size: 13px; color: var(--txt) }
-    th { background: var(--table-head-bg); font-weight: 700 }
-    td.left { text-align: left }
-    tfoot .total { background: var(--highlight); font-weight: 700 }
-    #cogsTable tfoot td.total.label, #sellingTable tfoot td.total.label { text-align: center; }
-    #cogsTable tfoot td.total.value, #sellingTable tfoot td.total.value { text-align: right; }
-    tr.section-row td { background: var(--section-row); font-weight: 700; text-align: left; padding-left: 12px; border-top: 2px solid var(--border) }
-    tr.selected { background: var(--row-selected); }
+    input[type="text"],
+    input[type="number"],
+    input[list] {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #d6d6d6;
+      font-size: 14px;
+      min-height: 36px;
+      width: 120px;
+      background: var(--bg);
+      color: var(--txt)
+    }
+
+    .theme-dark input[type="text"],
+    .theme-dark input[type="number"],
+    .theme-dark input[list] {
+      border-color: #3a3a3a;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[list]:focus,
+    .modal-search:focus,
+    .commission-input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    #itemName {
+      flex: 1
+    }
+
+    #projectSearch {
+      flex: 1
+    }
+
+    button[type="submit"] {
+      align-self: center;
+      width: 120px;
+    }
+
+    .form-disabled {
+      opacity: .7;
+      filter: grayscale(10%);
+    }
+
+    .form-disabled input,
+    .form-disabled select,
+    .form-disabled textarea {
+      background: var(--control-bg-disabled);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      background: var(--card);
+      border-radius: 6px;
+      padding: 8px;
+      border: 1px solid var(--border)
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: transparent
+    }
+
+    th,
+    td {
+      border: 1px solid var(--table-border);
+      padding: 8px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--txt)
+    }
+
+    th {
+      background: var(--table-head-bg);
+      font-weight: 700
+    }
+
+    td.left {
+      text-align: left
+    }
+
+    tfoot .total {
+      background: var(--highlight);
+      font-weight: 700
+    }
+
+    #cogsTable tfoot td.total.label,
+    #sellingTable tfoot td.total.label {
+      text-align: center;
+    }
+
+    #cogsTable tfoot td.total.value,
+    #sellingTable tfoot td.total.value {
+      text-align: right;
+    }
+
+    tr.section-row td {
+      background: var(--section-row);
+      font-weight: 700;
+      text-align: left;
+      padding-left: 12px;
+      border-top: 2px solid var(--border)
+    }
+
+    tr.selected {
+      background: var(--row-selected);
+    }
 
     /* ===== Drag & Drop ===== */
-    tr.draggable { cursor: grab; }
-    tr.dragging { opacity: .7; background: var(--drag-halo); }
-    tr.drag-over { outline: 2px dashed var(--drag-border); outline-offset: -2px; }
+    tr.draggable {
+      cursor: grab;
+    }
+
+    tr.dragging {
+      opacity: .7;
+      background: var(--drag-halo);
+    }
+
+    tr.drag-over {
+      outline: 2px dashed var(--drag-border);
+      outline-offset: -2px;
+    }
 
     /* --- Category row text is selectable & copyable by default --- */
     tr.section-row td {
-      user-select: text; -webkit-user-select: text; -moz-user-select: text;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
       cursor: text;
     }
+
     /* When Reorder mode is ON, force hand-grab cursor on category rows (match item rows) */
     .reorder-mode tr.section-row,
     .reorder-mode tr.section-row td {
-      user-select: none; -webkit-user-select: none; -moz-user-select: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
       cursor: grab;
     }
+
     .reorder-mode tr.section-row.dragging,
     .reorder-mode tr.section-row.dragging td {
       cursor: grabbing;
     }
+
     .reorder-mode tr.section-row.drag-over td {
       outline: 2px dashed var(--drag-border);
       outline-offset: -2px;
     }
 
     /* ===================== THEME SLIDER BUTTON (bukan checkbox) ===================== */
-    .theme-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--txt); user-select: none; }
-    .toggle-label { font-size: 12px; opacity: .9; }
-    .theme-dark .toggle-label { opacity: .95; }
-    .switch { position: relative; width: 56px; height: 28px; background: #8c8c8c; border-radius: 999px; border: 1px solid var(--border); cursor: pointer; transition: background .2s ease, border-color .2s ease; display: inline-block; }
-    .theme-dark .switch { background: #3a3a3a; border-color: #444; }
-    .switch .slider { position: absolute; top: 1.2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: transform .2s ease, background .2s ease, box-shadow .2s ease; will-change: transform; }
-    .theme-dark .switch .slider { background: #f0f0f0; }
-    .switch.on { background: #3a3a3a; }
-    .switch.on .slider { transform: translateX(28px); background: #ff9f1a; box-shadow: 0 1px 4px rgba(255,159,26,.5); }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--txt);
+      user-select: none;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      opacity: .9;
+    }
+
+    .theme-dark .toggle-label {
+      opacity: .95;
+    }
+
+    .switch {
+      position: relative;
+      width: 56px;
+      height: 28px;
+      background: #8c8c8c;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease;
+      display: inline-block;
+    }
+
+    .theme-dark .switch {
+      background: #3a3a3a;
+      border-color: #444;
+    }
+
+    .switch .slider {
+      position: absolute;
+      top: 1.2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+      will-change: transform;
+    }
+
+    .theme-dark .switch .slider {
+      background: #f0f0f0;
+    }
+
+    .switch.on {
+      background: #3a3a3a;
+    }
+
+    .switch.on .slider {
+      transform: translateX(28px);
+      background: #ff9f1a;
+      box-shadow: 0 1px 4px rgba(255, 159, 26, .5);
+    }
 
     /* ===================== ACTIONS DOCK (fixed di atas footer) ===================== */
     .actions-dock {
@@ -203,6 +507,7 @@
       z-index: 1100;
       will-change: height;
     }
+
     .actions-dock-inner {
       min-height: 56px;
       padding-top: 8px;
@@ -211,6 +516,7 @@
       align-items: center;
       width: 100%;
     }
+
     .actions {
       margin: 0;
       display: flex;
@@ -219,63 +525,208 @@
       align-items: center;
       width: 100%;
     }
-    .actions label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted) }
+
+    .actions label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted)
+    }
+
     .actions input#projectSearch {
       flex-grow: 1;
       flex-shrink: 1;
       flex-basis: 220px;
       min-width: 160px;
+      background: var(--card);
     }
-    .small-note { font-size: 12px; color: var(--muted) }
-    .hidden { display: none }
+
+    .small-note {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .hidden {
+      display: none
+    }
 
     /* ===================== FOOTER (FIXED & SPLIT) ===================== */
     .app-footer {
-      position: fixed; left: 0; right: 0; bottom: 0;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: var(--card);
-      z-index: 1000; height: var(--footer-h);
-      display: flex; align-items: center; width: 100%;
+      z-index: 1000;
+      height: var(--footer-h);
+      display: flex;
+      align-items: center;
+      width: 100%;
     }
-    .app-footer .container { width: 100%; padding-top: 0; padding-bottom: 0; }
-    .footer-inner { font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-    .footer-right { white-space: nowrap; }
+
+    .app-footer .container {
+      width: 100%;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .footer-inner {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .footer-right {
+      white-space: nowrap;
+    }
 
     /* ===================== MODAL ===================== */
-    .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-    .modal-content { background: var(--card); color: var(--txt); margin: 6% auto; padding: 16px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); border: 1px solid var(--border); }
-    .modal-header { font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap:8px; justify-content: space-between; flex-wrap: wrap; }
-    .modal-header .title { font-weight:700; }
-    .modal-search { margin: 0 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #d6d6d6; font-size: 14px; width: 55%; max-width: 340px; min-width: 160px; background: var(--card); color: var(--txt); }
-    .theme-dark .modal-search { border-color: #3a3a3a; }
-    .modal-list { max-height: 300px; overflow: auto; margin-bottom: 12px; padding: 0; list-style: none }
-    .modal-list li { display: flex; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--border) }
-    .modal-list li span { flex: 1 }
-    .modal-close { float: right; cursor: pointer; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: #eee; border: 1px solid #ddd }
-    .theme-dark .modal-close { background: #2d2d2d; border-color: #3a3a3a; color: var(--txt); }
-    .calc-summary thead th { text-align: center; }
-    .calc-summary tbody td.value { font-weight: 400; text-align: center; min-width: 140px; }
-    .commission-input { width: 120px; padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; text-align: center; background: var(--card); color: var(--txt); }
-    .theme-dark .commission-input { border-color: #3a3a3a; }
-    .modal .btn.ghost { background: transparent; border: 1px solid #ccc; color: #333; padding: 8px 12px; }
-    .theme-dark .modal .btn.ghost { border-color: #3a3a3a; color: var(--txt); }
-        /* ===================== FLOATING LABEL (KEEP EXISTING FLEX) ===================== */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background: var(--card);
+      color: var(--txt);
+      margin: 6% auto;
+      padding: 16px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 520px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .modal-header .title {
+      font-weight: 700;
+    }
+
+    .modal-search {
+      margin: 0 12px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #d6d6d6;
+      font-size: 14px;
+      width: 55%;
+      max-width: 340px;
+      min-width: 160px;
+      background: var(--card);
+      color: var(--txt);
+    }
+
+    .theme-dark .modal-search {
+      border-color: #3a3a3a;
+    }
+
+    .modal-list {
+      max-height: 300px;
+      overflow: auto;
+      margin-bottom: 12px;
+      padding: 0;
+      list-style: none
+    }
+
+    .modal-list li {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 4px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .modal-list li span {
+      flex: 1
+    }
+
+    .modal-close {
+      float: right;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #eee;
+      border: 1px solid #ddd
+    }
+
+    .theme-dark .modal-close {
+      background: #2d2d2d;
+      border-color: #3a3a3a;
+      color: var(--txt);
+    }
+
+    .calc-summary thead th {
+      text-align: center;
+    }
+
+    .calc-summary tbody td.value {
+      font-weight: 400;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .commission-input {
+      width: 120px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+      background: var(--card);
+      color: var(--txt);
+    }
+
+    .theme-dark .commission-input {
+      border-color: #3a3a3a;
+    }
+
+    .modal .btn.ghost {
+      background: transparent;
+      border: 1px solid #ccc;
+      color: #333;
+      padding: 8px 12px;
+    }
+
+    .theme-dark .modal .btn.ghost {
+      border-color: #3a3a3a;
+      color: var(--txt);
+    }
+
+    /* ===================== FLOATING LABEL ===================== */
     .floating-field {
       position: relative;
       min-width: 0;
       display: block;
     }
 
-    /* ikut aturan lama: itemName saja yang fleksibel */
     .floating-field.grow {
       flex: 1;
     }
 
-    /* field biasa ikut ukuran lama input: 120px */
     form .floating-field:not(.grow) {
       width: 120px;
     }
 
-    /* input tetap ikut style existing, jangan ubah size luar */
     .floating-field input {
       width: 100%;
       box-sizing: border-box;
@@ -283,7 +734,6 @@
       padding-bottom: 2px;
     }
 
-    /* label floating */
     .floating-field label {
       position: absolute;
       left: 10px;
@@ -301,31 +751,28 @@
       color: var(--muted);
     }
 
-    /* placeholder asli disembunyikan */
     .floating-field input::placeholder {
       color: transparent;
     }
 
-    /* saat focus / saat sudah ada isi */
-    .floating-field input:focus + label,
-    .floating-field input:not(:placeholder-shown) + label {
+    .floating-field input:focus+label,
+    .floating-field input:not(:placeholder-shown)+label {
       top: 0;
       transform: translateY(-50%);
       font-size: 11px;
       color: var(--accent);
-      background: var(--card);
+      background: var(--bg);
       padding: 0 4px;
     }
 
-    /* saat terisi tapi tidak focus */
-    .floating-field input:not(:focus):not(:placeholder-shown) + label {
+    .floating-field input:not(:focus):not(:placeholder-shown)+label {
       color: #5f6368;
     }
 
-    .theme-dark .floating-field input:not(:focus):not(:placeholder-shown) + label {
+    .theme-dark .floating-field input:not(:focus):not(:placeholder-shown)+label {
       color: var(--muted);
     }
-    /* ===== Floating label: search project ===== */
+
     #projectSearch {
       flex: unset;
     }
@@ -341,8 +788,14 @@
     .actions .floating-field.project-search input {
       width: 100%;
     }
+
+    .actions .floating-field.project-search input:focus+label,
+    .actions .floating-field.project-search input:not(:placeholder-shown)+label {
+      background: var(--card);
+    }
   </style>
 </head>
+
 <body>
   <!-- NAVBAR -->
   <div class="navbar-wrapper" id="navbarWrapper">
@@ -351,7 +804,8 @@
       <div class="nav-actions">
         <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
         <button class="btn ghost" id="manageBtn">Manage</button>
-        <button class="btn secondary" id="downloadJSON" title="Backup semua data (projects, items, working, commission)">Backup</button>
+        <button class="btn secondary" id="downloadJSON"
+          title="Backup semua data (projects, items, working, commission)">Backup</button>
         <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore</button>
         <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
       </div>
@@ -432,9 +886,24 @@
       <div id="tabCogs" class="tab-panel">
         <div class="table-wrap">
           <table id="cogsTable" aria-label="COGS table">
-            <thead><tr><th>No</th><th>Nama Item</th><th>Qty</th><th>Unit</th><th>Harga COGS</th><th>Total COGS</th><th>Margin (%)</th></tr></thead>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Item</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Harga COGS</th>
+                <th>Total COGS</th>
+                <th>Margin (%)</th>
+              </tr>
+            </thead>
             <tbody></tbody>
-            <tfoot><tr><td colspan="6" class="total label">Grand Total COGS</td><td class="total value" id="grandCogs">0</td></tr></tfoot>
+            <tfoot>
+              <tr>
+                <td colspan="6" class="total label">Grand Total COGS</td>
+                <td class="total value" id="grandCogs">0</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -442,9 +911,23 @@
       <div id="tabSelling" class="tab-panel hidden">
         <div class="table-wrap">
           <table id="sellingTable" aria-label="Selling table">
-            <thead><tr><th>No</th><th>Nama Item</th><th>Qty</th><th>Unit</th><th>Harga Satuan</th><th>Total</th></tr></thead>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Item</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Harga Satuan</th>
+                <th>Total</th>
+              </tr>
+            </thead>
             <tbody></tbody>
-            <tfoot><tr><td colspan="5" class="total label">Grand Total</td><td class="total value" id="grandSelling">0</td></tr></tfoot>
+            <tfoot>
+              <tr>
+                <td colspan="5" class="total label">Grand Total</td>
+                <td class="total value" id="grandSelling">0</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -452,12 +935,21 @@
       <div id="tabCalc" class="tab-panel hidden">
         <div class="table-wrap">
           <table id="calcSummary" class="calc-summary" aria-label="Calculation summary">
-            <thead><tr><th>Total COGS</th><th>Total Selling</th><th>Commission</th><th>Gross Profit</th><th>Total Margin</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Total COGS</th>
+                <th>Total Selling</th>
+                <th>Commission</th>
+                <th>Gross Profit</th>
+                <th>Total Margin</th>
+              </tr>
+            </thead>
             <tbody>
               <tr>
                 <td id="calcTotalCogs" class="value">0</td>
                 <td id="calcTotalSelling" class="value">0</td>
-                <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input" type="text" placeholder="0" /></td>
+                <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input"
+                    type="text" placeholder="0" /></td>
                 <td id="calcGrossProfit" class="value">0</td>
                 <td id="calcTotalMargin" class="value">0.00%</td>
               </tr>
@@ -474,7 +966,8 @@
       <div class="actions">
         <button id="editBtn" class="btn secondary" type="button">Edit</button>
         <button class="btn secondary" id="deleteBtn" type="button">Delete</button>
-        <button class="btn secondary" type="button" id="reorderBtn" title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
+        <button class="btn secondary" type="button" id="reorderBtn"
+          title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
         <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
         <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
         <div class="floating-field project-search">
@@ -531,7 +1024,7 @@
 
   <script>
     /* ===== Utilities kecil ===== */
-    function cgsTbodyAppend(node, tbody){ tbody.appendChild(node); }
+    function cgsTbodyAppend(node, tbody) { tbody.appendChild(node); }
     const rootStyle = document.documentElement.style;
 
     // ===== Sticky navbar shadow toggler =====
@@ -609,7 +1102,7 @@
       localStorage.setItem('boq_theme', isDark ? 'dark' : 'light');
       updateHeightsVars();
     }
-    (function initTheme(){
+    (function initTheme() {
       const saved = localStorage.getItem('boq_theme');
       if (saved === 'dark' || saved === 'light') applyTheme(saved);
       else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) applyTheme('dark');
@@ -625,24 +1118,24 @@
     let activeTab = 'cogs';
     function setFormDisabled(disabled) {
       const controls = form.querySelectorAll('input, button, select, textarea');
-      controls.forEach(el => { if (el.tagName.toLowerCase() !== 'datalist') disabled ? el.setAttribute('disabled','disabled') : el.removeAttribute('disabled'); });
+      controls.forEach(el => { if (el.tagName.toLowerCase() !== 'datalist') disabled ? el.setAttribute('disabled', 'disabled') : el.removeAttribute('disabled'); });
       form.classList.toggle('form-disabled', disabled);
     }
     function switchTo(tab) {
       activeTab = tab;
       tabCogs.classList.add('hidden'); tabSelling.classList.add('hidden'); tabCalc.classList.add('hidden');
-      [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected','false'); });
+      [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
 
       if (tab === 'cogs') {
-        tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected','true');
+        tabCogs.classList.remove('hidden'); tabCogsBtn.classList.add('active'); tabCogsBtn.setAttribute('aria-selected', 'true');
         setFormDisabled(false); // aktif di COGS
       }
       else if (tab === 'selling') {
-        tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected','true');
+        tabSelling.classList.remove('hidden'); tabSellingBtn.classList.add('active'); tabSellingBtn.setAttribute('aria-selected', 'true');
         setFormDisabled(false); // aktif juga di Selling
       }
       else {
-        tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected','true');
+        tabCalc.classList.remove('hidden'); tabCalcBtn.classList.add('active'); tabCalcBtn.setAttribute('aria-selected', 'true');
         setFormDisabled(true);  // tetap non-aktif di Calculation
         renderCalculation();
       }
@@ -715,7 +1208,7 @@
       reorderBtn.title = reorderMode ? 'Selesai ubah urutan' : 'Aktifkan drag & drop untuk ubah urutan';
     }
     function clearDragVisuals() {
-      document.querySelectorAll('.drag-over, .dragging').forEach(el => el.classList.remove('drag-over','dragging'));
+      document.querySelectorAll('.drag-over, .dragging').forEach(el => el.classList.remove('drag-over', 'dragging'));
     }
     function setReorderMode(on) {
       reorderMode = !!on;
@@ -756,22 +1249,22 @@
     function getSafeFileName(name) { if (!name) return 'BOQ'; return (`BOQ - ${name}`).replace(/[\\\/:*?"<>|]/g, '').trim(); }
     function updateNavProject() { navProject.textContent = currentProjectName ? `| ${currentProjectName}` : '(no project)'; }
     function showAlert(msg) { alert(msg); }
-    function parseNumberFormatted(str) { if (str == null) return null; const raw = String(str).replace(/\./g,'').replace(/,/g,'').trim(); return raw === '' ? null : Number(raw); }
-    function formatThousandsInput(el) { el.addEventListener('input', () => { const raw = String(el.value).replace(/[^\d]/g,''); el.value = raw ? Number(raw).toLocaleString('id-ID') : ''; }); }
+    function parseNumberFormatted(str) { if (str == null) return null; const raw = String(str).replace(/\./g, '').replace(/,/g, '').trim(); return raw === '' ? null : Number(raw); }
+    function formatThousandsInput(el) { el.addEventListener('input', () => { const raw = String(el.value).replace(/[^\d]/g, ''); el.value = raw ? Number(raw).toLocaleString('id-ID') : ''; }); }
     formatThousandsInput(priceInput);
     formatThousandsInput(sellingInput);
 
-    function excelColLetter(n) { let s=''; while (n>0) { const m = (n-1) % 26; s = String.fromCharCode(65+m) + s; n = Math.floor((n-1)/26); } return s; }
+    function excelColLetter(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 
     function updateDatalist() {
       const map = {};
       items.forEach(it => { if (!it || !it.name) return; const key = it.name.trim(); if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) map[key] = it; });
-      const arr = Object.values(map).slice().sort((a,b) => (a.name||'').toLowerCase().localeCompare((b.name||'').toLowerCase()));
+      const arr = Object.values(map).slice().sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()));
       itemList.innerHTML = '';
       arr.forEach(it => { const opt = document.createElement('option'); opt.value = it.name; itemList.appendChild(opt); });
     }
 
-    function calcSellingPrice(cogs, marginPercent) { const m = Number(marginPercent)/100; if (!isFinite(m) || m >= 1) return null; if (cogs === "" || cogs == null) return null; return Number(cogs) / (1 - m); }
+    function calcSellingPrice(cogs, marginPercent) { const m = Number(marginPercent) / 100; if (!isFinite(m) || m >= 1) return null; if (cogs === "" || cogs == null) return null; return Number(cogs) / (1 - m); }
     function roundUpToThousand(n) { if (n == null || !isFinite(n)) return null; const eps = 1e-9; return Math.ceil((n - eps) / 1000) * 1000; }
 
     function normalizeKey(name) { return String(name || '').trim().toLowerCase(); }
@@ -792,11 +1285,11 @@
         it.updatedAt = now;
         items[foundIndex] = it;
       } else {
-        items.push({ name, unit: unit||"", price: (price!==undefined && price!==null)?price:"", sellingPrice: (sellingPrice!==undefined && sellingPrice!==null)?sellingPrice:"", category: category||"", updatedAt: now });
+        items.push({ name, unit: unit || "", price: (price !== undefined && price !== null) ? price : "", sellingPrice: (sellingPrice !== undefined && sellingPrice !== null) ? sellingPrice : "", category: category || "", updatedAt: now });
       }
       const map = {};
       items.forEach(it => { const k = normalizeKey(it.name); if (!map[k] || (it.updatedAt || 0) > (map[k].updatedAt || 0)) map[k] = it; });
-      items = Object.values(map).sort((a,b) => (b.updatedAt||0)-(a.updatedAt||0));
+      items = Object.values(map).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
       localStorage.setItem('boq_items', JSON.stringify(items));
       updateDatalist();
     }
@@ -897,7 +1390,7 @@
         dragState.fromPos = posInCat;
         tr.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
-        try { e.dataTransfer.setData('text/plain', `row|${cat}|${posInCat}`); } catch(_) {}
+        try { e.dataTransfer.setData('text/plain', `row|${cat}|${posInCat}`); } catch (_) { }
       });
 
       tr.addEventListener('dragend', () => {
@@ -927,14 +1420,14 @@
 
     function addSectionDragHandlers(trSec, cat) {
       trSec.classList.add('draggable');
-      trSec.setAttribute('draggable','true');
+      trSec.setAttribute('draggable', 'true');
 
       trSec.addEventListener('dragstart', (e) => {
         dragState.type = 'group';
         dragState.fromCat = cat;
         trSec.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
-        try { e.dataTransfer.setData('text/plain', `group|${cat}`); } catch(_) {}
+        try { e.dataTransfer.setData('text/plain', `group|${cat}`); } catch (_) { }
       });
 
       trSec.addEventListener('dragend', () => {
@@ -1151,7 +1644,7 @@
     function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
     function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }
     function updateEditButton() { editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
-    function updateEditBtnInit(){ editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
+    function updateEditBtnInit() { editBtn.textContent = (editingIndex === null) ? 'Edit' : 'Cancel Edit'; }
 
     function clearSelectionOnly() {
       selectedIndex = null;
@@ -1176,11 +1669,11 @@
       const qtyRaw = qtyInput.value;
       const qty = qtyRaw !== "" ? Number(qtyRaw) : "";
       const unit = sanitize(unitInput.value);
-      const priceRaw = priceInput.value.replace(/\./g,'').replace(/,/g,'');
+      const priceRaw = priceInput.value.replace(/\./g, '').replace(/,/g, '');
       const price = priceRaw !== "" ? Number(priceRaw) : "";
       const marginRaw = marginInput.value;
       const margin = marginRaw !== "" ? Number(marginRaw) : 0;
-      const sellingRawStr = sellingInput.value.replace(/\./g,'').replace(/,/g,'');
+      const sellingRawStr = sellingInput.value.replace(/\./g, '').replace(/,/g, '');
       const sellingProvided = sellingRawStr !== "" ? Number(sellingRawStr) : "";
       if (margin >= 100) { if (!confirm('Margin 100% atau lebih akan membuat Harga Jual tidak terdefinisi. Lanjutkan?')) return; }
       const totalCogs = (qty !== "" && price !== "") ? Number(qty) * Number(price) : "";
@@ -1226,7 +1719,7 @@
       }
 
       categoryInput.value = r.category || "";
-      nameInput.focus(); 
+      nameInput.focus();
       updateEditButton();
     });
 
@@ -1263,14 +1756,14 @@
       tCellSell.font = { name: 'Arial', bold: true };
       tCellSell.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      const headerSell = ["No","Nama Item","Qty","Unit","Harga Satuan","Total"];
+      const headerSell = ["No", "Nama Item", "Qty", "Unit", "Harga Satuan", "Total"];
       sheetSelling.insertRow(3, headerSell);
       const headerRowSell = sheetSelling.getRow(3);
       headerRowSell.eachCell((cell) => {
         cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       });
 
       const groupedS = {};
@@ -1280,14 +1773,14 @@
       categoryOrder.forEach(cat => {
         const secRow = sheetSelling.addRow([cat]);
         sheetSelling.mergeCells(`A${secRow.number}:${excelColLetter(lastColSell)}${secRow.number}`);
-        for (let i=1;i<=lastColSell;i++){
+        for (let i = 1; i <= lastColSell; i++) {
           const cell = secRow.getCell(i);
           cell.font = { name: 'Arial', bold: true };
           cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
           cell.alignment = { horizontal: "left", vertical: "middle" };
-          cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         }
-        (groupedS[cat]||[]).forEach(r => {
+        (groupedS[cat] || []).forEach(r => {
           let spRaw = null;
           if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
           else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
@@ -1297,7 +1790,7 @@
           const dr = sheetSelling.addRow(rowObj);
           dr.eachCell((cell, colNum) => {
             cell.font = { name: 'Arial' };
-            cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
             if (colNum >= 5) { cell.numFmt = "#,##0"; cell.alignment = { horizontal: "right", vertical: "middle" }; }
             else if (colNum === 2) { cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true }; }
             else { cell.alignment = { horizontal: "center", vertical: "middle" }; }
@@ -1305,7 +1798,7 @@
         });
       });
 
-      const sumSelling = tableData.reduce((a,b) => {
+      const sumSelling = tableData.reduce((a, b) => {
         let sp = null;
         if (b.sellingPrice != null && b.sellingPrice !== "") sp = Number(b.sellingPrice);
         else if (b.price != null && b.price !== "") sp = calcSellingPrice(Number(b.price), b.margin);
@@ -1313,20 +1806,20 @@
         return a + (spr ? (Number(b.qty || 0) * spr) : 0);
       }, 0);
       const footRowSell = sheetSelling.addRow([]);
-      sheetSelling.mergeCells(`A${footRowSell.number}:${excelColLetter(lastColSell-1)}${footRowSell.number}`);
+      sheetSelling.mergeCells(`A${footRowSell.number}:${excelColLetter(lastColSell - 1)}${footRowSell.number}`);
       const labelCellS = footRowSell.getCell(1);
       labelCellS.value = "Grand Total";
       labelCellS.font = { name: 'Arial', bold: true };
       labelCellS.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       labelCellS.alignment = { horizontal: "center", vertical: "middle" };
-      labelCellS.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      labelCellS.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       const totalCellS = footRowSell.getCell(lastColSell);
       totalCellS.value = sumSelling;
       totalCellS.numFmt = "#,##0";
       totalCellS.font = { name: 'Arial', bold: true };
       totalCellS.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       totalCellS.alignment = { horizontal: "right", vertical: "middle" };
-      totalCellS.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      totalCellS.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
 
       // SHEET: COGS
       const sheetCogs = workbook.addWorksheet("COGS");
@@ -1343,14 +1836,14 @@
       tCellC.font = { name: 'Arial', bold: true };
       tCellC.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      const headerCogs = ["No","Nama Item","Qty","Unit","Harga COGS","Total COGS","Margin (%)"];
+      const headerCogs = ["No", "Nama Item", "Qty", "Unit", "Harga COGS", "Total COGS", "Margin (%)"];
       sheetCogs.insertRow(3, headerCogs);
       const headerRowCogs = sheetCogs.getRow(3);
       headerRowCogs.eachCell((cell) => {
         cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       });
 
       const groupedC = {};
@@ -1360,43 +1853,43 @@
       categoryOrder.forEach(cat => {
         const secRow = sheetCogs.addRow([cat]);
         sheetCogs.mergeCells(`A${secRow.number}:${excelColLetter(lastColCogs)}${secRow.number}`);
-        for (let i=1;i<=lastColCogs;i++){
+        for (let i = 1; i <= lastColCogs; i++) {
           const cell = secRow.getCell(i);
           cell.font = { name: 'Arial', bold: true };
           cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEEEEEE" } };
           cell.alignment = { horizontal: "left", vertical: "middle" };
-          cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         }
-        (groupedC[cat]||[]).forEach(r => {
+        (groupedC[cat] || []).forEach(r => {
           const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
-          const rowObj = [ noC++, r.name, r.qty, r.unit, (r.price!=="" && r.price!=null) ? Number(r.price) : "", (totalCogs !== "" ? totalCogs : ""), (r.margin!==undefined && r.margin!=null)? r.margin : "" ];
+          const rowObj = [noC++, r.name, r.qty, r.unit, (r.price !== "" && r.price != null) ? Number(r.price) : "", (totalCogs !== "" ? totalCogs : ""), (r.margin !== undefined && r.margin != null) ? r.margin : ""];
           const dr = sheetCogs.addRow(rowObj);
           dr.eachCell((cell, colNum) => {
             cell.font = { name: 'Arial' };
-            cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
-            if (colNum >= 5 && colNum <= 6) { cell.numFmt = "#,##0"; cell.alignment = { horizontal:"right", vertical:"middle" }; }
-            else if (colNum === 2) { cell.alignment = { horizontal:"left", vertical:"middle", wrapText:true }; }
-            else { cell.alignment = { horizontal:"center", vertical:"middle" }; }
+            cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+            if (colNum >= 5 && colNum <= 6) { cell.numFmt = "#,##0"; cell.alignment = { horizontal: "right", vertical: "middle" }; }
+            else if (colNum === 2) { cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true }; }
+            else { cell.alignment = { horizontal: "center", vertical: "middle" }; }
           });
         });
       });
 
-      const sumCogs = tableData.reduce((a,b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
+      const sumCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
       const footRowCogs = sheetCogs.addRow([]);
-      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColCogs-1)}${footRowCogs.number}`);
+      sheetCogs.mergeCells(`A${footRowCogs.number}:${excelColLetter(lastColCogs - 1)}${footRowCogs.number}`);
       const labelCellC = footRowCogs.getCell(1);
       labelCellC.value = "Grand Total COGS";
       labelCellC.font = { name: 'Arial', bold: true };
       labelCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       labelCellC.alignment = { horizontal: "center", vertical: "middle" };
-      labelCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      labelCellC.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       const totalCellC = footRowCogs.getCell(lastColCogs);
       totalCellC.value = sumCogs;
       totalCellC.numFmt = "#,##0";
       totalCellC.font = { name: 'Arial', bold: true };
       totalCellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       totalCellC.alignment = { horizontal: "right", vertical: "middle" };
-      totalCellC.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      totalCellC.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
 
       // SHEET: Calculation
       const sheetCalc = workbook.addWorksheet("Calculation");
@@ -1412,14 +1905,14 @@
       tCellCalc.font = { name: 'Arial', bold: true };
       tCellCalc.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      const headerCalc = ["Total COGS","Total Selling","Commission","Gross Profit","Total Margin"];
+      const headerCalc = ["Total COGS", "Total Selling", "Commission", "Gross Profit", "Total Margin"];
       sheetCalc.insertRow(3, headerCalc);
       const headerRowCalc = sheetCalc.getRow(3);
       headerRowCalc.eachCell((cell) => {
         cell.font = { name: 'Arial', bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
       });
 
       const totals = computeTotals();
@@ -1429,10 +1922,10 @@
       const grossProfitVal = totalSellingVal - totalCogsVal - commissionVal;
       const totalMarginPercent = (totalSellingVal === 0) ? 0 : (grossProfitVal / totalSellingVal * 100);
 
-      const dataRowCalc = sheetCalc.addRow([ totalCogsVal, totalSellingVal, commissionVal, grossProfitVal, (isFinite(totalMarginPercent) ? totalMarginPercent.toFixed(2) + '%' : '0.00%') ]);
+      const dataRowCalc = sheetCalc.addRow([totalCogsVal, totalSellingVal, commissionVal, grossProfitVal, (isFinite(totalMarginPercent) ? totalMarginPercent.toFixed(2) + '%' : '0.00%')]);
       dataRowCalc.eachCell((cell, colNum) => {
         cell.font = { name: 'Arial' };
-        cell.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
         if (colNum <= 4) { cell.numFmt = "#,##0"; cell.alignment = { horizontal: "right", vertical: "middle" }; }
         else { cell.alignment = { horizontal: "center", vertical: "middle" }; }
       });
@@ -1444,7 +1937,7 @@
       labelCellCalc.font = { name: 'Arial', bold: true };
       labelCellCalc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF3D6" } };
       labelCellCalc.alignment = { horizontal: "center", vertical: "middle" };
-      labelCellCalc.border = { top:{style:"thin"}, left:{style:"thin"}, bottom:{style:"thin"}, right:{style:"thin"} };
+      labelCellCalc.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -1477,46 +1970,46 @@
 
       if (activeTab === 'cogs') {
         categoryOrder.forEach(cat => {
-          body.push([{ content: cat, colSpan: 7, styles: { fillColor: [238,238,238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
-          (grouped[cat]||[]).forEach(r => {
+          body.push([{ content: cat, colSpan: 7, styles: { fillColor: [238, 238, 238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
+          (grouped[cat] || []).forEach(r => {
             const totalCogs = (r.price != null && r.price !== "" && r.qty != null && r.qty !== "") ? Number(r.price) * Number(r.qty) : "";
-            body.push([ rowNoGlobal++, r.name, r.qty, r.unit,
-              { content: r.price != null && r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
-              { content: totalCogs !== "" ? Number(totalCogs).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
-              { content: r.margin != null && r.margin !== "" ? Number(r.margin).toFixed(2) : "", styles: { halign: 'right', valign: 'middle' } }
+            body.push([rowNoGlobal++, r.name, r.qty, r.unit,
+            { content: r.price != null && r.price !== "" ? Number(r.price).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
+            { content: totalCogs !== "" ? Number(totalCogs).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
+            { content: r.margin != null && r.margin !== "" ? Number(r.margin).toFixed(2) : "", styles: { halign: 'right', valign: 'middle' } }
             ]);
           });
         });
-        const grandCogs = tableData.reduce((a,b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
-        body.push([{ content: "Grand Total COGS", colSpan: 6, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254,243,214] } }, { content: grandCogs.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254,243,214] } }]);
-        const head = ["No","Nama Item","Qty","Unit","Harga COGS","Total COGS","Margin (%)"];
-        doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31,78,120], textColor: [255,255,255], halign:'center', valign:'middle' }, columnStyles: { 0:{halign:'center'}, 2:{halign:'center'}, 3:{halign:'center'} }, styles: { fontSize: 10, cellPadding:3 } });
+        const grandCogs = tableData.reduce((a, b) => a + (Number(b.price || 0) * Number(b.qty || 0)), 0);
+        body.push([{ content: "Grand Total COGS", colSpan: 6, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254, 243, 214] } }, { content: grandCogs.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254, 243, 214] } }]);
+        const head = ["No", "Nama Item", "Qty", "Unit", "Harga COGS", "Total COGS", "Margin (%)"];
+        doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, columnStyles: { 0: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } }, styles: { fontSize: 10, cellPadding: 3 } });
       }
       else if (activeTab === 'selling') {
         categoryOrder.forEach(cat => {
-          body.push([{ content: cat, colSpan: 6, styles: { fillColor: [238,238,238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
-        (grouped[cat]||[]).forEach(r => {
+          body.push([{ content: cat, colSpan: 6, styles: { fillColor: [238, 238, 238], fontStyle: "bold", halign: "left", valign: "middle" } }]);
+          (grouped[cat] || []).forEach(r => {
             let spRaw = null;
             if (r.sellingPrice != null && r.sellingPrice !== "") spRaw = Number(r.sellingPrice);
             else if (r.price != null && r.price !== "") spRaw = calcSellingPrice(Number(r.price), r.margin);
             const spRounded = spRaw != null ? roundUpToThousand(spRaw) : "";
             const totalSp = (spRounded !== "") ? Number(r.qty || 0) * spRounded : "";
-            body.push([ rowNoGlobal++, r.name, r.qty, r.unit,
-              { content: spRounded !== "" ? Number(spRounded).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
-              { content: totalSp !== "" ? Number(totalSp).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } }
+            body.push([rowNoGlobal++, r.name, r.qty, r.unit,
+            { content: spRounded !== "" ? Number(spRounded).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } },
+            { content: totalSp !== "" ? Number(totalSp).toLocaleString('id-ID') : "", styles: { halign: 'right', valign: 'middle' } }
             ]);
           });
         });
-        const grandSelling = tableData.reduce((a,b) => {
+        const grandSelling = tableData.reduce((a, b) => {
           let sp = null;
           if (b.sellingPrice != null && b.sellingPrice !== "") sp = Number(b.sellingPrice);
           else if (b.price != null && b.price !== "") sp = calcSellingPrice(Number(b.price), b.margin);
           const spr = sp != null ? roundUpToThousand(sp) : 0;
           return a + (spr ? (Number(b.qty || 0) * spr) : 0);
         }, 0);
-        body.push([{ content: "Grand Total", colSpan: 5, styles: { fontStyle:"bold", halign:"center", valign:"middle", fillColor:[254,243,214] } }, { content: grandSelling.toLocaleString('id-ID'), styles: { fontStyle:"bold", halign:"right", valign:"middle", fillColor:[254,243,214] } }]);
-        const head = ["No","Nama Item","Qty","Unit","Harga Satuan","Total"];
-        doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31,78,120], textColor: [255,255,255], halign:'center', valign:'middle' }, columnStyles: { 0:{halign:'center'}, 2:{halign:'center'}, 3:{halign:'center'} }, styles: { fontSize:10, cellPadding:3 } });
+        body.push([{ content: "Grand Total", colSpan: 5, styles: { fontStyle: "bold", halign: "center", valign: "middle", fillColor: [254, 243, 214] } }, { content: grandSelling.toLocaleString('id-ID'), styles: { fontStyle: "bold", halign: "right", valign: "middle", fillColor: [254, 243, 214] } }]);
+        const head = ["No", "Nama Item", "Qty", "Unit", "Harga Satuan", "Total"];
+        doc.autoTable({ head: [head], body, startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, columnStyles: { 0: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } }, styles: { fontSize: 10, cellPadding: 3 } });
       }
       else if (activeTab === 'calculation') {
         const totals = computeTotals();
@@ -1525,15 +2018,15 @@
         const commission = Number(currentCommission || 0);
         const grossProfit = totalSelling - totalCogs - commission;
         const totalMargin = (totalSelling === 0) ? 0 : (grossProfit / totalSelling);
-        const head = ["Total COGS","Total Selling","Commission","Gross Profit","Total Margin"];
+        const head = ["Total COGS", "Total Selling", "Commission", "Gross Profit", "Total Margin"];
         const row = [
-          { content: Number(totalCogs).toLocaleString('id-ID'), styles: { halign:'right', valign:'middle' } },
-          { content: Number(totalSelling).toLocaleString('id-ID'), styles: { halign:'right', valign:'middle' } },
-          { content: Number(commission).toLocaleString('id-ID'), styles: { halign:'right', valign:'middle' } },
-          { content: Number(grossProfit).toLocaleString('id-ID'), styles: { halign:'right', valign:'middle' } },
-          { content: (isFinite(totalMargin) ? (totalMargin*100).toFixed(2) + '%' : '0.00%'), styles: { halign:'center', valign:'middle' } }
+          { content: Number(totalCogs).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: Number(totalSelling).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: Number(commission).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: Number(grossProfit).toLocaleString('id-ID'), styles: { halign: 'right', valign: 'middle' } },
+          { content: (isFinite(totalMargin) ? (totalMargin * 100).toFixed(2) + '%' : '0.00%'), styles: { halign: 'center', valign: 'middle' } }
         ];
-        doc.autoTable({ head: [head], body: [row], startY: 22, theme: 'grid', headStyles: { fillColor: [31,78,120], textColor: [255,255,255], halign:'center', valign:'middle' }, styles: { fontSize:10, cellPadding:3 } });
+        doc.autoTable({ head: [head], body: [row], startY: 22, theme: 'grid', headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], halign: 'center', valign: 'middle' }, styles: { fontSize: 10, cellPadding: 3 } });
       }
       const filename = getSafeFileName(currentProjectName) + (filenameSuffix ? filenameSuffix : '') + ".pdf";
       doc.save(filename);
@@ -1544,16 +2037,16 @@
       manageItemSearch.value = '';
       populateManageItems();
       manageModal.style.display = 'block';
-      manageModal.setAttribute('aria-hidden','false');
+      manageModal.setAttribute('aria-hidden', 'false');
       manageItemSearch.focus();
     });
-    modalClose.addEventListener('click', () => { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden','true'); });
-    projectsClose.addEventListener('click', () => { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden','true'); });
+    modalClose.addEventListener('click', () => { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden', 'true'); });
+    projectsClose.addEventListener('click', () => { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden', 'true'); });
     manageProjectsBtn.addEventListener('click', () => {
       manageProjectSearch.value = '';
       populateManageProjects();
       projectsModal.style.display = 'block';
-      projectsModal.setAttribute('aria-hidden','false');
+      projectsModal.setAttribute('aria-hidden', 'false');
       manageProjectSearch.focus();
     });
 
@@ -1562,8 +2055,8 @@
       const q = String(manageItemSearch.value || '').trim().toLowerCase();
       const map = {};
       items.forEach(it => { if (!it || !it.name) return; const key = it.name.trim(); if (!map[key] || (it.updatedAt && map[key].updatedAt < it.updatedAt)) map[key] = it; });
-      const arr = Object.values(map).slice().sort((a,b) => (a.name||'').toLowerCase().localeCompare((b.name||'').toLowerCase()));
-      const filtered = arr.filter(it => !q || (it.name||'').toLowerCase().includes(q));
+      const arr = Object.values(map).slice().sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()));
+      const filtered = arr.filter(it => !q || (it.name || '').toLowerCase().includes(q));
       filtered.forEach((it) => {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = it.name;
@@ -1593,8 +2086,8 @@
       manageProjectList.innerHTML = '';
       const q = String(manageProjectSearch.value || '').trim().toLowerCase();
       const projects = loadProjectsObj();
-      const names = Object.keys(projects || {}).slice().sort((a,b) => (a||'').toLowerCase().localeCompare((b||'').toLowerCase()));
-      const filtered = names.filter(n => !q || (n||'').toLowerCase().includes(q));
+      const names = Object.keys(projects || {}).slice().sort((a, b) => (a || '').toLowerCase().localeCompare((b || '').toLowerCase()));
+      const filtered = names.filter(n => !q || (n || '').toLowerCase().includes(q));
       filtered.forEach(name => {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = name;
@@ -1618,14 +2111,14 @@
     }
 
     window.addEventListener('click', (e) => {
-      if (e.target === manageModal) { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden','true'); }
-      if (e.target === projectsModal) { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden','true'); }
+      if (e.target === manageModal) { manageModal.style.display = 'none'; manageModal.setAttribute('aria-hidden', 'true'); }
+      if (e.target === projectsModal) { projectsModal.style.display = 'none'; projectsModal.setAttribute('aria-hidden', 'true'); }
     });
 
     function updateProjectList() {
       const projects = loadProjectsObj();
       projectList.innerHTML = '';
-      const keys = Object.keys(projects || {}).slice().sort((a,b) => (a||'').toLowerCase().localeCompare((b||'').toLowerCase()));
+      const keys = Object.keys(projects || {}).slice().sort((a, b) => (a || '').toLowerCase().localeCompare((b || '').toLowerCase()));
       keys.forEach(k => { const opt = document.createElement('option'); opt.value = k; projectList.appendChild(opt); });
     }
 
@@ -1712,8 +2205,8 @@
     downloadJSONBtn.addEventListener('click', () => {
       const projects = loadProjectsObj();
       const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], categoryOrder: categoryOrder || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
-      const ts = new Date(); const pad = n => String(n).toString().padStart(2,'0');
-      const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
+      const ts = new Date(); const pad = n => String(n).toString().padStart(2, '0');
+      const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     });
@@ -1777,7 +2270,7 @@
     });
 
     // INIT
-    function init(){
+    function init() {
       updateHeightsVars();
       updateProjectList();
       updateDatalist();
@@ -1793,4 +2286,5 @@
     init();
   </script>
 </body>
+
 </html>
