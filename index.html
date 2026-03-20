@@ -1727,6 +1727,10 @@
 
       categoryInput.value = r.category || "";
       nameInput.focus();
+      requestAnimationFrame(() => {
+        nameInput.setSelectionRange(0, 0);
+        nameInput.scrollLeft = 0;
+      });
       updateEditButton();
     });
 
