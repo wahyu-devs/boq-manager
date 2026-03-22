@@ -17,219 +17,267 @@
 </head>
 
 <body>
-  <!-- NAVBAR -->
-  <div class="navbar-wrapper" id="navbarWrapper">
-    <div class="container navbar">
-      <div class="brand">BOQ Manager <span class="project-name" id="navProject">(no project)</span></div>
-      <div class="nav-actions">
-        <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
-        <button class="btn ghost" id="manageBtn">Manage</button>
-        <button class="btn secondary" id="downloadJSON"
-          title="Backup semua data (projects, items, working, commission)">Backup</button>
-        <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore</button>
-        <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
+  <div id="loginScreen" class="auth-screen" aria-hidden="false">
+    <div class="auth-screen-topbar">
+      <div class="theme-toggle auth-theme-toggle" title="Toggle dark mode">
+        <span class="toggle-label" id="loginToggleLabel">Light</span>
+        <button id="loginThemeSwitchBtn" class="switch" type="button" aria-pressed="false"
+          aria-label="Toggle dark mode">
+          <span class="slider" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
-  </div>
 
-  <!-- MAIN CONTENT -->
-  <main>
-    <div class="container">
-      <div id="tabsSentinel" style="height:1px;"></div>
-
-      <div class="tabs-bar" id="tabsBar">
-        <div class="tabs" role="tablist" aria-label="Primary tabs">
-          <div class="tabs-left">
-            <button class="tab-btn active" id="tabCogsBtn" role="tab" aria-selected="true">COGS</button>
-            <button class="tab-btn" id="tabSellingBtn" role="tab" aria-selected="false">Selling</button>
-            <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
-          </div>
-          <div class="theme-toggle" title="Toggle dark mode">
-            <span class="toggle-label" id="toggleLabel">Light</span>
-            <button id="themeSwitchBtn" class="switch" role="button" aria-pressed="false" aria-label="Toggle dark mode">
-              <span class="slider" aria-hidden="true"></span>
-            </button>
-          </div>
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="auth-brand">BOQ Manager</div>
+          <p class="auth-subtitle">Login to continue</p>
         </div>
-      </div>
 
-      <div id="formSentinel" style="height:1px;"></div>
-
-      <div class="form-bar" id="formBar">
-        <form id="boqForm" autocomplete="off">
-          <div class="floating-field grow">
-            <input type="text" id="itemName" placeholder=" " list="itemList" required />
-            <label for="itemName">Item Name</label>
+        <form id="loginForm" class="auth-form" autocomplete="on">
+          <div class="floating-field auth-field">
+            <input type="text" id="loginEmail" placeholder=" " autocomplete="username" required />
+            <label for="loginEmail">Email / Username</label>
           </div>
 
-          <datalist id="itemList"></datalist>
-
-          <div class="floating-field">
-            <input type="number" id="qty" placeholder=" " />
-            <label for="qty">Qty</label>
+          <div class="floating-field auth-field">
+            <input type="password" id="loginPassword" placeholder=" " autocomplete="current-password" required />
+            <label for="loginPassword">Password</label>
           </div>
 
-          <div class="floating-field">
-            <input type="text" id="unit" placeholder=" " />
-            <label for="unit">Unit</label>
-          </div>
+          <label class="auth-remember">
+            <input type="checkbox" id="rememberLogin" />
+            <span>Remember me</span>
+          </label>
 
-          <div class="floating-field">
-            <input type="text" id="price" placeholder=" " />
-            <label for="price">COGS</label>
-          </div>
-
-          <div class="floating-field">
-            <input type="number" id="margin" placeholder=" " min="0" max="999.99" step="0.01" />
-            <label for="margin">Margin (%)</label>
-          </div>
-
-          <div class="floating-field">
-            <input type="text" id="sellingInput" placeholder=" " />
-            <label for="sellingInput">Selling Price</label>
-          </div>
-
-          <div class="floating-field">
-            <input type="text" id="category" placeholder=" " required />
-            <label for="category">Category</label>
-          </div>
-
-          <button type="submit" class="btn">Add / Update</button>
+          <button type="submit" class="btn auth-submit">Login</button>
+          <div id="loginError" class="auth-error" role="alert" aria-live="polite"></div>
         </form>
       </div>
 
-      <div id="tabCogs" class="tab-panel">
-        <div class="table-wrap">
-          <table id="cogsTable" aria-label="COGS table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Nama Item</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                <th>Harga COGS</th>
-                <th>Total COGS</th>
-                <th>Margin (%)</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr>
-                <td colspan="6" class="total label">Grand Total COGS</td>
-                <td class="total value" id="grandCogs">0</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      <div id="tabSelling" class="tab-panel hidden">
-        <div class="table-wrap">
-          <table id="sellingTable" aria-label="Selling table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Nama Item</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                <th>Harga Satuan</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr>
-                <td colspan="5" class="total label">Grand Total</td>
-                <td class="total value" id="grandSelling">0</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      <div id="tabCalc" class="tab-panel hidden">
-        <div class="table-wrap">
-          <table id="calcSummary" class="calc-summary" aria-label="Calculation summary">
-            <thead>
-              <tr>
-                <th>Total COGS</th>
-                <th>Total Selling</th>
-                <th>Commission</th>
-                <th>Gross Profit</th>
-                <th>Total Margin</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td id="calcTotalCogs" class="value">0</td>
-                <td id="calcTotalSelling" class="value">0</td>
-                <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input"
-                    type="text" placeholder="0" /></td>
-                <td id="calcGrossProfit" class="value">0</td>
-                <td id="calcTotalMargin" class="value">0.00%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <div class="actions-dock" id="actionsDock" role="region" aria-label="Actions dock">
-    <div class="container actions-dock-inner">
-      <div class="actions">
-        <button id="editBtn" class="btn secondary" type="button">Edit</button>
-        <button class="btn secondary" id="deleteBtn" type="button">Delete</button>
-        <button class="btn secondary" type="button" id="reorderBtn"
-          title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
-        <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
-        <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
-        <div class="floating-field project-search">
-          <input list="projectList" id="projectSearch" placeholder=" " autocomplete="off" />
-          <label for="projectSearch">Search project</label>
-        </div>
-        <datalist id="projectList"></datalist>
-        <button class="btn secondary" type="button" id="loadProjectBtn">Load Project</button>
-        <button class="btn secondary" type="button" id="saveProjectBtn">Save Project</button>
-        <button class="btn" type="button" id="newProjectBtn">New Project</button>
+      <div class="auth-page-footer">
+        © 2026 BOQ Manager. Developed by <b>Wahyu</b>.
       </div>
     </div>
   </div>
-
-  <footer class="app-footer" role="contentinfo" aria-label="Footer">
-    <div class="container">
-      <div class="footer-inner">
-        <div class="footer-left">© 2026 BOQ Manager. All rights reserved. Developed by <b>Wahyu</b>.</div>
-        <div class="footer-right">
-          <span>Last updated:</span>
-          <span id="lastSavedText">—</span>
+  <div id="appShell">
+    <!-- NAVBAR -->
+    <div class="navbar-wrapper" id="navbarWrapper">
+      <div class="container navbar">
+        <div class="brand">BOQ Manager <span class="project-name" id="navProject">(no project)</span></div>
+        <div class="nav-actions">
+          <button class="btn ghost" id="renameProjectBtn" title="Rename project">Rename</button>
+          <button class="btn ghost" id="manageBtn">Manage</button>
+          <button class="btn secondary" id="downloadJSON"
+            title="Backup semua data (projects, items, working, commission)">Backup</button>
+          <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore</button>
+          <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
+          <button class="btn" id="logoutBtn" title="Logout">Logout</button>
         </div>
       </div>
     </div>
-  </footer>
 
-  <div id="manageModal" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true">
-      <button class="modal-close" id="modalClose">&times;</button>
-      <div class="modal-header">
-        <div class="title">Manage Items</div>
-        <input id="manageItemSearch" class="modal-search" type="text" placeholder="Cari item..." />
+    <!-- MAIN CONTENT -->
+    <main>
+      <div class="container">
+        <div id="tabsSentinel" style="height:1px;"></div>
+
+        <div class="tabs-bar" id="tabsBar">
+          <div class="tabs" role="tablist" aria-label="Primary tabs">
+            <div class="tabs-left">
+              <button class="tab-btn active" id="tabCogsBtn" role="tab" aria-selected="true">COGS</button>
+              <button class="tab-btn" id="tabSellingBtn" role="tab" aria-selected="false">Selling</button>
+              <button class="tab-btn" id="tabCalcBtn" role="tab" aria-selected="false">Calculation</button>
+            </div>
+            <div class="theme-toggle" title="Toggle dark mode">
+              <span class="toggle-label" id="toggleLabel">Light</span>
+              <button id="themeSwitchBtn" class="switch" role="button" aria-pressed="false"
+                aria-label="Toggle dark mode">
+                <span class="slider" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="formSentinel" style="height:1px;"></div>
+
+        <div class="form-bar" id="formBar">
+          <form id="boqForm" autocomplete="off">
+            <div class="floating-field grow">
+              <input type="text" id="itemName" placeholder=" " list="itemList" required />
+              <label for="itemName">Item Name</label>
+            </div>
+
+            <datalist id="itemList"></datalist>
+
+            <div class="floating-field">
+              <input type="number" id="qty" placeholder=" " />
+              <label for="qty">Qty</label>
+            </div>
+
+            <div class="floating-field">
+              <input type="text" id="unit" placeholder=" " />
+              <label for="unit">Unit</label>
+            </div>
+
+            <div class="floating-field">
+              <input type="text" id="price" placeholder=" " />
+              <label for="price">COGS</label>
+            </div>
+
+            <div class="floating-field">
+              <input type="number" id="margin" placeholder=" " min="0" max="999.99" step="0.01" />
+              <label for="margin">Margin (%)</label>
+            </div>
+
+            <div class="floating-field">
+              <input type="text" id="sellingInput" placeholder=" " />
+              <label for="sellingInput">Selling Price</label>
+            </div>
+
+            <div class="floating-field">
+              <input type="text" id="category" placeholder=" " required />
+              <label for="category">Category</label>
+            </div>
+
+            <button type="submit" class="btn">Add / Update</button>
+          </form>
+        </div>
+
+        <div id="tabCogs" class="tab-panel">
+          <div class="table-wrap">
+            <table id="cogsTable" aria-label="COGS table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Item</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Harga COGS</th>
+                  <th>Total COGS</th>
+                  <th>Margin (%)</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="6" class="total label">Grand Total COGS</td>
+                  <td class="total value" id="grandCogs">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div id="tabSelling" class="tab-panel hidden">
+          <div class="table-wrap">
+            <table id="sellingTable" aria-label="Selling table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Item</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Harga Satuan</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="5" class="total label">Grand Total</td>
+                  <td class="total value" id="grandSelling">0</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div id="tabCalc" class="tab-panel hidden">
+          <div class="table-wrap">
+            <table id="calcSummary" class="calc-summary" aria-label="Calculation summary">
+              <thead>
+                <tr>
+                  <th>Total COGS</th>
+                  <th>Total Selling</th>
+                  <th>Commission</th>
+                  <th>Gross Profit</th>
+                  <th>Total Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="calcTotalCogs" class="value">0</td>
+                  <td id="calcTotalSelling" class="value">0</td>
+                  <td id="calcCommissionCell" class="value"><input id="commissionCellInput" class="commission-input"
+                      type="text" placeholder="0" /></td>
+                  <td id="calcGrossProfit" class="value">0</td>
+                  <td id="calcTotalMargin" class="value">0.00%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <ul id="manageItemList" class="modal-list"></ul>
-      <div style="text-align:right">
-        <button class="btn secondary" id="manageProjectsBtn">Manage Projects</button>
+    </main>
+
+    <div class="actions-dock" id="actionsDock" role="region" aria-label="Actions dock">
+      <div class="container actions-dock-inner">
+        <div class="actions">
+          <button id="editBtn" class="btn secondary" type="button">Edit</button>
+          <button class="btn secondary" id="deleteBtn" type="button">Delete</button>
+          <button class="btn secondary" type="button" id="reorderBtn"
+            title="Aktifkan drag & drop untuk ubah urutan">Reorder</button>
+          <button class="btn" type="button" id="exportExcelBtn">Export Excel</button>
+          <button class="btn" type="button" id="exportPdfBtn">Export PDF</button>
+          <div class="floating-field project-search">
+            <input list="projectList" id="projectSearch" placeholder=" " autocomplete="off" />
+            <label for="projectSearch">Search project</label>
+          </div>
+          <datalist id="projectList"></datalist>
+          <button class="btn secondary" type="button" id="loadProjectBtn">Load Project</button>
+          <button class="btn secondary" type="button" id="saveProjectBtn">Save Project</button>
+          <button class="btn" type="button" id="newProjectBtn">New Project</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="projectsModal" class="modal" aria-hidden="true">
-    <div class="modal-content" role="dialog" aria-modal="true">
-      <button class="modal-close" id="projectsClose">&times;</button>
-      <div class="modal-header">
-        <div class="title">Manage Projects</div>
-        <input id="manageProjectSearch" class="modal-search" type="text" placeholder="Cari project..." />
+    <footer class="app-footer" role="contentinfo" aria-label="Footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-left">© 2026 BOQ Manager. All rights reserved. Developed by <b>Wahyu</b>.</div>
+          <div class="footer-right">
+            <span>Last updated:</span>
+            <span id="lastSavedText">—</span>
+          </div>
+        </div>
       </div>
-      <ul id="manageProjectList" class="modal-list"></ul>
+    </footer>
+
+    <div id="manageModal" class="modal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="modal-header">
+          <div class="title">Manage Items</div>
+          <input id="manageItemSearch" class="modal-search" type="text" placeholder="Cari item..." />
+        </div>
+        <ul id="manageItemList" class="modal-list"></ul>
+        <div style="text-align:right">
+          <button class="btn secondary" id="manageProjectsBtn">Manage Projects</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="projectsModal" class="modal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true">
+        <button class="modal-close" id="projectsClose">&times;</button>
+        <div class="modal-header">
+          <div class="title">Manage Projects</div>
+          <input id="manageProjectSearch" class="modal-search" type="text" placeholder="Cari project..." />
+        </div>
+        <ul id="manageProjectList" class="modal-list"></ul>
+      </div>
     </div>
   </div>
 

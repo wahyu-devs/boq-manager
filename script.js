@@ -90,6 +90,158 @@ themeSwitchBtn.addEventListener('keydown', (e) => {
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); themeSwitchBtn.click(); }
 });
 
+/* ===== AUTH (temporary front-end gate) ===== */
+const AUTH_USERS = [
+    {
+        username: 'admin',
+        email: 'admin@boqmanager.com',
+        password: '123456'
+    }
+];
+
+const AUTH_SESSION_KEY = 'boq_auth_session';
+const AUTH_REMEMBER_KEY = 'boq_auth_remember';
+
+const loginScreen = document.getElementById('loginScreen');
+const appShell = document.getElementById('appShell');
+const loginForm = document.getElementById('loginForm');
+const loginEmailInput = document.getElementById('loginEmail');
+const loginPasswordInput = document.getElementById('loginPassword');
+const rememberLoginInput = document.getElementById('rememberLogin');
+const loginError = document.getElementById('loginError');
+const logoutBtn = document.getElementById('logoutBtn');
+const loginThemeSwitchBtn = document.getElementById('loginThemeSwitchBtn');
+const loginToggleLabel = document.getElementById('loginToggleLabel');
+
+function syncThemeToggles() {
+    const isDark = document.documentElement.classList.contains('theme-dark');
+    if (loginThemeSwitchBtn) {
+        loginThemeSwitchBtn.classList.toggle('on', isDark);
+        loginThemeSwitchBtn.setAttribute('aria-pressed', String(isDark));
+    }
+    if (loginToggleLabel) {
+        loginToggleLabel.textContent = isDark ? 'Dark' : 'Light';
+    }
+}
+
+const originalApplyTheme = applyTheme;
+applyTheme = function (theme) {
+    originalApplyTheme(theme);
+    syncThemeToggles();
+};
+
+function getStoredSession() {
+    try {
+        return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || sessionStorage.getItem(AUTH_SESSION_KEY) || 'null');
+    } catch {
+        return null;
+    }
+}
+
+function setSession(user, remember) {
+    const payload = {
+        username: user.username,
+        email: user.email,
+        loggedInAt: Date.now()
+    };
+
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem(AUTH_SESSION_KEY);
+
+    if (remember) {
+        localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(payload));
+        localStorage.setItem(AUTH_REMEMBER_KEY, '1');
+    } else {
+        sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(payload));
+        localStorage.removeItem(AUTH_REMEMBER_KEY);
+    }
+}
+
+function clearSession() {
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    localStorage.removeItem(AUTH_REMEMBER_KEY);
+}
+
+function showLoginScreen() {
+    document.body.classList.add('auth-locked');
+    loginScreen.classList.add('is-visible');
+    loginScreen.setAttribute('aria-hidden', 'false');
+    appShell.removeAttribute('aria-hidden');
+    loginError.textContent = '';
+    loginPasswordInput.value = '';
+    rememberLoginInput.checked = localStorage.getItem(AUTH_REMEMBER_KEY) === '1';
+    syncThemeToggles();
+    setTimeout(() => loginEmailInput.focus(), 0);
+}
+
+function showAppShell() {
+    document.body.classList.remove('auth-locked');
+    loginScreen.classList.remove('is-visible');
+    loginScreen.setAttribute('aria-hidden', 'true');
+    appShell.removeAttribute('aria-hidden');
+}
+
+function findMatchingUser(identifier, password) {
+    const key = String(identifier || '').trim().toLowerCase();
+    return AUTH_USERS.find(user => {
+        return (
+            (user.username && user.username.toLowerCase() === key) ||
+            (user.email && user.email.toLowerCase() === key)
+        ) && user.password === password;
+    }) || null;
+}
+
+function initAuth() {
+    const session = getStoredSession();
+    if (session) showAppShell();
+    else showLoginScreen();
+}
+
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const identifier = loginEmailInput.value.trim();
+    const password = loginPasswordInput.value;
+    const remember = rememberLoginInput.checked;
+
+    const user = findMatchingUser(identifier, password);
+
+    if (!user) {
+        loginError.textContent = 'Invalid credentials. Please try again.';
+        loginPasswordInput.focus();
+        loginPasswordInput.select();
+        return;
+    }
+
+    setSession(user, remember);
+    loginError.textContent = '';
+    showAppShell();
+});
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        clearSession();
+        showLoginScreen();
+    });
+}
+
+if (loginThemeSwitchBtn) {
+    loginThemeSwitchBtn.addEventListener('click', () => {
+        applyTheme(document.documentElement.classList.contains('theme-dark') ? 'light' : 'dark');
+    });
+
+    loginThemeSwitchBtn.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            loginThemeSwitchBtn.click();
+        }
+    });
+}
+
+syncThemeToggles();
+initAuth();
+
 let activeTab = 'cogs';
 function setFormDisabled(disabled) {
     const controls = form.querySelectorAll('input, button, select, textarea');
