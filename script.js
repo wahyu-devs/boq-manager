@@ -113,6 +113,21 @@ const logoutBtn = document.getElementById('logoutBtn');
 const loginThemeSwitchBtn = document.getElementById('loginThemeSwitchBtn');
 const loginToggleLabel = document.getElementById('loginToggleLabel');
 
+const userMenu = document.getElementById('userMenu');
+const userMenuTrigger = document.getElementById('userMenuTrigger');
+const userMenuDropdown = document.getElementById('userMenuDropdown');
+const userMenuGreeting = document.getElementById('userMenuGreeting');
+const changePasswordBtn = document.getElementById('changePasswordBtn');
+
+const changePasswordModal = document.getElementById('changePasswordModal');
+const changePasswordCloseBtn = document.getElementById('changePasswordCloseBtn');
+const cancelChangePasswordBtn = document.getElementById('cancelChangePasswordBtn');
+const changePasswordForm = document.getElementById('changePasswordForm');
+const currentPasswordInput = document.getElementById('currentPasswordInput');
+const newPasswordInput = document.getElementById('newPasswordInput');
+const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+const changePasswordError = document.getElementById('changePasswordError');
+
 function syncThemeToggles() {
     const isDark = document.documentElement.classList.contains('theme-dark');
     if (loginThemeSwitchBtn) {
@@ -136,6 +151,63 @@ function getStoredSession() {
     } catch {
         return null;
     }
+}
+
+function getAuthUsers() {
+    try {
+        const stored = JSON.parse(localStorage.getItem('boq_auth_users') || 'null');
+        return Array.isArray(stored) && stored.length ? stored : AUTH_USERS;
+    } catch {
+        return AUTH_USERS;
+    }
+}
+
+function saveAuthUsers(users) {
+    localStorage.setItem('boq_auth_users', JSON.stringify(users));
+}
+
+function setGreetingFromSession() {
+    const session = getStoredSession();
+    if (!userMenuGreeting) return;
+    const name = session?.username || session?.email || 'User';
+    userMenuGreeting.textContent = `Hi, ${name}!`;
+}
+
+function openUserMenu() {
+    if (!userMenu || !userMenuTrigger || !userMenuDropdown) return;
+    userMenu.classList.add('open');
+    userMenuTrigger.setAttribute('aria-expanded', 'true');
+    userMenuDropdown.setAttribute('aria-hidden', 'false');
+}
+
+function closeUserMenu() {
+    if (!userMenu || !userMenuTrigger || !userMenuDropdown) return;
+    userMenu.classList.remove('open');
+    userMenuTrigger.setAttribute('aria-expanded', 'false');
+    userMenuDropdown.setAttribute('aria-hidden', 'true');
+}
+
+function toggleUserMenu() {
+    if (!userMenu) return;
+    if (userMenu.classList.contains('open')) closeUserMenu();
+    else openUserMenu();
+}
+
+function openChangePasswordModal() {
+    if (!changePasswordModal) return;
+    changePasswordError.textContent = '';
+    changePasswordForm.reset();
+    changePasswordModal.style.display = 'block';
+    changePasswordModal.setAttribute('aria-hidden', 'false');
+    closeUserMenu();
+    setTimeout(() => currentPasswordInput?.focus(), 0);
+}
+
+function closeChangePasswordModal() {
+    if (!changePasswordModal) return;
+    changePasswordModal.style.display = 'none';
+    changePasswordModal.setAttribute('aria-hidden', 'true');
+    changePasswordError.textContent = '';
 }
 
 function setSession(user, remember) {
@@ -184,7 +256,9 @@ function showAppShell() {
 
 function findMatchingUser(identifier, password) {
     const key = String(identifier || '').trim().toLowerCase();
-    return AUTH_USERS.find(user => {
+    const users = getAuthUsers();
+
+    return users.find(user => {
         return (
             (user.username && user.username.toLowerCase() === key) ||
             (user.email && user.email.toLowerCase() === key)
@@ -194,8 +268,12 @@ function findMatchingUser(identifier, password) {
 
 function initAuth() {
     const session = getStoredSession();
-    if (session) showAppShell();
-    else showLoginScreen();
+    if (session) {
+        setGreetingFromSession();
+        showAppShell();
+    } else {
+        showLoginScreen();
+    }
 }
 
 loginForm.addEventListener('submit', (e) => {
@@ -215,14 +293,105 @@ loginForm.addEventListener('submit', (e) => {
     }
 
     setSession(user, remember);
+    setGreetingFromSession();
     loginError.textContent = '';
     showAppShell();
 });
 
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
+        closeUserMenu();
         clearSession();
         showLoginScreen();
+    });
+}
+
+if (userMenuTrigger) {
+    userMenuTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleUserMenu();
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (!userMenu) return;
+    if (!userMenu.contains(e.target)) closeUserMenu();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeUserMenu();
+        closeChangePasswordModal();
+    }
+});
+
+if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', openChangePasswordModal);
+}
+
+if (changePasswordCloseBtn) {
+    changePasswordCloseBtn.addEventListener('click', closeChangePasswordModal);
+}
+
+if (cancelChangePasswordBtn) {
+    cancelChangePasswordBtn.addEventListener('click', closeChangePasswordModal);
+}
+
+if (changePasswordModal) {
+    changePasswordModal.addEventListener('click', (e) => {
+        if (e.target === changePasswordModal) closeChangePasswordModal();
+    });
+}
+
+if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const session = getStoredSession();
+        if (!session) {
+            changePasswordError.textContent = 'Session not found. Please login again.';
+            return;
+        }
+
+        const currentPassword = currentPasswordInput.value;
+        const newPassword = newPasswordInput.value.trim();
+        const confirmPassword = confirmPasswordInput.value.trim();
+
+        const users = getAuthUsers();
+        const userIndex = users.findIndex(user =>
+            user.username === session.username || user.email === session.email
+        );
+
+        if (userIndex === -1) {
+            changePasswordError.textContent = 'User not found.';
+            return;
+        }
+
+        if (users[userIndex].password !== currentPassword) {
+            changePasswordError.textContent = 'Current password is incorrect.';
+            currentPasswordInput.focus();
+            currentPasswordInput.select();
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            changePasswordError.textContent = 'New password must be at least 6 characters.';
+            newPasswordInput.focus();
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            changePasswordError.textContent = 'New password confirmation does not match.';
+            confirmPasswordInput.focus();
+            confirmPasswordInput.select();
+            return;
+        }
+
+        users[userIndex].password = newPassword;
+        saveAuthUsers(users);
+        changePasswordError.textContent = '';
+        closeChangePasswordModal();
+        alert('Password updated successfully.');
     });
 }
 

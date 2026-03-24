@@ -73,7 +73,25 @@
             title="Backup semua data (projects, items, working, commission)">Backup</button>
           <button class="btn secondary" id="restoreJSON" title="Restore dari file backup JSON">Restore</button>
           <input type="file" id="restoreInput" accept=".json,application/json" style="display:none" />
-          <button class="btn" id="logoutBtn" title="Logout">Logout</button>
+          <div class="user-menu" id="userMenu">
+            <button class="btn ghost user-menu-trigger" id="userMenuTrigger" type="button" aria-haspopup="true"
+              aria-expanded="false" title="Open account menu">
+              <span class="user-menu-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" class="user-menu-avatar-icon" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" class="avatar-ring" />
+                  <circle cx="12" cy="9.5" r="2.5" class="avatar-head" />
+                  <path d="M6.3 17.0c.7-2.4 3-3.9 5.7-3.9s5 1.5 5.7 3.9" class="avatar-body" />
+                </svg>
+              </span>
+              <span id="userMenuGreeting">Hi, User!</span>
+              <span class="user-menu-caret" aria-hidden="true"></span>
+            </button>
+            <div class="user-menu-dropdown" id="userMenuDropdown" aria-hidden="true">
+              <button class="user-menu-item" id="changePasswordBtn" type="button">Change Password</button>
+              <div class="user-menu-divider" aria-hidden="true"></div>
+              <button class="user-menu-item danger" id="logoutBtn" type="button">Logout</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -277,6 +295,39 @@
           <input id="manageProjectSearch" class="modal-search" type="text" placeholder="Cari project..." />
         </div>
         <ul id="manageProjectList" class="modal-list"></ul>
+      </div>
+    </div>
+    <div id="changePasswordModal" class="modal" aria-hidden="true">
+      <div class="modal-content modal-sm" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle">
+        <button class="modal-close" id="changePasswordCloseBtn" type="button">&times;</button>
+
+        <div class="modal-header">
+          <div class="title" id="changePasswordTitle">Change Password</div>
+        </div>
+
+        <form id="changePasswordForm" class="change-password-form" autocomplete="off">
+          <div class="floating-field grow">
+            <input type="password" id="currentPasswordInput" placeholder=" " required />
+            <label for="currentPasswordInput">Current Password</label>
+          </div>
+
+          <div class="floating-field grow">
+            <input type="password" id="newPasswordInput" placeholder=" " required />
+            <label for="newPasswordInput">New Password</label>
+          </div>
+
+          <div class="floating-field grow">
+            <input type="password" id="confirmPasswordInput" placeholder=" " required />
+            <label for="confirmPasswordInput">Confirm New Password</label>
+          </div>
+
+          <div id="changePasswordError" class="auth-error" role="alert" aria-live="polite"></div>
+
+          <div class="modal-actions">
+            <button class="btn secondary" id="cancelChangePasswordBtn" type="button">Cancel</button>
+            <button class="btn" type="submit">Save Password</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

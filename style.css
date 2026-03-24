@@ -169,6 +169,343 @@ button:focus-visible {
     align-items: center
 }
 
+/* ===== User Menu ===== */
+.user-menu {
+    position: relative;
+}
+
+.user-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.user-menu-trigger {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    min-height: auto;
+    height: auto;
+    font-weight: 700;
+    color: var(--txt);
+}
+
+.user-menu-trigger:hover,
+.user-menu-trigger:focus,
+.user-menu-trigger:active {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    color: var(--txt);
+}
+
+.user-menu-trigger:focus-visible {
+    outline: none;
+}
+
+.user-menu-trigger:hover {
+    opacity: 0.85;
+}
+
+.user-menu-caret {
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-1px);
+    opacity: .8;
+}
+
+.user-menu-trigger[aria-expanded="true"] .user-menu-caret {
+    transform: rotate(225deg) translateY(-1px);
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 220px;
+    padding: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+    display: none;
+    z-index: 1200;
+}
+
+.theme-dark .user-menu-dropdown {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.36);
+}
+
+.user-menu.open .user-menu-dropdown {
+    display: block;
+}
+
+.user-menu-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--txt);
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.user-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.theme-dark .user-menu-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.user-menu-item.danger {
+    color: #c62828;
+}
+
+.theme-dark .user-menu-item.danger {
+    color: #ff8a80;
+}
+
+.user-menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 0;
+}
+
+.user-menu-trigger,
+.user-menu-trigger.btn,
+.user-menu-trigger.btn.ghost {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: auto;
+    height: auto;
+    font-weight: 700;
+    color: var(--nav-txt);
+}
+
+.user-menu-trigger:hover,
+.user-menu-trigger:active,
+.user-menu-trigger:focus,
+.user-menu-trigger:focus-visible,
+.user-menu-trigger.btn:hover,
+.user-menu-trigger.btn:active,
+.user-menu-trigger.btn:focus,
+.user-menu-trigger.btn:focus-visible,
+.user-menu-trigger.btn.ghost:hover,
+.user-menu-trigger.btn.ghost:active,
+.user-menu-trigger.btn.ghost:focus,
+.user-menu-trigger.btn.ghost:focus-visible {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: var(--nav-txt);
+}
+
+.user-menu-trigger:hover {
+    opacity: 0.85;
+}
+
+.user-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.user-menu-avatar {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--nav-txt);
+    flex: 0 0 22px;
+}
+
+.user-menu-avatar-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+.user-menu-avatar-icon .avatar-ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.user-menu-avatar-icon .avatar-head,
+.user-menu-avatar-icon .avatar-body {
+    fill: currentColor;
+    stroke: none;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+}
+
+.user-menu-trigger,
+.user-menu-trigger.btn,
+.user-menu-trigger.btn.ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 2px;
+    margin: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: 32px;
+    line-height: 1;
+    font-weight: 700;
+    color: var(--nav-txt);
+    vertical-align: middle;
+}
+
+.user-menu-trigger:hover,
+.user-menu-trigger:active,
+.user-menu-trigger:focus,
+.user-menu-trigger:focus-visible,
+.user-menu-trigger.btn:hover,
+.user-menu-trigger.btn:active,
+.user-menu-trigger.btn:focus,
+.user-menu-trigger.btn:focus-visible,
+.user-menu-trigger.btn.ghost:hover,
+.user-menu-trigger.btn.ghost:active,
+.user-menu-trigger.btn.ghost:focus,
+.user-menu-trigger.btn.ghost:focus-visible {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: var(--nav-txt);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ===== Small Modal / Change Password ===== */
+.modal-sm {
+    max-width: 440px;
+}
+
+.change-password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.change-password-form .floating-field,
+.change-password-form .floating-field.grow {
+    width: 100%;
+}
+
+.change-password-form .floating-field input {
+    width: 100%;
+    background: var(--card);
+}
+
+.change-password-form .floating-field label,
+.change-password-form .floating-field input:focus+label,
+.change-password-form .floating-field input:not(:placeholder-shown)+label {
+    background: var(--card);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.change-password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 12px 0 0;
+    align-items: stretch;
+}
+
+.change-password-form .floating-field,
+.change-password-form .floating-field.grow {
+    width: 100%;
+    flex: none;
+}
+
+.change-password-form input[type="password"] {
+    width: 100%;
+    min-height: 36px;
+    height: 36px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #d6d6d6;
+    background: var(--card);
+    color: var(--txt);
+    box-sizing: border-box;
+}
+
+.theme-dark .change-password-form input[type="password"] {
+    border-color: #3a3a3a;
+}
+
+.change-password-form input[type="password"]:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.change-password-form .floating-field label,
+.change-password-form .floating-field input:focus+label,
+.change-password-form .floating-field input:not(:placeholder-shown)+label {
+    background: var(--card);
+}
+
+.change-password-form .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.change-password-form .modal-actions .btn {
+    min-height: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 6px;
+}
+
+.change-password-form .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.change-password-form .modal-actions .btn {
+    min-height: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1;
+}
+
 /* ===== Sticky Tabs Bar ===== */
 .tabs-bar {
     position: sticky;
@@ -266,6 +603,7 @@ form {
 }
 
 input[type="text"],
+input[type="password"],
 input[type="number"],
 input[list] {
     padding: 8px 10px;
@@ -275,16 +613,18 @@ input[list] {
     min-height: 36px;
     width: 120px;
     background: var(--bg);
-    color: var(--txt)
+    color: var(--txt);
 }
 
 .theme-dark input[type="text"],
+.theme-dark input[type="password"],
 .theme-dark input[type="number"],
 .theme-dark input[list] {
     border-color: #3a3a3a;
 }
 
 input[type="text"]:focus,
+input[type="password"]:focus,
 input[type="number"]:focus,
 input[list]:focus,
 .modal-search:focus,
