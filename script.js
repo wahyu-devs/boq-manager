@@ -170,7 +170,7 @@ function setGreetingFromSession() {
     const session = getStoredSession();
     if (!userMenuGreeting) return;
     const name = session?.username || session?.email || 'User';
-    userMenuGreeting.textContent = `Hi, ${name}!`;
+    userMenuGreeting.textContent = name;
 }
 
 function openUserMenu() {
