@@ -90,17 +90,17 @@ themeSwitchBtn.addEventListener('keydown', (e) => {
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); themeSwitchBtn.click(); }
 });
 
-/* ===== AUTH (temporary front-end gate) ===== */
-const AUTH_USERS = [
-    {
-        username: 'admin',
-        email: 'admin@boqmanager.com',
-        password: '123456'
-    }
-];
+/* ===== AUTH (Supabase) ===== */
+const SUPABASE_URL = 'https://lhrwrkcablnqewgndpsr.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_NFPcMihNQpPB10r9tRYZdg_6AaOL3lo';
 
-const AUTH_SESSION_KEY = 'boq_auth_session';
-const AUTH_REMEMBER_KEY = 'boq_auth_remember';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    }
+});
 
 const loginScreen = document.getElementById('loginScreen');
 const appShell = document.getElementById('appShell');
@@ -145,31 +145,34 @@ applyTheme = function (theme) {
     syncThemeToggles();
 };
 
-function getStoredSession() {
-    try {
-        return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || sessionStorage.getItem(AUTH_SESSION_KEY) || 'null');
-    } catch {
+async function getStoredSession() {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) {
+        console.error('Supabase getSession error:', error);
         return null;
     }
+    return data.session || null;
 }
 
-function getAuthUsers() {
-    try {
-        const stored = JSON.parse(localStorage.getItem('boq_auth_users') || 'null');
-        return Array.isArray(stored) && stored.length ? stored : AUTH_USERS;
-    } catch {
-        return AUTH_USERS;
+async function clearSession() {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        console.error('Supabase signOut error:', error);
     }
 }
 
-function saveAuthUsers(users) {
-    localStorage.setItem('boq_auth_users', JSON.stringify(users));
-}
-
-function setGreetingFromSession() {
-    const session = getStoredSession();
+async function setGreetingFromSession(sessionArg = null) {
     if (!userMenuGreeting) return;
-    const name = session?.username || session?.email || 'User';
+
+    const session = sessionArg || await getStoredSession();
+    const user = session?.user;
+
+    const name =
+        user?.user_metadata?.username ||
+        user?.user_metadata?.display_name ||
+        (user?.email ? user.email.split('@')[0] : '') ||
+        'User';
+
     userMenuGreeting.textContent = name;
 }
 
@@ -210,31 +213,6 @@ function closeChangePasswordModal() {
     changePasswordError.textContent = '';
 }
 
-function setSession(user, remember) {
-    const payload = {
-        username: user.username,
-        email: user.email,
-        loggedInAt: Date.now()
-    };
-
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
-    localStorage.removeItem(AUTH_SESSION_KEY);
-
-    if (remember) {
-        localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(payload));
-        localStorage.setItem(AUTH_REMEMBER_KEY, '1');
-    } else {
-        sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(payload));
-        localStorage.removeItem(AUTH_REMEMBER_KEY);
-    }
-}
-
-function clearSession() {
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    localStorage.removeItem(AUTH_REMEMBER_KEY);
-}
-
 function showLoginScreen() {
     document.body.classList.add('auth-locked');
     loginScreen.classList.add('is-visible');
@@ -242,7 +220,6 @@ function showLoginScreen() {
     appShell.removeAttribute('aria-hidden');
     loginError.textContent = '';
     loginPasswordInput.value = '';
-    rememberLoginInput.checked = localStorage.getItem(AUTH_REMEMBER_KEY) === '1';
     syncThemeToggles();
     setTimeout(() => loginEmailInput.focus(), 0);
 }
@@ -254,54 +231,54 @@ function showAppShell() {
     appShell.removeAttribute('aria-hidden');
 }
 
-function findMatchingUser(identifier, password) {
-    const key = String(identifier || '').trim().toLowerCase();
-    const users = getAuthUsers();
-
-    return users.find(user => {
-        return (
-            (user.username && user.username.toLowerCase() === key) ||
-            (user.email && user.email.toLowerCase() === key)
-        ) && user.password === password;
-    }) || null;
-}
-
-function initAuth() {
-    const session = getStoredSession();
-    if (session) {
-        setGreetingFromSession();
+async function initAuth() {
+    const session = await getStoredSession();
+    if (session?.user) {
+        await setGreetingFromSession(session);
         showAppShell();
     } else {
         showLoginScreen();
     }
 }
 
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const identifier = loginEmailInput.value.trim();
+    const email = loginEmailInput.value.trim();
     const password = loginPasswordInput.value;
-    const remember = rememberLoginInput.checked;
 
-    const user = findMatchingUser(identifier, password);
+    loginError.textContent = '';
 
-    if (!user) {
+    if (!email || !password) {
+        loginError.textContent = 'Please enter your email and password.';
+        return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error || !data?.user) {
         loginError.textContent = 'Invalid credentials. Please try again.';
         loginPasswordInput.focus();
         loginPasswordInput.select();
         return;
     }
 
-    setSession(user, remember);
-    setGreetingFromSession();
+    // Untuk tahap ini checkbox "Remember me" hanya UI.
+    // Session persistence sudah ditangani Supabase via persistSession: true.
+    void rememberLoginInput?.checked;
+
+    await setGreetingFromSession(data.session);
     loginError.textContent = '';
     showAppShell();
 });
 
 if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', async () => {
         closeUserMenu();
-        clearSession();
+        await clearSession();
         showLoginScreen();
     });
 }
@@ -344,33 +321,17 @@ if (changePasswordModal) {
 }
 
 if (changePasswordForm) {
-    changePasswordForm.addEventListener('submit', (e) => {
+    changePasswordForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        const session = getStoredSession();
-        if (!session) {
-            changePasswordError.textContent = 'Session not found. Please login again.';
-            return;
-        }
 
         const currentPassword = currentPasswordInput.value;
         const newPassword = newPasswordInput.value.trim();
         const confirmPassword = confirmPasswordInput.value.trim();
 
-        const users = getAuthUsers();
-        const userIndex = users.findIndex(user =>
-            user.username === session.username || user.email === session.email
-        );
+        changePasswordError.textContent = '';
 
-        if (userIndex === -1) {
-            changePasswordError.textContent = 'User not found.';
-            return;
-        }
-
-        if (users[userIndex].password !== currentPassword) {
-            changePasswordError.textContent = 'Current password is incorrect.';
-            currentPasswordInput.focus();
-            currentPasswordInput.select();
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            changePasswordError.textContent = 'Please complete all password fields.';
             return;
         }
 
@@ -387,9 +348,35 @@ if (changePasswordForm) {
             return;
         }
 
-        users[userIndex].password = newPassword;
-        saveAuthUsers(users);
-        changePasswordError.textContent = '';
+        const session = await getStoredSession();
+        const email = session?.user?.email;
+
+        if (!email) {
+            changePasswordError.textContent = 'Session not found. Please login again.';
+            return;
+        }
+
+        const { error: reauthError } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password: currentPassword
+        });
+
+        if (reauthError) {
+            changePasswordError.textContent = 'Current password is incorrect.';
+            currentPasswordInput.focus();
+            currentPasswordInput.select();
+            return;
+        }
+
+        const { error: updateError } = await supabaseClient.auth.updateUser({
+            password: newPassword
+        });
+
+        if (updateError) {
+            changePasswordError.textContent = updateError.message || 'Failed to update password.';
+            return;
+        }
+
         closeChangePasswordModal();
         alert('Password updated successfully.');
     });
@@ -407,6 +394,15 @@ if (loginThemeSwitchBtn) {
         }
     });
 }
+
+supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    if (session?.user) {
+        await setGreetingFromSession(session);
+        showAppShell();
+    } else {
+        showLoginScreen();
+    }
+});
 
 syncThemeToggles();
 initAuth();
