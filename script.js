@@ -1580,3 +1580,156 @@ function init() {
     updateNavProject();
 }
 init();
+
+/* ===== USER-SCOPED LOCAL STORAGE PATCH ===== */
+
+(() => {
+    const SCOPED_KEYS = new Set([
+        'boq_projects_v2',
+        'boq_unsaved_commission',
+        'boq_items',
+        'boq_working',
+        'boq_current_name',
+        'boq_category_order'
+    ]);
+
+    const LEGACY_TO_SUFFIX = {
+        boq_projects_v2: 'projects',
+        boq_unsaved_commission: 'unsaved_commission',
+        boq_items: 'items',
+        boq_working: 'working',
+        boq_current_name: 'current_name',
+        boq_category_order: 'category_order'
+    };
+
+    const originalGetItem = localStorage.getItem.bind(localStorage);
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+    let scopedStorageUserId = null;
+
+    function setScopedStorageUserId(userId) {
+        scopedStorageUserId = userId || null;
+    }
+
+    function getScopedNamespace(userId = scopedStorageUserId) {
+        return userId ? `boq:user:${userId}` : 'boq:guest';
+    }
+
+    function getScopedKeyFromLegacyKey(legacyKey, userId = scopedStorageUserId) {
+        const suffix = LEGACY_TO_SUFFIX[legacyKey];
+        if (!suffix) return legacyKey;
+        return `${getScopedNamespace(userId)}:${suffix}`;
+    }
+
+    function readRawJson(rawKey, fallback) {
+        try {
+            const raw = originalGetItem(rawKey);
+            return raw === null ? fallback : JSON.parse(raw);
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function legacyGlobalSnapshotExists() {
+        return Object.keys(LEGACY_TO_SUFFIX).some((legacyKey) => originalGetItem(legacyKey) !== null);
+    }
+
+    function scopedSnapshotExists(userId = scopedStorageUserId) {
+        return Object.keys(LEGACY_TO_SUFFIX).some((legacyKey) => {
+            const scopedKey = getScopedKeyFromLegacyKey(legacyKey, userId);
+            return originalGetItem(scopedKey) !== null;
+        });
+    }
+
+    function migrateLegacyGlobalToUser(userId = scopedStorageUserId) {
+        if (!userId) return;
+        if (scopedSnapshotExists(userId)) return;
+        if (!legacyGlobalSnapshotExists()) return;
+
+        Object.keys(LEGACY_TO_SUFFIX).forEach((legacyKey) => {
+            const raw = originalGetItem(legacyKey);
+            if (raw !== null) {
+                const scopedKey = getScopedKeyFromLegacyKey(legacyKey, userId);
+                originalSetItem(scopedKey, raw);
+            }
+        });
+    }
+
+    function hydrateRuntimeFromScopedStorage() {
+        items = readRawJson(getScopedKeyFromLegacyKey('boq_items'), []);
+        tableData = readRawJson(getScopedKeyFromLegacyKey('boq_working'), []);
+        currentProjectName = originalGetItem(getScopedKeyFromLegacyKey('boq_current_name')) || '';
+        categoryOrder = readRawJson(getScopedKeyFromLegacyKey('boq_category_order'), []);
+
+        selectedIndex = null;
+        editingIndex = null;
+        sellingInputManuallyEdited = false;
+
+        if (typeof loadCommissionForCurrentProject === 'function') {
+            loadCommissionForCurrentProject();
+        }
+
+        if (typeof setEditingMode === 'function') {
+            setEditingMode(null);
+        }
+
+        if (typeof updateProjectList === 'function') updateProjectList();
+        if (typeof updateDatalist === 'function') updateDatalist();
+        if (typeof updateNavProject === 'function') updateNavProject();
+        if (typeof renderAll === 'function') renderAll();
+        if (typeof updateFooterLastSaved === 'function') updateFooterLastSaved();
+        if (typeof updateEditButton === 'function') updateEditButton();
+    }
+
+    function patchLocalStorageMethods() {
+        localStorage.getItem = function (key) {
+            if (SCOPED_KEYS.has(key)) {
+                return originalGetItem(getScopedKeyFromLegacyKey(key));
+            }
+            return originalGetItem(key);
+        };
+
+        localStorage.setItem = function (key, value) {
+            if (SCOPED_KEYS.has(key)) {
+                return originalSetItem(getScopedKeyFromLegacyKey(key), value);
+            }
+            return originalSetItem(key, value);
+        };
+
+        localStorage.removeItem = function (key) {
+            if (SCOPED_KEYS.has(key)) {
+                return originalRemoveItem(getScopedKeyFromLegacyKey(key));
+            }
+            return originalRemoveItem(key);
+        };
+    }
+
+    async function bootstrapScopedStorageFromSession() {
+        const session = await getStoredSession();
+        const userId = session?.user?.id || null;
+
+        setScopedStorageUserId(userId);
+
+        if (userId) {
+            migrateLegacyGlobalToUser(userId);
+        }
+
+        hydrateRuntimeFromScopedStorage();
+    }
+
+    patchLocalStorageMethods();
+
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+        const userId = session?.user?.id || null;
+        setScopedStorageUserId(userId);
+
+        if (userId) {
+            migrateLegacyGlobalToUser(userId);
+        }
+
+        hydrateRuntimeFromScopedStorage();
+    });
+
+    bootstrapScopedStorageFromSession();
+})();
