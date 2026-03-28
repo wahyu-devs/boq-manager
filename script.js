@@ -481,6 +481,8 @@ const calcGrossProfitEl = document.getElementById('calcGrossProfit');
 const calcTotalMarginEl = document.getElementById('calcTotalMargin');
 
 const lastSavedTextEl = document.getElementById('lastSavedText');
+const lastSyncedTextEl = document.getElementById('lastSyncedText');
+const LOCAL_META_KEY = 'boq_sync_meta_v1';
 
 let items = JSON.parse(localStorage.getItem('boq_items')) || [];
 let tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
@@ -901,17 +903,58 @@ function loadCommissionForCurrentProject() {
     currentCommission = unsaved != null ? Number(unsaved) : 0;
 }
 
+function getLocalMeta() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_META_KEY));
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+}
+
+function saveLocalMeta(metaPatch) {
+    const current = getLocalMeta();
+    const next = { ...current, ...metaPatch };
+    localStorage.setItem(LOCAL_META_KEY, JSON.stringify(next));
+    return next;
+}
+
 function formatLastSaved(ts) {
     if (!ts) return '—';
     try {
         return new Date(ts).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-    } catch { return '—'; }
+    } catch {
+        return '—';
+    }
 }
+
 function updateFooterLastSaved() {
-    if (!currentProjectName) { lastSavedTextEl.textContent = '—'; return; }
+    if (!lastSavedTextEl) return;
+    if (!currentProjectName) {
+        lastSavedTextEl.textContent = '—';
+        return;
+    }
     const projects = loadProjectsObj();
     const p = projects[currentProjectName];
     lastSavedTextEl.textContent = p && p.lastSaved ? formatLastSaved(p.lastSaved) : '—';
+}
+
+function updateFooterLastSynced() {
+    if (!lastSyncedTextEl) return;
+    const meta = getLocalMeta();
+    lastSyncedTextEl.textContent = meta.lastSyncedAt
+        ? formatLastSaved(meta.lastSyncedAt)
+        : 'Not yet';
+}
+
+function updateFooterStatus() {
+    updateFooterLastSaved();
+    updateFooterLastSynced();
+}
+
+function markLastSynced(ts = Date.now()) {
+    saveLocalMeta({ lastSyncedAt: ts });
+    updateFooterLastSynced();
 }
 
 function persistProject() {
@@ -1576,7 +1619,7 @@ function init() {
     renderAll();
     switchTo('selling');
     updateEditBtnInit();
-    updateFooterLastSaved();
+    updateFooterStatus();
     updateNavProject();
 }
 init();
@@ -1587,6 +1630,7 @@ init();
     const SCOPED_KEYS = new Set([
         'boq_projects_v2',
         'boq_unsaved_commission',
+        'boq_sync_meta_v1',
         'boq_items',
         'boq_working',
         'boq_current_name',
@@ -1596,6 +1640,7 @@ init();
     const LEGACY_TO_SUFFIX = {
         boq_projects_v2: 'projects',
         boq_unsaved_commission: 'unsaved_commission',
+        boq_sync_meta_v1: 'sync_meta',
         boq_items: 'items',
         boq_working: 'working',
         boq_current_name: 'current_name',
