@@ -868,6 +868,66 @@ function renderSellingTable() {
 function loadProjectsObj() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || {}; } catch (e) { return {}; } }
 function saveProjectsObj(obj) { localStorage.setItem(PROJECTS_KEY, JSON.stringify(obj)); }
 
+function serializeAppState() {
+    return {
+        projects: loadProjectsObj(),
+        items: Array.isArray(items) ? items : [],
+        working: Array.isArray(tableData) ? tableData : [],
+        currentProjectName: currentProjectName || '',
+        categoryOrder: Array.isArray(categoryOrder) ? categoryOrder : [],
+        unsavedCommission: Number(currentCommission || 0),
+        meta: {
+            schemaVersion: 1
+        }
+    };
+}
+
+function applyAppState(snapshot) {
+    const safe = snapshot && typeof snapshot === 'object' ? snapshot : {};
+
+    const nextProjects =
+        safe.projects && typeof safe.projects === 'object' ? safe.projects : {};
+    const nextItems =
+        Array.isArray(safe.items) ? safe.items : [];
+    const nextWorking =
+        Array.isArray(safe.working) ? safe.working : [];
+    const nextCurrentProjectName =
+        typeof safe.currentProjectName === 'string' ? safe.currentProjectName : '';
+    const nextCategoryOrder =
+        Array.isArray(safe.categoryOrder) ? safe.categoryOrder : [];
+    const nextUnsavedCommission =
+        Number(safe.unsavedCommission || 0);
+
+    saveProjectsObj(nextProjects);
+    localStorage.setItem('boq_items', JSON.stringify(nextItems));
+    localStorage.setItem('boq_working', JSON.stringify(nextWorking));
+    localStorage.setItem('boq_category_order', JSON.stringify(nextCategoryOrder));
+
+    if (nextCurrentProjectName) {
+        localStorage.setItem('boq_current_name', nextCurrentProjectName);
+    } else {
+        localStorage.removeItem('boq_current_name');
+    }
+
+    if (nextUnsavedCommission === 0) {
+        localStorage.removeItem(UNSAVED_COMM_KEY);
+    } else {
+        localStorage.setItem(UNSAVED_COMM_KEY, String(nextUnsavedCommission));
+    }
+
+    items = nextItems;
+    tableData = nextWorking;
+    categoryOrder = nextCategoryOrder;
+    currentProjectName = nextCurrentProjectName;
+    currentCommission = nextUnsavedCommission;
+
+    updateDatalist();
+    updateProjectList();
+    updateNavProject();
+    renderAll();
+    updateFooterStatus();
+}
+
 function renderCalculation() {
     const totals = computeTotals();
     const totalCogs = totals.totalCogs || 0;
@@ -1542,12 +1602,20 @@ renameProjectBtn.addEventListener('click', () => {
 
 // Backup / Restore
 downloadJSONBtn.addEventListener('click', () => {
-    const projects = loadProjectsObj();
-    const payload = { exportedAt: new Date().toISOString(), projects: projects, items: items || [], working: tableData || [], categoryOrder: categoryOrder || [], currentProjectName: currentProjectName || null, unsavedCommission: Number(currentCommission || 0) };
-    const ts = new Date(); const pad = n => String(n).toString().padStart(2, '0');
+    const payload = {
+        exportedAt: new Date().toISOString(),
+        ...serializeAppState()
+    };
+
+    const ts = new Date();
+    const pad = n => String(n).padStart(2, '0');
     const filename = `boq_backup_${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}_${pad(ts.getHours())}${pad(ts.getMinutes())}.json`;
+
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
 });
 
 restoreJSONBtn.addEventListener('click', () => { restoreInput.value = ''; restoreInput.click(); });
@@ -1587,18 +1655,18 @@ restoreInput.addEventListener('change', (ev) => {
         }
         if (!confirm('Restore akan menimpa semua data lokal (projects, items, working, category order, current project). Lanjutkan?')) { return; }
         try {
-            saveProjectsObj(restoreObj.projects || {});
-            localStorage.setItem('boq_items', JSON.stringify(restoreObj.items || []));
-            localStorage.setItem('boq_working', JSON.stringify(restoreObj.working || []));
-            localStorage.setItem('boq_category_order', JSON.stringify(restoreObj.categoryOrder || []));
-            if (restoreObj.currentProjectName) { localStorage.setItem('boq_current_name', restoreObj.currentProjectName); currentProjectName = restoreObj.currentProjectName; } else { localStorage.removeItem('boq_current_name'); currentProjectName = ''; }
-            if (restoreObj.unsavedCommission && Number(restoreObj.unsavedCommission) !== 0) localStorage.setItem(UNSAVED_COMM_KEY, String(Number(restoreObj.unsavedCommission))); else localStorage.removeItem(UNSAVED_COMM_KEY);
-            items = JSON.parse(localStorage.getItem('boq_items')) || [];
-            tableData = JSON.parse(localStorage.getItem('boq_working')) || [];
-            categoryOrder = JSON.parse(localStorage.getItem('boq_category_order')) || [];
-            loadCommissionForCurrentProject();
-            updateNavProject(); updateProjectList(); updateDatalist(); renderAll();
-            updateFooterLastSaved();
+            applyAppState({
+                projects: restoreObj.projects || {},
+                items: restoreObj.items || [],
+                working: restoreObj.working || [],
+                currentProjectName: restoreObj.currentProjectName || '',
+                categoryOrder: restoreObj.categoryOrder || [],
+                unsavedCommission: Number(restoreObj.unsavedCommission || 0),
+                meta: {
+                    schemaVersion: 1
+                }
+            });
+
             alert('Restore berhasil. Data lokal telah diperbarui.');
         } catch (err) {
             console.error(err);
