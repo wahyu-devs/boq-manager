@@ -236,6 +236,7 @@ async function initAuth() {
     if (session?.user) {
         await setGreetingFromSession(session);
         showAppShell();
+        void runStartupCloudPull(session);
     } else {
         showLoginScreen();
     }
@@ -273,11 +274,14 @@ loginForm.addEventListener('submit', async (e) => {
     await setGreetingFromSession(data.session);
     loginError.textContent = '';
     showAppShell();
+    void runStartupCloudPull(data.session);
 });
 
 if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
         closeUserMenu();
+        startupCloudPullRunId++;
+        startupCloudPullDoneForUserId = null;
         await clearSession();
         showLoginScreen();
     });
@@ -493,6 +497,9 @@ let currentProjectName = localStorage.getItem('boq_current_name') || "";
 const PROJECTS_KEY = 'boq_projects_v2';
 const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
 const CLOUD_STATE_TABLE = 'user_app_state';
+
+let startupCloudPullDoneForUserId = null;
+let startupCloudPullRunId = 0;
 
 // ===== Reorder mode =====
 const reorderBtn = document.getElementById('reorderBtn');
@@ -1195,6 +1202,71 @@ async function pullCloudStateManual(options = {}) {
     }
     alert('Data cloud berhasil dimuat ke local.');
     return true;
+}
+
+async function runStartupCloudPull(sessionArg = null) {
+    const session = sessionArg || await getStoredSession();
+    const userId = session?.user?.id || null;
+
+    if (!userId) return false;
+    if (startupCloudPullDoneForUserId === userId) return false;
+
+    const runId = ++startupCloudPullRunId;
+    startupCloudPullDoneForUserId = userId;
+
+    const cloud = await fetchCloudState(session);
+    if (runId !== startupCloudPullRunId) return false;
+
+    if (!cloud || !cloud.state) {
+        updateFooterLastSynced();
+        return false;
+    }
+
+    const localSnapshot = serializeAppState();
+    const localTs = getSnapshotClientUpdatedAt(localSnapshot);
+    const cloudTs = getSnapshotClientUpdatedAt(cloud.state);
+    const localEmpty = isSnapshotStructurallyEmpty(localSnapshot);
+    const cloudEmpty = isSnapshotStructurallyEmpty(cloud.state);
+
+    if (cloudEmpty) {
+        updateFooterLastSynced();
+        return false;
+    }
+
+    if (localEmpty) {
+        applyAppState(cloud.state);
+
+        if (runId !== startupCloudPullRunId) return false;
+
+        if (cloud.updatedAt) {
+            const parsed = Date.parse(cloud.updatedAt);
+            if (!Number.isNaN(parsed)) markLastSynced(parsed);
+            else updateFooterLastSynced();
+        } else {
+            updateFooterLastSynced();
+        }
+
+        return true;
+    }
+
+    if (cloudTs && (!localTs || cloudTs > localTs)) {
+        applyAppState(cloud.state);
+
+        if (runId !== startupCloudPullRunId) return false;
+
+        if (cloud.updatedAt) {
+            const parsed = Date.parse(cloud.updatedAt);
+            if (!Number.isNaN(parsed)) markLastSynced(parsed);
+            else updateFooterLastSynced();
+        } else {
+            updateFooterLastSynced();
+        }
+
+        return true;
+    }
+
+    updateFooterLastSynced();
+    return false;
 }
 
 window.__boqCloudDebug = {
