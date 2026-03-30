@@ -128,6 +128,12 @@ const newPasswordInput = document.getElementById('newPasswordInput');
 const confirmPasswordInput = document.getElementById('confirmPasswordInput');
 const changePasswordError = document.getElementById('changePasswordError');
 
+const USER_PROFILE_TABLE = 'user_profiles';
+const USER_PROFILE_ID_COLUMN = 'user_id';
+const USER_PROFILE_USERNAME_COLUMN = 'username';
+
+let navbarGreetingRequestSeq = 0;
+
 function syncThemeToggles() {
     const isDark = document.documentElement.classList.contains('theme-dark');
     if (loginThemeSwitchBtn) {
@@ -161,19 +167,66 @@ async function clearSession() {
     }
 }
 
+function getNavbarFallbackName(user) {
+    return (
+        user?.user_metadata?.username ||
+        user?.user_metadata?.display_name ||
+        (user?.email ? user.email.split('@')[0] : '') ||
+        'User'
+    );
+}
+
+async function fetchNavbarUsernameFromProfile(userId) {
+    if (!userId) return null;
+
+    const { data, error } = await supabaseClient
+        .from(USER_PROFILE_TABLE)
+        .select(USER_PROFILE_USERNAME_COLUMN)
+        .eq(USER_PROFILE_ID_COLUMN, userId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('fetchNavbarUsernameFromProfile error:', error);
+        return null;
+    }
+
+    const username = data?.[USER_PROFILE_USERNAME_COLUMN];
+    if (typeof username !== 'string') return null;
+
+    const trimmed = username.trim();
+    return trimmed || null;
+}
+
 async function setGreetingFromSession(sessionArg = null) {
     if (!userMenuGreeting) return;
 
     const session = sessionArg || await getStoredSession();
     const user = session?.user;
 
-    const name =
-        user?.user_metadata?.username ||
-        user?.user_metadata?.display_name ||
-        (user?.email ? user.email.split('@')[0] : '') ||
-        'User';
+    if (!user) {
+        userMenuGreeting.textContent = 'User';
+        return;
+    }
 
-    userMenuGreeting.textContent = name;
+    const fallbackName = getNavbarFallbackName(user);
+    userMenuGreeting.textContent = fallbackName;
+
+    const currentRequestSeq = ++navbarGreetingRequestSeq;
+    const currentUserId = user.id;
+
+    if (!currentUserId) return;
+
+    void (async () => {
+        const profileUsername = await fetchNavbarUsernameFromProfile(currentUserId);
+        if (!profileUsername) return;
+
+        if (currentRequestSeq !== navbarGreetingRequestSeq) return;
+
+        const latestSession = await getStoredSession();
+        if (latestSession?.user?.id !== currentUserId) return;
+
+        userMenuGreeting.textContent = profileUsername;
+    })();
 }
 
 function openUserMenu() {
