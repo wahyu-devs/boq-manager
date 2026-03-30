@@ -282,6 +282,9 @@ if (logoutBtn) {
         closeUserMenu();
         startupCloudPullRunId++;
         startupCloudPullDoneForUserId = null;
+        clearTimeout(syncTimer);
+        syncTimer = null;
+        syncInFlight = false;
         await clearSession();
         showLoginScreen();
     });
@@ -497,9 +500,13 @@ let currentProjectName = localStorage.getItem('boq_current_name') || "";
 const PROJECTS_KEY = 'boq_projects_v2';
 const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
 const CLOUD_STATE_TABLE = 'user_app_state';
+const CLOUD_SYNC_DEBOUNCE_MS = 3000;
 
 let startupCloudPullDoneForUserId = null;
 let startupCloudPullRunId = 0;
+let syncTimer = null;
+let syncInFlight = false;
+let suppressScheduledSync = false;
 
 // ===== Reorder mode =====
 const reorderBtn = document.getElementById('reorderBtn');
@@ -1025,6 +1032,11 @@ function markLastSynced(ts = Date.now()) {
     updateFooterLastSynced();
 }
 
+function setSyncedFooterText(text) {
+    if (!lastSyncedTextEl) return;
+    lastSyncedTextEl.textContent = text;
+}
+
 async function getCurrentUserId(sessionArg = null) {
     const session = sessionArg || await getStoredSession();
     return session?.user?.id || null;
@@ -1091,36 +1103,13 @@ async function fetchCloudState(sessionArg = null) {
 }
 
 async function pushCloudStateManual(sessionArg = null) {
-    const userId = await getCurrentUserId(sessionArg);
-    if (!userId) {
-        alert('User session tidak ditemukan.');
-        return false;
-    }
+    const ok = await pushCloudState(sessionArg);
 
-    const snapshot = serializeAppState();
-    const clientUpdatedAtMs = getSnapshotClientUpdatedAt(snapshot);
-    const clientUpdatedAtIso = clientUpdatedAtMs
-        ? new Date(clientUpdatedAtMs).toISOString()
-        : new Date().toISOString();
-
-    const payload = {
-        user_id: userId,
-        state: snapshot,
-        client_updated_at: clientUpdatedAtIso,
-        app_version: 'snapshot-v1'
-    };
-
-    const { error } = await supabaseClient
-        .from(CLOUD_STATE_TABLE)
-        .upsert(payload, { onConflict: 'user_id' });
-
-    if (error) {
-        console.error('pushCloudStateManual error:', error);
+    if (!ok) {
         alert('Push ke cloud gagal. Lihat console.');
         return false;
     }
 
-    markLastSynced(Date.now());
     alert('Push ke cloud berhasil.');
     return true;
 }
@@ -1269,6 +1258,66 @@ async function runStartupCloudPull(sessionArg = null) {
     return false;
 }
 
+async function pushCloudState(sessionArg = null) {
+    const userId = await getCurrentUserId(sessionArg);
+    if (!userId) return false;
+
+    const snapshot = serializeAppState();
+    const clientUpdatedAtMs = getSnapshotClientUpdatedAt(snapshot);
+    const clientUpdatedAtIso = clientUpdatedAtMs
+        ? new Date(clientUpdatedAtMs).toISOString()
+        : new Date().toISOString();
+
+    const payload = {
+        user_id: userId,
+        state: snapshot,
+        client_updated_at: clientUpdatedAtIso,
+        app_version: 'snapshot-v1'
+    };
+
+    const { error } = await supabaseClient
+        .from(CLOUD_STATE_TABLE)
+        .upsert(payload, { onConflict: 'user_id' });
+
+    if (error) {
+        console.error('pushCloudState error:', error);
+        return false;
+    }
+
+    markLastSynced(Date.now());
+    return true;
+}
+
+function scheduleCloudSync() {
+    if (suppressScheduledSync) return;
+
+    clearTimeout(syncTimer);
+    setSyncedFooterText('Pending');
+
+    syncTimer = setTimeout(async () => {
+        if (syncInFlight) return;
+
+        syncInFlight = true;
+        setSyncedFooterText('Syncing...');
+
+        try {
+            const ok = await pushCloudState();
+            if (!ok) {
+                setSyncedFooterText('Failed');
+            }
+        } catch (err) {
+            console.error('scheduleCloudSync error:', err);
+            setSyncedFooterText('Failed');
+        } finally {
+            syncInFlight = false;
+        }
+    }, CLOUD_SYNC_DEBOUNCE_MS);
+}
+
+function touchCloudSync() {
+    scheduleCloudSync();
+}
+
 window.__boqCloudDebug = {
     fetch: fetchCloudState,
     push: pushCloudStateManual,
@@ -1286,9 +1335,11 @@ function persistProject() {
         };
         saveProjectsObj(projects);
         updateFooterLastSaved();
+        touchCloudSync();
     } else {
         if (currentCommission === 0) localStorage.removeItem(UNSAVED_COMM_KEY);
         else localStorage.setItem(UNSAVED_COMM_KEY, String(currentCommission));
+        touchCloudSync();
     }
 }
 
@@ -1724,7 +1775,9 @@ function populateManageItems() {
             const oldKey = normalizeKey(it.name);
             items.forEach(x => { if (normalizeKey(x.name) === oldKey) x.name = newName; });
             localStorage.setItem('boq_items', JSON.stringify(items));
-            updateDatalist(); populateManageItems();
+            updateDatalist();
+            touchCloudSync();
+            populateManageItems();
         });
         const delBtnEl = document.createElement('button'); delBtnEl.textContent = 'Hapus'; delBtnEl.className = 'btn secondary';
         delBtnEl.addEventListener('click', () => {
@@ -1732,7 +1785,9 @@ function populateManageItems() {
             const key = normalizeKey(it.name);
             items = items.filter(x => normalizeKey(x.name) !== key);
             localStorage.setItem('boq_items', JSON.stringify(items));
-            updateDatalist(); populateManageItems();
+            updateDatalist();
+            touchCloudSync();
+            populateManageItems();
         });
         li.appendChild(span); li.appendChild(renameBtnEl); li.appendChild(delBtnEl);
         manageItemList.appendChild(li);
@@ -1749,7 +1804,15 @@ function populateManageProjects() {
         const li = document.createElement('li');
         const span = document.createElement('span'); span.textContent = name;
         const delBtnEl = document.createElement('button'); delBtnEl.textContent = 'Hapus'; delBtnEl.className = 'btn secondary';
-        delBtnEl.addEventListener('click', () => { if (!confirm(`Hapus project "${name}"?`)) return; delete projects[name]; saveProjectsObj(projects); populateManageProjects(); updateProjectList(); updateFooterLastSaved(); });
+        delBtnEl.addEventListener('click', () => {
+            if (!confirm(`Hapus project "${name}"?`)) return;
+            delete projects[name];
+            saveProjectsObj(projects);
+            touchCloudSync();
+            populateManageProjects();
+            updateProjectList();
+            updateFooterLastSaved();
+        });
         const renameBtnEl = document.createElement('button'); renameBtnEl.textContent = 'Rename'; renameBtnEl.className = 'btn ghost';
         renameBtnEl.addEventListener('click', () => {
             const newName = sanitize(prompt('Ubah nama project:', name) || '');
@@ -1759,6 +1822,7 @@ function populateManageProjects() {
             projects[newName].lastSaved = Date.now();
             delete projects[name];
             saveProjectsObj(projects);
+            touchCloudSync();
             if (currentProjectName === name) { currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateNavProject(); updateFooterLastSaved(); }
             populateManageProjects(); updateProjectList();
         });
@@ -1801,7 +1865,10 @@ function saveProject() {
     };
     saveProjectsObj(projects);
     currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
-    updateProjectList(); updateNavProject(); updateFooterLastSaved();
+    updateProjectList();
+    updateNavProject();
+    updateFooterLastSaved();
+    touchCloudSync();
     alert(`Project "${name}" berhasil disimpan.`);
 }
 
@@ -1823,6 +1890,7 @@ function loadProject() {
     currentProjectName = name; localStorage.setItem('boq_current_name', currentProjectName);
     updateNavProject(); updateProjectList(); renderAll(); projectSearch.value = '';
     updateFooterLastSaved();
+    touchCloudSync();
     alert(`Project "${name}" berhasil dimuat.`);
     updateEditButton();
 }
@@ -1837,6 +1905,7 @@ function newProject() {
     localStorage.removeItem('boq_current_name');
     updateNavProject(); renderAll(); updateEditButton();
     updateFooterLastSaved();
+    touchCloudSync();
     alert('Project baru siap diisi.');
 }
 
@@ -1854,7 +1923,12 @@ renameProjectBtn.addEventListener('click', () => {
         lastSaved: Date.now()
     };
     saveProjectsObj(projects);
-    currentProjectName = newName; localStorage.setItem('boq_current_name', currentProjectName); updateProjectList(); updateNavProject(); updateFooterLastSaved();
+    currentProjectName = newName;
+    localStorage.setItem('boq_current_name', currentProjectName);
+    updateProjectList();
+    updateNavProject();
+    updateFooterLastSaved();
+    touchCloudSync();
     alert('Nama project diubah.');
 });
 
@@ -1925,6 +1999,7 @@ restoreInput.addEventListener('change', (ev) => {
                 }
             });
 
+            touchCloudSync();
             alert('Restore berhasil. Data lokal telah diperbarui.');
         } catch (err) {
             console.error(err);
