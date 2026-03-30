@@ -492,6 +492,7 @@ let sellingInputManuallyEdited = false;
 let currentProjectName = localStorage.getItem('boq_current_name') || "";
 const PROJECTS_KEY = 'boq_projects_v2';
 const UNSAVED_COMM_KEY = 'boq_unsaved_commission';
+const CLOUD_STATE_TABLE = 'user_app_state';
 
 // ===== Reorder mode =====
 const reorderBtn = document.getElementById('reorderBtn');
@@ -1016,6 +1017,191 @@ function markLastSynced(ts = Date.now()) {
     saveLocalMeta({ lastSyncedAt: ts });
     updateFooterLastSynced();
 }
+
+async function getCurrentUserId(sessionArg = null) {
+    const session = sessionArg || await getStoredSession();
+    return session?.user?.id || null;
+}
+
+function getSnapshotClientUpdatedAt(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return null;
+
+    const projects = snapshot.projects && typeof snapshot.projects === 'object'
+        ? snapshot.projects
+        : {};
+
+    let latest = 0;
+    Object.values(projects).forEach((p) => {
+        const ts = Number(p?.lastSaved || 0);
+        if (ts > latest) latest = ts;
+    });
+
+    return latest || null;
+}
+
+function isSnapshotStructurallyEmpty(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return true;
+
+    const projects = snapshot.projects && typeof snapshot.projects === 'object' ? snapshot.projects : {};
+    const itemsArr = Array.isArray(snapshot.items) ? snapshot.items : [];
+    const workingArr = Array.isArray(snapshot.working) ? snapshot.working : [];
+    const categoryArr = Array.isArray(snapshot.categoryOrder) ? snapshot.categoryOrder : [];
+    const currentName = typeof snapshot.currentProjectName === 'string' ? snapshot.currentProjectName.trim() : '';
+    const unsavedComm = Number(snapshot.unsavedCommission || 0);
+
+    return (
+        Object.keys(projects).length === 0 &&
+        itemsArr.length === 0 &&
+        workingArr.length === 0 &&
+        categoryArr.length === 0 &&
+        currentName === '' &&
+        unsavedComm === 0
+    );
+}
+
+async function fetchCloudState(sessionArg = null) {
+    const userId = await getCurrentUserId(sessionArg);
+    if (!userId) return null;
+
+    const { data, error } = await supabaseClient
+        .from(CLOUD_STATE_TABLE)
+        .select('state, client_updated_at, updated_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('fetchCloudState error:', error);
+        return null;
+    }
+
+    if (!data) return null;
+
+    return {
+        state: data.state || null,
+        clientUpdatedAt: data.client_updated_at || null,
+        updatedAt: data.updated_at || null
+    };
+}
+
+async function pushCloudStateManual(sessionArg = null) {
+    const userId = await getCurrentUserId(sessionArg);
+    if (!userId) {
+        alert('User session tidak ditemukan.');
+        return false;
+    }
+
+    const snapshot = serializeAppState();
+    const clientUpdatedAtMs = getSnapshotClientUpdatedAt(snapshot);
+    const clientUpdatedAtIso = clientUpdatedAtMs
+        ? new Date(clientUpdatedAtMs).toISOString()
+        : new Date().toISOString();
+
+    const payload = {
+        user_id: userId,
+        state: snapshot,
+        client_updated_at: clientUpdatedAtIso,
+        app_version: 'snapshot-v1'
+    };
+
+    const { error } = await supabaseClient
+        .from(CLOUD_STATE_TABLE)
+        .upsert(payload, { onConflict: 'user_id' });
+
+    if (error) {
+        console.error('pushCloudStateManual error:', error);
+        alert('Push ke cloud gagal. Lihat console.');
+        return false;
+    }
+
+    markLastSynced(Date.now());
+    alert('Push ke cloud berhasil.');
+    return true;
+}
+
+async function pullCloudStateManual(options = {}) {
+    const { forceReplace = false } = options;
+
+    const cloud = await fetchCloudState();
+    if (!cloud || !cloud.state) {
+        alert('Data cloud belum ada.');
+        return false;
+    }
+
+    const localSnapshot = serializeAppState();
+    const localTs = getSnapshotClientUpdatedAt(localSnapshot);
+    const cloudTs = getSnapshotClientUpdatedAt(cloud.state);
+    const localEmpty = isSnapshotStructurallyEmpty(localSnapshot);
+    const cloudEmpty = isSnapshotStructurallyEmpty(cloud.state);
+
+    if (cloudEmpty) {
+        alert('Snapshot cloud kosong.');
+        return false;
+    }
+
+    if (localEmpty) {
+        applyAppState(cloud.state);
+        if (cloud.updatedAt) {
+            const parsed = Date.parse(cloud.updatedAt);
+            if (!Number.isNaN(parsed)) markLastSynced(parsed);
+            else updateFooterLastSynced();
+        } else {
+            updateFooterLastSynced();
+        }
+        alert('Data cloud berhasil dimuat ke local.');
+        return true;
+    }
+
+    if (forceReplace) {
+        applyAppState(cloud.state);
+        if (cloud.updatedAt) {
+            const parsed = Date.parse(cloud.updatedAt);
+            if (!Number.isNaN(parsed)) markLastSynced(parsed);
+            else updateFooterLastSynced();
+        } else {
+            updateFooterLastSynced();
+        }
+        alert('Data local berhasil ditimpa dari cloud.');
+        return true;
+    }
+
+    if (cloudTs && (!localTs || cloudTs > localTs)) {
+        const ok = confirm('Data cloud lebih baru dari local. Timpa local dengan data cloud?');
+        if (!ok) return false;
+
+        applyAppState(cloud.state);
+        if (cloud.updatedAt) {
+            const parsed = Date.parse(cloud.updatedAt);
+            if (!Number.isNaN(parsed)) markLastSynced(parsed);
+            else updateFooterLastSynced();
+        } else {
+            updateFooterLastSynced();
+        }
+        alert('Data cloud berhasil dimuat ke local.');
+        return true;
+    }
+
+    if (localTs && (!cloudTs || localTs > cloudTs)) {
+        alert('Data local lebih baru dari cloud. Tidak dilakukan overwrite.');
+        return false;
+    }
+
+    applyAppState(cloud.state);
+    if (cloud.updatedAt) {
+        const parsed = Date.parse(cloud.updatedAt);
+        if (!Number.isNaN(parsed)) markLastSynced(parsed);
+        else updateFooterLastSynced();
+    } else {
+        updateFooterLastSynced();
+    }
+    alert('Data cloud berhasil dimuat ke local.');
+    return true;
+}
+
+window.__boqCloudDebug = {
+    fetch: fetchCloudState,
+    push: pushCloudStateManual,
+    pull: pullCloudStateManual
+};
 
 function persistProject() {
     if (currentProjectName) {
