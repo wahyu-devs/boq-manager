@@ -112,17 +112,24 @@ main {
     color: var(--nav-txt)
 }
 
-.btn:focus,
+.btn:hover,
+.btn:active,
 .btn:focus-visible,
-.switch:focus,
+.switch:hover,
+.switch:active,
 .switch:focus-visible,
-.modal-close:focus,
-.modal-close:focus-visible,
-button:focus,
-button:focus-visible {
+.modal-close:hover,
+.modal-close:active,
+.modal-close:focus-visible {
     outline: none;
     box-shadow: 0 0 0 1px var(--accent);
-    border-color: var(--accent);
+}
+
+.btn:focus:not(:focus-visible):not(:active),
+.switch:focus:not(:focus-visible):not(:active),
+.modal-close:focus:not(:focus-visible):not(:active) {
+    outline: none;
+    box-shadow: none;
 }
 
 .tab-btn:focus,
