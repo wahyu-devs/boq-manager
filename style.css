@@ -314,6 +314,52 @@ button:focus-visible {
     opacity: 0.85;
 }
 
+.user-menu-greeting {
+    display: inline-block;
+    min-width: 0;
+    line-height: 1;
+    color: var(--nav-txt);
+}
+
+.user-menu-greeting.is-loading {
+    position: relative;
+    width: 88px;
+    height: 14px;
+    color: transparent;
+    border-radius: 999px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+
+.user-menu-greeting.is-loading::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.14) 0%,
+            rgba(255, 255, 255, 0.32) 50%,
+            rgba(255, 255, 255, 0.14) 100%);
+    background-size: 200% 100%;
+    animation: userGreetingShimmer 1.2s linear infinite;
+}
+
+@keyframes userGreetingShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .user-menu-greeting.is-loading::before {
+        animation: none;
+    }
+}
+
 .user-menu-trigger {
     display: inline-flex;
     align-items: center;

@@ -134,6 +134,27 @@ const USER_PROFILE_USERNAME_COLUMN = 'username';
 
 let navbarGreetingRequestSeq = 0;
 
+function setUserGreetingLoading() {
+    if (!userMenuGreeting) return;
+
+    userMenuGreeting.textContent = '';
+    userMenuGreeting.classList.add('is-loading');
+    userMenuGreeting.setAttribute('aria-busy', 'true');
+}
+
+function setUserGreetingText(text) {
+    if (!userMenuGreeting) return;
+
+    userMenuGreeting.classList.remove('is-loading');
+    userMenuGreeting.setAttribute('aria-busy', 'false');
+    userMenuGreeting.textContent = text || 'User';
+}
+
+function resetUserGreeting() {
+    navbarGreetingRequestSeq++;
+    setUserGreetingText('User');
+}
+
 function syncThemeToggles() {
     const isDark = document.documentElement.classList.contains('theme-dark');
     if (loginThemeSwitchBtn) {
@@ -168,12 +189,7 @@ async function clearSession() {
 }
 
 function getNavbarFallbackName(user) {
-    return (
-        user?.user_metadata?.username ||
-        user?.user_metadata?.display_name ||
-        (user?.email ? user.email.split('@')[0] : '') ||
-        'User'
-    );
+    return user?.email ? user.email.split('@')[0] : 'User';
 }
 
 async function fetchNavbarUsernameFromProfile(userId) {
@@ -202,30 +218,29 @@ async function setGreetingFromSession(sessionArg = null) {
 
     const session = sessionArg || await getStoredSession();
     const user = session?.user;
+    const currentRequestSeq = ++navbarGreetingRequestSeq;
 
     if (!user) {
-        userMenuGreeting.textContent = 'User';
+        setUserGreetingText('User');
         return;
     }
 
-    const fallbackName = getNavbarFallbackName(user);
-    userMenuGreeting.textContent = fallbackName;
+    setUserGreetingLoading();
 
-    const currentRequestSeq = ++navbarGreetingRequestSeq;
     const currentUserId = user.id;
-
-    if (!currentUserId) return;
+    if (!currentUserId) {
+        if (currentRequestSeq !== navbarGreetingRequestSeq) return;
+        setUserGreetingText(getNavbarFallbackName(user));
+        return;
+    }
 
     void (async () => {
         const profileUsername = await fetchNavbarUsernameFromProfile(currentUserId);
-        if (!profileUsername) return;
 
         if (currentRequestSeq !== navbarGreetingRequestSeq) return;
 
-        const latestSession = await getStoredSession();
-        if (latestSession?.user?.id !== currentUserId) return;
-
-        userMenuGreeting.textContent = profileUsername;
+        const resolvedName = profileUsername || getNavbarFallbackName(user);
+        setUserGreetingText(resolvedName);
     })();
 }
 
@@ -267,6 +282,7 @@ function closeChangePasswordModal() {
 }
 
 function showLoginScreen() {
+    resetUserGreeting();
     document.body.classList.add('auth-locked');
     loginScreen.classList.add('is-visible');
     loginScreen.setAttribute('aria-hidden', 'false');
