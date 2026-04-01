@@ -114,16 +114,34 @@ const loginThemeSwitchBtn = document.getElementById('loginThemeSwitchBtn');
 const loginToggleLabel = document.getElementById('loginToggleLabel');
 
 const appLoadingScreen = document.getElementById('appLoadingScreen');
+const appLoadingTitle = document.getElementById('appLoadingTitle');
+const appLoadingSubtitle = document.getElementById('appLoadingSubtitle');
 
 const APP_LOADING_MIN_MS = 3000;
+const APP_ENTRY_LOADING_MIN_MS = APP_LOADING_MIN_MS;
+const APP_LOGOUT_LOADING_MIN_MS = 3000;
+
 let appLoadingRunId = 0;
+let isLogoutTransitioning = false;
 
 function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function showAppLoadingScreen() {
+function setAppLoadingContent(title, subtitle) {
+    if (appLoadingTitle) {
+        appLoadingTitle.textContent = title || 'Preparing your workspace';
+    }
+
+    if (appLoadingSubtitle) {
+        appLoadingSubtitle.textContent = subtitle || 'Please wait a moment...';
+    }
+}
+
+function showAppLoadingScreen(title, subtitle) {
     if (!appLoadingScreen) return;
+
+    setAppLoadingContent(title, subtitle);
     document.body.classList.add('auth-loading');
     appLoadingScreen.classList.add('is-visible');
     appLoadingScreen.setAttribute('aria-hidden', 'false');
@@ -138,13 +156,17 @@ function hideAppLoadingScreen() {
 
 async function runAppEntryTransition(sessionArg = null) {
     const runId = ++appLoadingRunId;
+    isLogoutTransitioning = false;
 
-    showAppLoadingScreen();
+    showAppLoadingScreen(
+        'Preparing your workspace',
+        'Please wait a moment...'
+    );
 
     try {
         await Promise.all([
             setGreetingFromSession(sessionArg),
-            wait(APP_LOADING_MIN_MS)
+            wait(APP_ENTRY_LOADING_MIN_MS)
         ]);
 
         if (runId !== appLoadingRunId) return;
@@ -153,6 +175,31 @@ async function runAppEntryTransition(sessionArg = null) {
     } finally {
         if (runId === appLoadingRunId) {
             hideAppLoadingScreen();
+        }
+    }
+}
+
+async function runLogoutTransition() {
+    const runId = ++appLoadingRunId;
+    isLogoutTransitioning = true;
+
+    showAppLoadingScreen(
+        'Signing you out',
+        'Returning to login page...'
+    );
+
+    try {
+        await Promise.allSettled([
+            clearSession(),
+            wait(APP_LOGOUT_LOADING_MIN_MS)
+        ]);
+
+        if (runId !== appLoadingRunId) return;
+
+        showLoginScreen();
+    } finally {
+        if (runId === appLoadingRunId) {
+            isLogoutTransitioning = false;
         }
     }
 }
@@ -326,7 +373,7 @@ function closeChangePasswordModal() {
 }
 
 function showLoginScreen() {
-    appLoadingRunId++;
+    isLogoutTransitioning = false;
     hideAppLoadingScreen();
     resetUserGreeting();
     document.body.classList.add('auth-locked');
@@ -398,8 +445,7 @@ if (logoutBtn) {
         clearTimeout(syncTimer);
         syncTimer = null;
         syncInFlight = false;
-        await clearSession();
-        showLoginScreen();
+        await runLogoutTransition();
     });
 }
 
@@ -522,6 +568,7 @@ supabaseClient.auth.onAuthStateChange(async (_event, session) => {
             showAppShell();
         }
     } else {
+        if (isLogoutTransitioning) return;
         showLoginScreen();
     }
 });
