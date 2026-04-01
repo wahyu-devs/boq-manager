@@ -113,6 +113,50 @@ const logoutBtn = document.getElementById('logoutBtn');
 const loginThemeSwitchBtn = document.getElementById('loginThemeSwitchBtn');
 const loginToggleLabel = document.getElementById('loginToggleLabel');
 
+const appLoadingScreen = document.getElementById('appLoadingScreen');
+
+const APP_LOADING_MIN_MS = 3000;
+let appLoadingRunId = 0;
+
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function showAppLoadingScreen() {
+    if (!appLoadingScreen) return;
+    document.body.classList.add('auth-loading');
+    appLoadingScreen.classList.add('is-visible');
+    appLoadingScreen.setAttribute('aria-hidden', 'false');
+}
+
+function hideAppLoadingScreen() {
+    if (!appLoadingScreen) return;
+    document.body.classList.remove('auth-loading');
+    appLoadingScreen.classList.remove('is-visible');
+    appLoadingScreen.setAttribute('aria-hidden', 'true');
+}
+
+async function runAppEntryTransition(sessionArg = null) {
+    const runId = ++appLoadingRunId;
+
+    showAppLoadingScreen();
+
+    try {
+        await Promise.all([
+            setGreetingFromSession(sessionArg),
+            wait(APP_LOADING_MIN_MS)
+        ]);
+
+        if (runId !== appLoadingRunId) return;
+
+        showAppShell();
+    } finally {
+        if (runId === appLoadingRunId) {
+            hideAppLoadingScreen();
+        }
+    }
+}
+
 const userMenu = document.getElementById('userMenu');
 const userMenuTrigger = document.getElementById('userMenuTrigger');
 const userMenuDropdown = document.getElementById('userMenuDropdown');
@@ -282,6 +326,8 @@ function closeChangePasswordModal() {
 }
 
 function showLoginScreen() {
+    appLoadingRunId++;
+    hideAppLoadingScreen();
     resetUserGreeting();
     document.body.classList.add('auth-locked');
     loginScreen.classList.add('is-visible');
@@ -303,8 +349,7 @@ function showAppShell() {
 async function initAuth() {
     const session = await getStoredSession();
     if (session?.user) {
-        await setGreetingFromSession(session);
-        showAppShell();
+        await runAppEntryTransition(session);
         void runStartupCloudPull(session);
     } else {
         showLoginScreen();
@@ -340,9 +385,8 @@ loginForm.addEventListener('submit', async (e) => {
     // Session persistence sudah ditangani Supabase via persistSession: true.
     void rememberLoginInput?.checked;
 
-    await setGreetingFromSession(data.session);
     loginError.textContent = '';
-    showAppShell();
+    await runAppEntryTransition(data.session);
     void runStartupCloudPull(data.session);
 });
 
@@ -474,7 +518,9 @@ if (loginThemeSwitchBtn) {
 supabaseClient.auth.onAuthStateChange(async (_event, session) => {
     if (session?.user) {
         await setGreetingFromSession(session);
-        showAppShell();
+        if (!appLoadingScreen?.classList.contains('is-visible')) {
+            showAppShell();
+        }
     } else {
         showLoginScreen();
     }
