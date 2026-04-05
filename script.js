@@ -583,6 +583,7 @@ function setFormDisabled(disabled) {
     form.classList.toggle('form-disabled', disabled);
 }
 function switchTo(tab) {
+    closeItemNamePopover();
     activeTab = tab;
     tabCogs.classList.add('hidden'); tabSelling.classList.add('hidden'); tabCalc.classList.add('hidden');
     [tabCogsBtn, tabSellingBtn, tabCalcBtn].forEach(btn => { btn.classList.remove('active'); btn.setAttribute('aria-selected', 'false'); });
@@ -717,6 +718,140 @@ function normalizeCategoryOrder() {
 let currentCommission = 0;
 
 function sanitize(s) { return String(s || '').replace(/<\/?[^>]+(>|$)/g, "").trim(); }
+
+let itemNamePopoverEl = null;
+let itemNamePopoverTrigger = null;
+
+function ensureItemNamePopover() {
+    if (itemNamePopoverEl) return itemNamePopoverEl;
+
+    const el = document.createElement('div');
+    el.className = 'item-name-popover';
+    el.setAttribute('aria-hidden', 'true');
+    el.addEventListener('click', (e) => e.stopPropagation());
+    document.body.appendChild(el);
+
+    itemNamePopoverEl = el;
+    return itemNamePopoverEl;
+}
+
+function closeItemNamePopover() {
+    if (!itemNamePopoverEl) return;
+
+    itemNamePopoverEl.classList.remove('is-open');
+    itemNamePopoverEl.setAttribute('aria-hidden', 'true');
+    itemNamePopoverEl.textContent = '';
+
+    if (itemNamePopoverTrigger) {
+        itemNamePopoverTrigger.setAttribute('aria-expanded', 'false');
+    }
+
+    itemNamePopoverTrigger = null;
+}
+
+function positionItemNamePopover(triggerEl) {
+    if (!itemNamePopoverEl || !triggerEl) return;
+
+    itemNamePopoverEl.style.left = '12px';
+    itemNamePopoverEl.style.top = '12px';
+
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const popRect = itemNamePopoverEl.getBoundingClientRect();
+    const gap = 8;
+
+    let left = triggerRect.right - popRect.width;
+    left = Math.max(12, Math.min(left, window.innerWidth - popRect.width - 12));
+
+    let top = triggerRect.bottom + gap;
+    if (top + popRect.height > window.innerHeight - 12) {
+        top = triggerRect.top - popRect.height - gap;
+    }
+    top = Math.max(12, top);
+
+    itemNamePopoverEl.style.left = `${left}px`;
+    itemNamePopoverEl.style.top = `${top}px`;
+}
+
+function openItemNamePopover(triggerEl, fullName) {
+    const popover = ensureItemNamePopover();
+
+    if (itemNamePopoverTrigger && itemNamePopoverTrigger !== triggerEl) {
+        itemNamePopoverTrigger.setAttribute('aria-expanded', 'false');
+    }
+
+    popover.textContent = fullName;
+    popover.classList.add('is-open');
+    popover.setAttribute('aria-hidden', 'false');
+
+    itemNamePopoverTrigger = triggerEl;
+    triggerEl.setAttribute('aria-expanded', 'true');
+
+    positionItemNamePopover(triggerEl);
+}
+
+function toggleItemNamePopover(triggerEl, fullName) {
+    const isSameTrigger = itemNamePopoverTrigger === triggerEl;
+    const isOpen = itemNamePopoverEl?.classList.contains('is-open');
+
+    if (isOpen && isSameTrigger) {
+        closeItemNamePopover();
+        return;
+    }
+
+    openItemNamePopover(triggerEl, fullName);
+}
+
+function createItemNameCell(rawName) {
+    const fullName = sanitize(rawName);
+
+    const td = document.createElement('td');
+    td.className = 'left item-name-cell';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'item-name-wrap';
+
+    const text = document.createElement('span');
+    text.className = 'item-name-text';
+    text.textContent = fullName;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'item-name-trigger';
+    btn.textContent = '...';
+    btn.title = 'View full item name';
+    btn.setAttribute('aria-label', `View full item name: ${fullName}`);
+    btn.setAttribute('aria-expanded', 'false');
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleItemNamePopover(btn, fullName);
+    });
+
+    wrap.appendChild(text);
+    wrap.appendChild(btn);
+    td.appendChild(wrap);
+
+    return td;
+}
+
+document.addEventListener('click', (e) => {
+    if (!itemNamePopoverEl?.classList.contains('is-open')) return;
+    if (e.target.closest('.item-name-trigger')) return;
+    closeItemNamePopover();
+});
+
+window.addEventListener('resize', () => {
+    if (itemNamePopoverTrigger && itemNamePopoverEl?.classList.contains('is-open')) {
+        positionItemNamePopover(itemNamePopoverTrigger);
+    }
+});
+
+window.addEventListener('scroll', () => {
+    if (itemNamePopoverTrigger && itemNamePopoverEl?.classList.contains('is-open')) {
+        positionItemNamePopover(itemNamePopoverTrigger);
+    }
+}, true);
+
 function getSafeFileName(name) { if (!name) return 'BOQ'; return (`BOQ - ${name}`).replace(/[\\\/:*?"<>|]/g, '').trim(); }
 function updateNavProject() { navProject.textContent = currentProjectName ? `| ${currentProjectName}` : '(no project)'; }
 function showAlert(msg) { alert(msg); }
@@ -961,7 +1096,7 @@ function renderCogsTable() {
             const tr = document.createElement('tr');
 
             const tdNo = document.createElement('td'); tdNo.textContent = idx++;
-            const tdName = document.createElement('td'); tdName.className = 'left'; tdName.textContent = sanitize(row.name);
+            const tdName = createItemNameCell(row.name);
             const tdQty = document.createElement('td'); tdQty.textContent = row.qty !== "" ? row.qty : "";
             const tdUnit = document.createElement('td'); tdUnit.textContent = row.unit || "";
             const tdCogs = document.createElement('td'); tdCogs.style.textAlign = 'right';
@@ -1010,7 +1145,7 @@ function renderSellingTable() {
             const tr = document.createElement('tr');
 
             const tdNo = document.createElement('td'); tdNo.textContent = idx++;
-            const tdName = document.createElement('td'); tdName.className = 'left'; tdName.textContent = sanitize(row.name);
+            const tdName = createItemNameCell(row.name);
             const tdQty = document.createElement('td'); tdQty.textContent = row.qty !== "" ? row.qty : "";
             const tdUnit = document.createElement('td'); tdUnit.textContent = row.unit || "";
             const tdSelling = document.createElement('td'); tdSelling.style.textAlign = 'right';

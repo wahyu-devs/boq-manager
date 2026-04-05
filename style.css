@@ -743,6 +743,130 @@ td.left {
     text-align: left
 }
 
+/* ===== Item name truncate + popover ===== */
+#cogsTable,
+#sellingTable {
+    table-layout: fixed;
+}
+
+#cogsTable th:nth-child(1),
+#cogsTable td:nth-child(1),
+#sellingTable th:nth-child(1),
+#sellingTable td:nth-child(1) {
+    width: 52px;
+}
+
+#cogsTable th:nth-child(3),
+#cogsTable td:nth-child(3),
+#sellingTable th:nth-child(3),
+#sellingTable td:nth-child(3) {
+    width: 72px;
+}
+
+#cogsTable th:nth-child(4),
+#cogsTable td:nth-child(4),
+#sellingTable th:nth-child(4),
+#sellingTable td:nth-child(4) {
+    width: 82px;
+}
+
+#cogsTable th:nth-child(5),
+#cogsTable td:nth-child(5),
+#sellingTable th:nth-child(5),
+#sellingTable td:nth-child(5) {
+    width: 130px;
+}
+
+#cogsTable th:nth-child(6),
+#cogsTable td:nth-child(6),
+#sellingTable th:nth-child(6),
+#sellingTable td:nth-child(6) {
+    width: 140px;
+}
+
+#cogsTable th:nth-child(7),
+#cogsTable td:nth-child(7) {
+    width: 96px;
+}
+
+.item-name-cell {
+    text-align: left;
+}
+
+.item-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.item-name-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-name-trigger {
+    flex: 0 0 auto;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.item-name-trigger:hover {
+    background: var(--table-head-bg);
+    color: var(--txt);
+}
+
+.item-name-trigger:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    color: var(--accent);
+}
+
+.item-name-trigger[aria-expanded="true"] {
+    border-color: var(--accent);
+    background: var(--table-head-bg);
+    color: var(--accent);
+}
+
+.item-name-popover {
+    position: fixed;
+    z-index: 1300;
+    display: none;
+    max-width: min(420px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--txt);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
+    font-size: 13px;
+    line-height: 1.45;
+    word-break: break-word;
+    user-select: text;
+}
+
+.theme-dark .item-name-popover {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.36);
+}
+
+.item-name-popover.is-open {
+    display: block;
+}
+
 tfoot .total {
     background: var(--highlight);
     font-weight: 700
