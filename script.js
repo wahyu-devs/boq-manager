@@ -601,7 +601,9 @@ function switchTo(tab) {
         setFormDisabled(true);  // tetap non-aktif di Calculation
         renderCalculation();
     }
+
     updateHeightsVars();
+    refreshVisibleItemNameOverflow(tab);
 }
 tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
 tabSellingBtn.addEventListener('click', () => switchTo('selling'));
@@ -821,6 +823,7 @@ function createItemNameCell(rawName) {
     btn.title = 'View full item name';
     btn.setAttribute('aria-label', `View full item name: ${fullName}`);
     btn.setAttribute('aria-expanded', 'false');
+    btn.hidden = true;
 
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -834,6 +837,39 @@ function createItemNameCell(rawName) {
     return td;
 }
 
+function updateItemNameOverflowStates(root = document) {
+    const wraps = root.querySelectorAll('.item-name-wrap');
+
+    wraps.forEach((wrap) => {
+        const text = wrap.querySelector('.item-name-text');
+        const btn = wrap.querySelector('.item-name-trigger');
+
+        if (!text || !btn) return;
+
+        const isTruncated = text.scrollWidth > text.clientWidth + 1;
+        btn.hidden = !isTruncated;
+
+        if (!isTruncated && itemNamePopoverTrigger === btn) {
+            closeItemNamePopover();
+        }
+    });
+}
+
+function refreshVisibleItemNameOverflow(tab) {
+    const targetRoot =
+        tab === 'cogs' ? document.querySelector('#cogsTable tbody') :
+            tab === 'selling' ? document.querySelector('#sellingTable tbody') :
+                null;
+
+    if (!targetRoot) return;
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            updateItemNameOverflowStates(targetRoot);
+        });
+    });
+}
+
 document.addEventListener('click', (e) => {
     if (!itemNamePopoverEl?.classList.contains('is-open')) return;
     if (e.target.closest('.item-name-trigger')) return;
@@ -844,6 +880,8 @@ window.addEventListener('resize', () => {
     if (itemNamePopoverTrigger && itemNamePopoverEl?.classList.contains('is-open')) {
         positionItemNamePopover(itemNamePopoverTrigger);
     }
+
+    refreshVisibleItemNameOverflow(activeTab);
 });
 
 window.addEventListener('scroll', () => {
@@ -1125,6 +1163,7 @@ function renderCogsTable() {
         });
     });
     grandCogsEl.textContent = grand.toLocaleString('id-ID');
+    requestAnimationFrame(() => updateItemNameOverflowStates(cogsTbody));
 }
 
 function renderSellingTable() {
@@ -1175,6 +1214,7 @@ function renderSellingTable() {
         });
     });
     grandSellingEl.textContent = grand.toLocaleString('id-ID');
+    requestAnimationFrame(() => updateItemNameOverflowStates(sellingTbody));
 }
 
 function loadProjectsObj() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || {}; } catch (e) { return {}; } }
