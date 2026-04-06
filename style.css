@@ -790,38 +790,54 @@ td.left {
 }
 
 .item-name-cell {
+    position: relative;
     text-align: left;
+    vertical-align: middle;
 }
 
 .item-name-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    position: relative;
+    display: block;
     min-width: 0;
+    padding-right: 24px;
 }
 
 .item-name-text {
-    flex: 1 1 auto;
+    display: block;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.2;
 }
 
 .item-name-trigger {
-    flex: 0 0 auto;
-    min-width: 28px;
-    height: 28px;
-    padding: 0 8px;
-    border-radius: 8px;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border-radius: 6px;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--muted);
     font: inherit;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 700;
     line-height: 1;
     cursor: pointer;
+    box-sizing: border-box;
+}
+
+.item-name-trigger[hidden] {
+    display: none !important;
 }
 
 .item-name-trigger:hover {
