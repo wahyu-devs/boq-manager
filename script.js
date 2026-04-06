@@ -117,9 +117,9 @@ const appLoadingScreen = document.getElementById('appLoadingScreen');
 const appLoadingTitle = document.getElementById('appLoadingTitle');
 const appLoadingSubtitle = document.getElementById('appLoadingSubtitle');
 
-const APP_LOADING_MIN_MS = 3000;
+const APP_LOADING_MIN_MS = 900;
 const APP_ENTRY_LOADING_MIN_MS = APP_LOADING_MIN_MS;
-const APP_LOGOUT_LOADING_MIN_MS = 3000;
+const APP_LOGOUT_LOADING_MIN_MS = 900;
 
 let appLoadingRunId = 0;
 let isLogoutTransitioning = false;
