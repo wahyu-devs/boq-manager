@@ -1,6 +1,14 @@
 /* ===== Utilities kecil ===== */
 function cgsTbodyAppend(node, tbody) { tbody.appendChild(node); }
 const rootStyle = document.documentElement.style;
+let floatingTableHeaderEl = null;
+let floatingTableHeaderTable = null;
+let floatingTableHeaderSourceKey = '';
+let floatingTableHeaderRaf = 0;
+let floatingTableFooterEl = null;
+let floatingTableFooterTable = null;
+let floatingTableFooterSourceKey = '';
+let floatingTableFooterRaf = 0;
 
 // ===== Sticky navbar shadow toggler =====
 const navbarWrapper = document.getElementById('navbarWrapper');
@@ -13,14 +21,18 @@ window.addEventListener('scroll', setStickinessShadow, { passive: true });
 
 // ===== Hitung tinggi navbar, tabs, actions untuk CSS vars =====
 const tabsBar = document.getElementById('tabsBar');
+const formBar = document.getElementById('formBar');
 const actionsDock = document.getElementById('actionsDock');
 function updateHeightsVars() {
     const navH = navbarWrapper.offsetHeight || 60;
     const tabsH = tabsBar.offsetHeight || 52;
+    const formH = formBar.offsetHeight || 0;
     const actH = actionsDock.offsetHeight || 56;
     rootStyle.setProperty('--nav-h', navH + 'px');
     rootStyle.setProperty('--tabs-h', tabsH + 'px');
+    rootStyle.setProperty('--form-h', formH + 'px');
     rootStyle.setProperty('--actions-h', actH + 'px');
+    scheduleFloatingTableChromeUpdate();
 }
 window.addEventListener('load', updateHeightsVars);
 window.addEventListener('resize', updateHeightsVars);
@@ -32,6 +44,9 @@ if (typeof ResizeObserver !== 'undefined') {
 
     const tabsResizeObserver = new ResizeObserver(updateHeightsVars);
     tabsResizeObserver.observe(tabsBar);
+
+    const formResizeObserver = new ResizeObserver(updateHeightsVars);
+    formResizeObserver.observe(formBar);
 
     const actionsResizeObserver = new ResizeObserver(updateHeightsVars);
     actionsResizeObserver.observe(actionsDock);
@@ -46,7 +61,6 @@ const tabsIO = new IntersectionObserver(([entry]) => {
 tabsIO.observe(tabsSentinel);
 
 // ===== Sticky Form: shadow saat melekat =====
-const formBar = document.getElementById('formBar');
 const formSentinel = document.getElementById('formSentinel');
 const formIO = new IntersectionObserver(([entry]) => {
     if (entry && !entry.isIntersecting) formBar.classList.add('is-stuck');
@@ -374,6 +388,8 @@ function closeChangePasswordModal() {
 
 function showLoginScreen() {
     isLogoutTransitioning = false;
+    hideFloatingTableHeader();
+    hideFloatingTableFooter();
     hideAppLoadingScreen();
     resetUserGreeting();
     document.body.classList.add('auth-locked');
@@ -391,6 +407,7 @@ function showAppShell() {
     loginScreen.classList.remove('is-visible');
     loginScreen.setAttribute('aria-hidden', 'true');
     appShell.removeAttribute('aria-hidden');
+    requestAnimationFrame(updateHeightsVars);
 }
 
 async function initAuth() {
@@ -582,6 +599,252 @@ function setFormDisabled(disabled) {
     controls.forEach(el => { if (el.tagName.toLowerCase() !== 'datalist') disabled ? el.setAttribute('disabled', 'disabled') : el.removeAttribute('disabled'); });
     form.classList.toggle('form-disabled', disabled);
 }
+
+function getActiveFloatingTable() {
+    if (activeTab === 'selling') return document.getElementById('sellingTable');
+    if (activeTab === 'calculation') return document.getElementById('calcSummary');
+    return document.getElementById('cogsTable');
+}
+
+function ensureFloatingTableHeader() {
+    if (floatingTableHeaderEl && floatingTableHeaderTable) return;
+
+    floatingTableHeaderEl = document.createElement('div');
+    floatingTableHeaderEl.className = 'floating-table-header';
+    floatingTableHeaderEl.setAttribute('aria-hidden', 'true');
+
+    floatingTableHeaderTable = document.createElement('table');
+    floatingTableHeaderEl.appendChild(floatingTableHeaderTable);
+    document.body.appendChild(floatingTableHeaderEl);
+}
+
+function hideFloatingTableHeader() {
+    if (!floatingTableHeaderEl) return;
+    floatingTableHeaderEl.classList.remove('is-visible');
+}
+
+function ensureFloatingTableFooter() {
+    if (floatingTableFooterEl && floatingTableFooterTable) return;
+
+    floatingTableFooterEl = document.createElement('div');
+    floatingTableFooterEl.className = 'floating-table-footer';
+    floatingTableFooterEl.setAttribute('aria-hidden', 'true');
+
+    floatingTableFooterTable = document.createElement('table');
+    floatingTableFooterEl.appendChild(floatingTableFooterTable);
+    document.body.appendChild(floatingTableFooterEl);
+}
+
+function hideFloatingTableFooter() {
+    if (!floatingTableFooterEl) return;
+    floatingTableFooterEl.classList.remove('is-visible');
+}
+
+function getStickyStackHeight() {
+    return (navbarWrapper.offsetHeight || 0) + (tabsBar.offsetHeight || 0) + (formBar.offsetHeight || 0);
+}
+
+function getFixedBottomStackHeight() {
+    const footer = document.querySelector('.app-footer');
+    return (actionsDock.offsetHeight || 0) + (footer?.offsetHeight || 0);
+}
+
+function syncFloatingTableHeader(table) {
+    const headerRow = table.tHead?.rows?.[0];
+    if (!headerRow) return false;
+
+    floatingTableHeaderTable.className = table.className;
+
+    const sourceKey = [
+        table.id,
+        headerRow.cells.length,
+        Array.from(headerRow.cells).map(cell => cell.textContent.trim()).join('|')
+    ].join(':');
+
+    if (floatingTableHeaderSourceKey !== sourceKey) {
+        floatingTableHeaderTable.innerHTML = '';
+        floatingTableHeaderTable.appendChild(table.tHead.cloneNode(true));
+        floatingTableHeaderSourceKey = sourceKey;
+    }
+
+    const cloneRow = floatingTableHeaderTable.tHead?.rows?.[0];
+    if (!cloneRow) return false;
+
+    Array.from(headerRow.cells).forEach((cell, index) => {
+        const cloneCell = cloneRow.cells[index];
+        if (!cloneCell) return;
+
+        const width = cell.getBoundingClientRect().width;
+        cloneCell.style.width = width + 'px';
+        cloneCell.style.minWidth = width + 'px';
+        cloneCell.style.maxWidth = width + 'px';
+    });
+
+    return true;
+}
+
+function syncFloatingTableFooter(table) {
+    const footerRow = table.tFoot?.rows?.[0];
+    if (!footerRow) return false;
+
+    floatingTableFooterTable.className = table.className;
+
+    const sourceKey = [
+        table.id,
+        footerRow.cells.length,
+        Array.from(footerRow.cells).map(cell => cell.textContent.trim()).join('|')
+    ].join(':');
+
+    if (floatingTableFooterSourceKey !== sourceKey) {
+        floatingTableFooterTable.innerHTML = '';
+        floatingTableFooterTable.appendChild(table.tFoot.cloneNode(true));
+        floatingTableFooterSourceKey = sourceKey;
+    }
+
+    const cloneRow = floatingTableFooterTable.tFoot?.rows?.[0];
+    if (!cloneRow) return false;
+
+    Array.from(footerRow.cells).forEach((cell, index) => {
+        const cloneCell = cloneRow.cells[index];
+        if (!cloneCell) return;
+
+        const width = cell.getBoundingClientRect().width;
+        cloneCell.style.width = width + 'px';
+        cloneCell.style.minWidth = width + 'px';
+        cloneCell.style.maxWidth = width + 'px';
+    });
+
+    return true;
+}
+
+function updateFloatingTableHeader() {
+    const table = getActiveFloatingTable();
+    if (!table || !table.tHead || table.closest('.hidden')) {
+        hideFloatingTableHeader();
+        return;
+    }
+
+    const wrap = table.closest('.table-wrap');
+    const headerRow = table.tHead.rows[0];
+    if (!wrap || !headerRow) {
+        hideFloatingTableHeader();
+        return;
+    }
+
+    const tableRect = table.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const headerRect = headerRow.getBoundingClientRect();
+    const top = getStickyStackHeight();
+    const shouldFloat = headerRect.top < top && tableRect.bottom > top + headerRect.height;
+
+    if (!shouldFloat) {
+        hideFloatingTableHeader();
+        return;
+    }
+
+    ensureFloatingTableHeader();
+    if (!syncFloatingTableHeader(table)) {
+        hideFloatingTableHeader();
+        return;
+    }
+
+    const left = Math.max(wrapRect.left, 0);
+    const right = Math.min(wrapRect.right, window.innerWidth);
+    const width = Math.max(0, right - left);
+
+    if (!width) {
+        hideFloatingTableHeader();
+        return;
+    }
+
+    floatingTableHeaderEl.style.top = top + 'px';
+    floatingTableHeaderEl.style.left = left + 'px';
+    floatingTableHeaderEl.style.width = width + 'px';
+    floatingTableHeaderEl.style.height = headerRect.height + 'px';
+    floatingTableHeaderTable.style.width = tableRect.width + 'px';
+    floatingTableHeaderTable.style.transform = 'translateX(' + (tableRect.left - left) + 'px)';
+    floatingTableHeaderEl.classList.add('is-visible');
+}
+
+function updateFloatingTableFooter() {
+    const table = getActiveFloatingTable();
+    if (!table || !table.tFoot || table.closest('.hidden')) {
+        hideFloatingTableFooter();
+        return;
+    }
+
+    const wrap = table.closest('.table-wrap');
+    const footerRow = table.tFoot.rows[0];
+    if (!wrap || !footerRow) {
+        hideFloatingTableFooter();
+        return;
+    }
+
+    const tableRect = table.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const footerRect = footerRow.getBoundingClientRect();
+    const bottom = getFixedBottomStackHeight();
+    const floatLine = window.innerHeight - bottom;
+    const shouldFloat = tableRect.top < floatLine && footerRect.bottom > floatLine;
+
+    if (!shouldFloat) {
+        hideFloatingTableFooter();
+        return;
+    }
+
+    ensureFloatingTableFooter();
+    if (!syncFloatingTableFooter(table)) {
+        hideFloatingTableFooter();
+        return;
+    }
+
+    const left = Math.max(wrapRect.left, 0);
+    const right = Math.min(wrapRect.right, window.innerWidth);
+    const width = Math.max(0, right - left);
+
+    if (!width) {
+        hideFloatingTableFooter();
+        return;
+    }
+
+    floatingTableFooterEl.style.bottom = bottom + 'px';
+    floatingTableFooterEl.style.left = left + 'px';
+    floatingTableFooterEl.style.width = width + 'px';
+    floatingTableFooterEl.style.height = footerRect.height + 'px';
+    floatingTableFooterTable.style.width = tableRect.width + 'px';
+    floatingTableFooterTable.style.transform = 'translateX(' + (tableRect.left - left) + 'px)';
+    floatingTableFooterEl.classList.add('is-visible');
+}
+
+function scheduleFloatingTableHeaderUpdate() {
+    if (floatingTableHeaderRaf) return;
+
+    floatingTableHeaderRaf = requestAnimationFrame(() => {
+        floatingTableHeaderRaf = 0;
+        updateFloatingTableHeader();
+    });
+}
+
+function scheduleFloatingTableFooterUpdate() {
+    if (floatingTableFooterRaf) return;
+
+    floatingTableFooterRaf = requestAnimationFrame(() => {
+        floatingTableFooterRaf = 0;
+        updateFloatingTableFooter();
+    });
+}
+
+function scheduleFloatingTableChromeUpdate() {
+    scheduleFloatingTableHeaderUpdate();
+    scheduleFloatingTableFooterUpdate();
+}
+
+window.addEventListener('scroll', scheduleFloatingTableChromeUpdate, { passive: true });
+window.addEventListener('resize', scheduleFloatingTableChromeUpdate);
+document.querySelectorAll('.table-wrap').forEach(wrap => {
+    wrap.addEventListener('scroll', scheduleFloatingTableChromeUpdate, { passive: true });
+});
+
 function switchTo(tab) {
     closeItemNamePopover();
     activeTab = tab;
@@ -604,6 +867,7 @@ function switchTo(tab) {
 
     updateHeightsVars();
     refreshVisibleItemNameOverflow(tab);
+    scheduleFloatingTableChromeUpdate();
 }
 tabCogsBtn.addEventListener('click', () => switchTo('cogs'));
 tabSellingBtn.addEventListener('click', () => switchTo('selling'));
@@ -1680,7 +1944,13 @@ function persistProject() {
     }
 }
 
-function renderAll() { normalizeCategoryOrder(); renderCogsTable(); renderSellingTable(); renderCalculation(); }
+function renderAll() {
+    normalizeCategoryOrder();
+    renderCogsTable();
+    renderSellingTable();
+    renderCalculation();
+    scheduleFloatingTableChromeUpdate();
+}
 
 function setEditingMode(idx) { editingIndex = (typeof idx === 'number') ? idx : null; updateEditButton(); }
 function cancelEdit() { setEditingMode(null); selectedIndex = null; sellingInputManuallyEdited = false; form.reset(); document.querySelectorAll('#cogsTable tbody tr, #sellingTable tbody tr').forEach(r => r.classList.remove('selected')); nameInput.focus(); }

@@ -23,6 +23,8 @@
     --actions-h: 56px;
     --nav-h: 60px;
     --tabs-h: 52px;
+    --form-h: 0px;
+    --table-header-top: calc(var(--nav-h) + var(--tabs-h) + var(--form-h));
 }
 
 .theme-dark {
@@ -737,6 +739,53 @@ td {
 th {
     background: var(--table-head-bg);
     font-weight: 700
+}
+
+.floating-table-header,
+.floating-table-footer {
+    position: fixed;
+    left: 0;
+    z-index: 930;
+    display: none;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.floating-table-header {
+    top: var(--table-header-top);
+}
+
+.floating-table-header.is-visible,
+.floating-table-footer.is-visible {
+    display: block;
+}
+
+.floating-table-header table,
+.floating-table-footer table {
+    table-layout: fixed;
+    background: var(--card);
+    will-change: transform;
+}
+
+.floating-table-header th {
+    background: var(--table-head-bg);
+}
+
+.floating-table-footer td.total.label {
+    text-align: center;
+}
+
+.floating-table-footer td.total.value {
+    text-align: right;
+}
+
+.theme-dark .floating-table-header,
+.theme-dark .floating-table-footer {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36);
 }
 
 td.left {
